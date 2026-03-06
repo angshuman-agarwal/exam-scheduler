@@ -30,3 +30,7 @@ dist-ssr
 .agents
 
 *.zip
+
+# Playwright
+test-results/
+playwright-report/

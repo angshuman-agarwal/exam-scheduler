@@ -9,9 +9,7 @@ const STATE_KEY = 'app'
 
 const seed = seedData as SeedDataV2
 
-// Bump this whenever seed data changes (new fields, new papers, etc.)
-// Stale IDB with a lower revision will be reseeded on next load.
-const SEED_REVISION = 2
+import { SEED_REVISION } from '../lib/constants'
 
 interface PersistedState {
   version: 2

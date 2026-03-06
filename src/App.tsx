@@ -116,7 +116,7 @@ function App() {
           }}
         />
       )}
-      {page === 'progress' && <Progress />}
+      {page === 'progress' && <Progress onGoToToday={() => setPage('today')} />}
     </Layout>
   )
 }
