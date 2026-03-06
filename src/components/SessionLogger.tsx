@@ -33,20 +33,18 @@ function getNextStep(score: number): string {
   return "No worries \u2014 we'll keep this in your rotation."
 }
 
-function ConfidenceDots({ value, color }: { value: number; color: string }) {
+const CONFIDENCE_EMOJI = ['😰', '😕', '😐', '🙂', '😎'] as const
+
+function ConfidenceDots({ value }: { value: number; color: string }) {
   return (
-    <span className="inline-flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} style={{ color: i <= value ? color : '#d1d5db' }}>
-          {i <= value ? '\u25CF' : '\u25CB'}
-        </span>
-      ))}
+    <span className="text-sm leading-none" title={`Confidence: ${value}/5`}>
+      {CONFIDENCE_EMOJI[Math.max(0, Math.min(4, value - 1))] ?? '😐'}
     </span>
   )
 }
 
 export default function SessionLogger({ scored, source, scheduleItemId, onBack }: SessionLoggerProps) {
-  const { topic, subject } = scored
+  const { topic, subject, offering } = scored
   const logSession = useAppStore((s) => s.logSession)
   const addNote = useAppStore((s) => s.addNote)
   const removeFromPlan = useAppStore((s) => s.removeFromPlan)
@@ -164,7 +162,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack }
         <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: subject.color }} />
         <div>
           <h2 className="text-xl font-bold text-gray-900">{topic.name}</h2>
-          <p className="text-sm text-gray-500">{subject.name}</p>
+          <p className="text-sm text-gray-500">{subject.name} <span className="text-gray-300">·</span> {offering.label}</p>
         </div>
       </div>
 

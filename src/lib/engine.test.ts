@@ -18,11 +18,16 @@ import {
   OVERDUE_RECENCY_THRESHOLD,
   OVERDUE_WEAKNESS_THRESHOLD,
 } from './engine'
-import type { Topic, Paper, Subject, ScoredTopic, ScheduleItem } from '../types'
+import type { Topic, Paper, Subject, Offering, ScoredTopic, ScheduleItem } from '../types'
 
 const TODAY = new Date('2026-05-01T00:00:00Z')
 
-// ── Core Formula Components ──
+// Helper to build test fixtures with v2 shape
+function mkOffering(id: string, subjectId: string): Offering {
+  return { id, subjectId, boardId: 'aqa', spec: '0000', label: 'AQA 0000' }
+}
+
+// -- Core Formula Components --
 
 describe('weakness', () => {
   it('perf=0.6, conf=3 → 0.40', () => {
@@ -56,41 +61,35 @@ describe('daysRemaining', () => {
   })
 })
 
-// ── Full Topic Scores (Simulation Values) ──
+// -- Full Topic Scores (Simulation Values) --
 
 describe('simulation topic scores', () => {
   it('CS Algorithms → 0.130', () => {
-    // perf=0.6, conf=3, exam=11May(10d), lastReviewed=26Apr(5d since)
     expect(topicScore(0.6, 3, '2026-05-11', '2026-04-26', TODAY)).toBeCloseTo(0.131, 2)
   })
 
   it('English Literature Macbeth → 0.156', () => {
-    // perf=0.5, conf=3, exam=11May(10d), lastReviewed=23Apr(8d since)
     expect(topicScore(0.5, 3, '2026-05-11', '2026-04-23', TODAY)).toBeCloseTo(0.157, 2)
   })
 
   it('Biology Cell Division → 0.083', () => {
-    // perf=0.7, conf=4, exam=12May(11d), lastReviewed=29Apr(2d since)
     expect(topicScore(0.7, 4, '2026-05-12', '2026-04-29', TODAY)).toBeCloseTo(0.082, 2)
   })
 
   it('Maths Algebra → 0.183', () => {
-    // perf=0.4, conf=2, exam=14May(13d), lastReviewed=16Apr(15d since)
     expect(topicScore(0.4, 2, '2026-05-14', '2026-04-16', TODAY)).toBeCloseTo(0.183, 3)
   })
 
   it('Physics Electricity → 0.100', () => {
-    // perf=0.5, conf=3, exam=2Jun(32d), lastReviewed=1Apr(30d since)
     expect(topicScore(0.5, 3, '2026-06-02', '2026-04-01', TODAY)).toBeCloseTo(0.1, 3)
   })
 
   it('Spanish Speaking → 0.032', () => {
-    // perf=0.8, conf=4, exam=9Jun(39d), lastReviewed=30Apr(1d since)
     expect(topicScore(0.8, 4, '2026-06-09', '2026-04-30', TODAY)).toBeCloseTo(0.032, 3)
   })
 })
 
-// ── Performance Update ──
+// -- Performance Update --
 
 describe('updatePerformance', () => {
   it('0.5 and 0.9 → 0.62', () => {
@@ -98,7 +97,7 @@ describe('updatePerformance', () => {
   })
 })
 
-// ── Confidence Adjustment ──
+// -- Confidence Adjustment --
 
 describe('adjustConfidence', () => {
   it('score < 0.5 → conf−1', () => {
@@ -122,7 +121,7 @@ describe('adjustConfidence', () => {
   })
 })
 
-// ── Daily Load Logic ──
+// -- Daily Load Logic --
 
 describe('maxDeepBlocks', () => {
   it('(3,2) → 3', () => {
@@ -142,14 +141,16 @@ describe('maxDeepBlocks', () => {
   })
 })
 
-// ── Sort Tiebreak ──
+// -- Sort Tiebreak --
 
 describe('sortScoredTopics', () => {
   it('score desc → perf asc → name asc', () => {
+    const off = mkOffering('o-s', 's')
     const mkTopic = (id: string, name: string, perf: number): ScoredTopic => ({
-      topic: { id, paperId: 'p', subjectId: 's', name, confidence: 3, performanceScore: perf, lastReviewed: null },
-      paper: { id: 'p', subjectId: 's', name: 'P1', examDate: '2026-05-10' },
-      subject: { id: 's', name: 'S', color: '#000', board: 'X' },
+      topic: { id, paperId: 'p', offeringId: 'o-s', name, confidence: 3, performanceScore: perf, lastReviewed: null },
+      paper: { id: 'p', offeringId: 'o-s', name: 'P1', examDate: '2026-05-10' },
+      offering: off,
+      subject: { id: 's', name: 'S', color: '#000' },
       score: 0.5,
       blockType: 'deep',
       weakness: 0.5,
@@ -163,53 +164,56 @@ describe('sortScoredTopics', () => {
     ]
 
     const sorted = sortScoredTopics(topics)
-    expect(sorted[0].topic.id).toBe('c') // lower perf first
-    expect(sorted[1].topic.id).toBe('b') // then Alpha before Beta
+    expect(sorted[0].topic.id).toBe('c')
+    expect(sorted[1].topic.id).toBe('b')
     expect(sorted[2].topic.id).toBe('a')
   })
 })
 
-// ── scoreAllTopics ──
+// -- scoreAllTopics --
 
 describe('scoreAllTopics', () => {
   it('excludes past papers', () => {
     const topics: Topic[] = [
-      { id: 't1', paperId: 'p-past', subjectId: 's1', name: 'Past', confidence: 3, performanceScore: 0.5, lastReviewed: null },
-      { id: 't2', paperId: 'p-future', subjectId: 's1', name: 'Future', confidence: 3, performanceScore: 0.5, lastReviewed: null },
+      { id: 't1', paperId: 'p-past', offeringId: 'o1', name: 'Past', confidence: 3, performanceScore: 0.5, lastReviewed: null },
+      { id: 't2', paperId: 'p-future', offeringId: 'o1', name: 'Future', confidence: 3, performanceScore: 0.5, lastReviewed: null },
     ]
     const papers: Paper[] = [
-      { id: 'p-past', subjectId: 's1', name: 'Past Paper', examDate: '2026-04-01' },
-      { id: 'p-future', subjectId: 's1', name: 'Future Paper', examDate: '2026-06-01' },
+      { id: 'p-past', offeringId: 'o1', name: 'Past Paper', examDate: '2026-04-01' },
+      { id: 'p-future', offeringId: 'o1', name: 'Future Paper', examDate: '2026-06-01' },
     ]
-    const subjects: Subject[] = [{ id: 's1', name: 'Test', color: '#000', board: 'X' }]
+    const offerings: Offering[] = [mkOffering('o1', 's1')]
+    const subjects: Subject[] = [{ id: 's1', name: 'Test', color: '#000' }]
 
-    const scored = scoreAllTopics(topics, papers, subjects, TODAY)
+    const scored = scoreAllTopics(topics, papers, offerings, subjects, TODAY)
     expect(scored).toHaveLength(1)
     expect(scored[0].topic.id).toBe('t2')
   })
 
   it('includes precomputed weakness and recencyFactor', () => {
     const topics: Topic[] = [
-      { id: 't1', paperId: 'p1', subjectId: 's1', name: 'T1', confidence: 3, performanceScore: 0.6, lastReviewed: null },
+      { id: 't1', paperId: 'p1', offeringId: 'o1', name: 'T1', confidence: 3, performanceScore: 0.6, lastReviewed: null },
     ]
     const papers: Paper[] = [
-      { id: 'p1', subjectId: 's1', name: 'P1', examDate: '2026-06-01' },
+      { id: 'p1', offeringId: 'o1', name: 'P1', examDate: '2026-06-01' },
     ]
-    const subjects: Subject[] = [{ id: 's1', name: 'Test', color: '#000', board: 'X' }]
+    const offerings: Offering[] = [mkOffering('o1', 's1')]
+    const subjects: Subject[] = [{ id: 's1', name: 'Test', color: '#000' }]
 
-    const scored = scoreAllTopics(topics, papers, subjects, TODAY)
+    const scored = scoreAllTopics(topics, papers, offerings, subjects, TODAY)
     expect(scored[0].weakness).toBeCloseTo(weakness(0.6, 3), 5)
     expect(scored[0].recencyFactor).toBeCloseTo(recencyFactor(null, TODAY), 5)
   })
 })
 
-// ── diversifyTopics ──
+// -- diversifyTopics --
 
 describe('diversifyTopics', () => {
   const mkScored = (id: string, subjectId: string, score: number, examDate = '2026-05-30'): ScoredTopic => ({
-    topic: { id, paperId: 'p', subjectId, name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
-    paper: { id: 'p', subjectId, name: 'P1', examDate },
-    subject: { id: subjectId, name: subjectId, color: '#000', board: 'X' },
+    topic: { id, paperId: 'p', offeringId: `o-${subjectId}`, name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
+    paper: { id: 'p', offeringId: `o-${subjectId}`, name: 'P1', examDate },
+    offering: mkOffering(`o-${subjectId}`, subjectId),
+    subject: { id: subjectId, name: subjectId, color: '#000' },
     score,
     blockType: 'deep',
     weakness: 0.5,
@@ -243,13 +247,14 @@ describe('diversifyTopics', () => {
   })
 })
 
-// ── buildDayPlan ──
+// -- buildDayPlan --
 
 describe('buildDayPlan', () => {
   const mkScored = (id: string, score: number, subjectId = id): ScoredTopic => ({
-    topic: { id, paperId: `p-${id}`, subjectId, name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
-    paper: { id: `p-${id}`, subjectId, name: 'P1', examDate: '2026-05-10' },
-    subject: { id: subjectId, name: subjectId, color: '#000', board: 'X' },
+    topic: { id, paperId: `p-${id}`, offeringId: `o-${subjectId}`, name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
+    paper: { id: `p-${id}`, offeringId: `o-${subjectId}`, name: 'P1', examDate: '2026-05-10' },
+    offering: mkOffering(`o-${subjectId}`, subjectId),
+    subject: { id: subjectId, name: subjectId, color: '#000' },
     score,
     blockType: 'deep',
     weakness: 0.5,
@@ -279,13 +284,14 @@ describe('buildDayPlan', () => {
   })
 })
 
-// ── getSuggestions ──
+// -- getSuggestions --
 
 describe('getSuggestions', () => {
   const mkScored = (id: string, score: number, subjectId = 's1'): ScoredTopic => ({
-    topic: { id, paperId: 'p', subjectId, name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
-    paper: { id: 'p', subjectId, name: 'P1', examDate: '2026-05-30' },
-    subject: { id: subjectId, name: subjectId, color: '#000', board: 'X' },
+    topic: { id, paperId: 'p', offeringId: `o-${subjectId}`, name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
+    paper: { id: 'p', offeringId: `o-${subjectId}`, name: 'P1', examDate: '2026-05-30' },
+    offering: mkOffering(`o-${subjectId}`, subjectId),
+    subject: { id: subjectId, name: subjectId, color: '#000' },
     score,
     blockType: 'deep',
     weakness: 0.5,
@@ -314,13 +320,14 @@ describe('getSuggestions', () => {
   })
 })
 
-// ── getOverdueTopics ──
+// -- getOverdueTopics --
 
 describe('getOverdueTopics', () => {
   const mkScored = (id: string, w: number, r: number): ScoredTopic => ({
-    topic: { id, paperId: 'p', subjectId: 's', name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
-    paper: { id: 'p', subjectId: 's', name: 'P1', examDate: '2026-05-30' },
-    subject: { id: 's', name: 'S', color: '#000', board: 'X' },
+    topic: { id, paperId: 'p', offeringId: 'o-s', name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
+    paper: { id: 'p', offeringId: 'o-s', name: 'P1', examDate: '2026-05-30' },
+    offering: mkOffering('o-s', 's'),
+    subject: { id: 's', name: 'S', color: '#000' },
     score: 0.5,
     blockType: 'deep',
     weakness: w,
@@ -330,8 +337,8 @@ describe('getOverdueTopics', () => {
   it('returns topics above both thresholds', () => {
     const scored = [
       mkScored('a', OVERDUE_WEAKNESS_THRESHOLD, OVERDUE_RECENCY_THRESHOLD),
-      mkScored('b', 0.3, 1.2), // weakness below
-      mkScored('c', 0.8, 1.0), // recency below
+      mkScored('b', 0.3, 1.2),
+      mkScored('c', 0.8, 1.0),
     ]
     const result = getOverdueTopics(scored)
     expect(result).toHaveLength(1)
@@ -344,13 +351,14 @@ describe('getOverdueTopics', () => {
   })
 })
 
-// ── autoFillPlanItems ──
+// -- autoFillPlanItems --
 
 describe('autoFillPlanItems', () => {
   const mkScored = (id: string, score: number, subjectId = 's1'): ScoredTopic => ({
-    topic: { id, paperId: 'p', subjectId, name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
-    paper: { id: 'p', subjectId, name: 'P1', examDate: '2026-05-30' },
-    subject: { id: subjectId, name: subjectId, color: '#000', board: 'X' },
+    topic: { id, paperId: 'p', offeringId: `o-${subjectId}`, name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
+    paper: { id: 'p', offeringId: `o-${subjectId}`, name: 'P1', examDate: '2026-05-30' },
+    offering: mkOffering(`o-${subjectId}`, subjectId),
+    subject: { id: subjectId, name: subjectId, color: '#000' },
     score,
     blockType: 'deep',
     weakness: 0.5,
@@ -373,7 +381,6 @@ describe('autoFillPlanItems', () => {
   })
 
   it('max 2/subject across tray + fill', () => {
-    // Tray has 1 item from subject 'bio'
     const scored = [
       mkScored('a', 0.9, 'bio'),
       mkScored('b', 0.8, 'bio'),
@@ -382,14 +389,12 @@ describe('autoFillPlanItems', () => {
       mkScored('e', 0.5, 'cs'),
       mkScored('f', 0.4, 'maths'),
     ]
-    const existing = [mkItem('a')] // 'a' is bio
-    // scoredMap resolves 'a' → bio, so bio starts at 1
+    const existing = [mkItem('a')]
     const result = autoFillPlanItems(scored, existing, '2026-05-01', 2000)
     const bioCount = result.filter((i) => {
       const s = scored.find((sc) => sc.topic.id === i.topicId)
       return s?.subject.id === 'bio'
     }).length
-    // tray has 1 bio + fill adds at most 1 more = 2 total
     expect(bioCount).toBeLessThanOrEqual(1)
   })
 

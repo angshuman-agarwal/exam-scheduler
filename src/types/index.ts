@@ -8,24 +8,37 @@ export interface ScheduleItem {
   dayKey: string           // YYYY-MM-DD local timezone (never UTC)
 }
 
+export interface Board {
+  id: string
+  name: string             // e.g. "AQA", "Edexcel", "OCR"
+}
+
 export interface Subject {
   id: string
   name: string
   color: string
-  board: string
+}
+
+export interface Offering {
+  id: string
+  subjectId: string
+  boardId: string
+  spec: string             // e.g. "8525", "1MA1"
+  label: string            // display: "AQA 8525"
 }
 
 export interface Paper {
   id: string
-  subjectId: string
+  offeringId: string
   name: string
   examDate: string // ISO date
+  examTime?: string // HH:mm 24-hour format
 }
 
 export interface Topic {
   id: string
   paperId: string
-  subjectId: string
+  offeringId: string
   name: string
   confidence: number // 1-5
   performanceScore: number // 0-1
@@ -45,6 +58,7 @@ export interface Session {
 export interface ScoredTopic {
   topic: Topic
   paper: Paper
+  offering: Offering
   subject: Subject
   score: number
   blockType: 'deep' | 'recall'
@@ -69,8 +83,11 @@ export interface Note {
   text: string
 }
 
-export interface SeedData {
+export interface SeedDataV2 {
+  version: 2
+  boards: Board[]
   subjects: Subject[]
+  offerings: Offering[]
   papers: Paper[]
   topics: Topic[]
 }

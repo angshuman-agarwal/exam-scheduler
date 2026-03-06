@@ -1,23 +1,34 @@
 import { create } from 'zustand'
 import { openDB, type IDBPDatabase } from 'idb'
-import type { Topic, Paper, Subject, Session, ScoredTopic, DayPlan, UserState, Note, ScheduleItem, ScheduleSource } from '../types'
+import type { Topic, Paper, Subject, Board, Offering, Session, ScoredTopic, DayPlan, UserState, Note, ScheduleItem, ScheduleSource, SeedDataV2 } from '../types'
 import { scoreAllTopics, buildDayPlan, updatePerformance, adjustConfidence, autoFillPlanItems, TOTAL_BLOCKS } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
 import seedData from '../data/subjects.json'
 
 const DB_NAME = 'gcse-scheduler'
-const DB_VERSION = 1
+const DB_VERSION = 2
 const STORE_NAME = 'state'
 const STATE_KEY = 'app'
 
+const seed = seedData as SeedDataV2
+
+// Bump this whenever seed data changes (new fields, new papers, etc.)
+// Stale IDB with a lower revision will be reseeded on next load.
+const SEED_REVISION = 2
+
 interface PersistedState {
-  topics: Topic[]
+  version: 2
+  seedRevision?: number
+  boards: Board[]
   subjects: Subject[]
+  offerings: Offering[]
   papers: Paper[]
+  topics: Topic[]
   sessions: Session[]
   notes: Note[]
   userState: UserState
   onboarded: boolean
+  selectedOfferingIds: string[]
   dailyPlan: ScheduleItem[]
   planDay: string
 }
@@ -30,9 +41,9 @@ interface AppState extends PersistedState {
   setStress: (level: number) => void
   getDayPlan: (today: Date) => DayPlan
   getAllTopicsScored: (today: Date) => ScoredTopic[]
-  completeOnboarding: (subjectIds: string[], confidences: Map<string, number>) => void
+  completeOnboarding: (offeringIds: string[], confidences: Map<string, number>) => void
   addNote: (topicId: string, text: string) => void
-  getTopicsForSubject: (subjectId: string, today: Date) => ScoredTopic[]
+  getTopicsForOffering: (offeringId: string, today: Date) => ScoredTopic[]
   resetAll: () => Promise<void>
   addToPlan: (topicId: string, source: ScheduleSource, today: Date) => void
   removeFromPlan: (id: string) => void
@@ -43,15 +54,74 @@ interface AppState extends PersistedState {
 
 function deepCloneSeed(): PersistedState {
   return {
-    subjects: JSON.parse(JSON.stringify(seedData.subjects)) as Subject[],
-    papers: JSON.parse(JSON.stringify(seedData.papers)) as Paper[],
-    topics: JSON.parse(JSON.stringify(seedData.topics)) as Topic[],
+    version: 2,
+    seedRevision: SEED_REVISION,
+    boards: JSON.parse(JSON.stringify(seed.boards)) as Board[],
+    subjects: JSON.parse(JSON.stringify(seed.subjects)) as Subject[],
+    offerings: JSON.parse(JSON.stringify(seed.offerings)) as Offering[],
+    papers: JSON.parse(JSON.stringify(seed.papers)) as Paper[],
+    topics: JSON.parse(JSON.stringify(seed.topics)) as Topic[],
     sessions: [],
     notes: [],
     userState: { energyLevel: 3, stress: 2 },
     onboarded: false,
+    selectedOfferingIds: [],
     dailyPlan: [],
     planDay: '',
+  }
+}
+
+function hasValidSchema(data: unknown): data is PersistedState {
+  if (!data || typeof data !== 'object') return false
+  const d = data as Record<string, unknown>
+  return d.version === 2 && Array.isArray(d.offerings) && Array.isArray(d.boards)
+}
+
+function isSeedCurrent(data: PersistedState): boolean {
+  return data.seedRevision === SEED_REVISION
+}
+
+function mergeWithFreshSeed(saved: PersistedState, fresh: PersistedState): PersistedState {
+  // Build map of old topics for preserving user-owned fields
+  const oldTopicMap = new Map(saved.topics.map((t) => [t.id, t]))
+
+  // Merge topics: seed-owned fields from fresh, user-owned fields from saved
+  const mergedTopics = fresh.topics.map((t) => {
+    const old = oldTopicMap.get(t.id)
+    if (!old) return t
+    return {
+      ...t,
+      confidence: old.confidence,
+      performanceScore: old.performanceScore,
+      lastReviewed: old.lastReviewed,
+    }
+  })
+
+  const validTopicIds = new Set(mergedTopics.map((t) => t.id))
+  const validOfferingIds = new Set(fresh.offerings.map((o) => o.id))
+
+  // Filter user data to only valid IDs
+  const selectedOfferingIds = saved.selectedOfferingIds.filter((id) => validOfferingIds.has(id))
+  const onboarded = selectedOfferingIds.length > 0 ? saved.onboarded : false
+  const sessions = saved.sessions.filter((s) => validTopicIds.has(s.topicId))
+  const notes = saved.notes.filter((n) => validTopicIds.has(n.topicId))
+  const dailyPlan = saved.dailyPlan.filter((i) => validTopicIds.has(i.topicId))
+
+  return {
+    version: 2,
+    seedRevision: SEED_REVISION,
+    boards: fresh.boards,
+    subjects: fresh.subjects,
+    offerings: fresh.offerings,
+    papers: fresh.papers,
+    topics: mergedTopics,
+    sessions,
+    notes,
+    userState: saved.userState,
+    onboarded,
+    selectedOfferingIds,
+    dailyPlan,
+    planDay: saved.planDay,
   }
 }
 
@@ -70,10 +140,11 @@ function getDb() {
   return dbPromise
 }
 
-async function loadFromIdb(): Promise<PersistedState | null> {
+async function loadFromIdb(): Promise<{ state: PersistedState; needsMerge: boolean } | null> {
   const db = await getDb()
   const data = await db.get(STORE_NAME, STATE_KEY)
-  return data ?? null
+  if (!hasValidSchema(data)) return null
+  return { state: data, needsMerge: !isSeedCurrent(data) }
 }
 
 async function saveToIdb(state: PersistedState): Promise<void> {
@@ -83,56 +154,87 @@ async function saveToIdb(state: PersistedState): Promise<void> {
 
 function extractPersisted(state: AppState): PersistedState {
   return {
-    topics: state.topics,
+    version: 2,
+    seedRevision: SEED_REVISION,
+    boards: state.boards,
     subjects: state.subjects,
+    offerings: state.offerings,
     papers: state.papers,
+    topics: state.topics,
     sessions: state.sessions,
     notes: state.notes,
     userState: state.userState,
     onboarded: state.onboarded,
+    selectedOfferingIds: state.selectedOfferingIds,
     dailyPlan: state.dailyPlan,
     planDay: state.planDay,
   }
 }
 
+// Filter topics/papers to only selected offerings
+function selectedTopics(state: { topics: Topic[]; selectedOfferingIds: string[] }): Topic[] {
+  const ids = new Set(state.selectedOfferingIds)
+  return state.topics.filter((t) => ids.has(t.offeringId))
+}
+
+function selectedPapers(state: { papers: Paper[]; selectedOfferingIds: string[] }): Paper[] {
+  const ids = new Set(state.selectedOfferingIds)
+  return state.papers.filter((p) => ids.has(p.offeringId))
+}
+
+function selectedOfferings(state: { offerings: Offering[]; selectedOfferingIds: string[] }): Offering[] {
+  const ids = new Set(state.selectedOfferingIds)
+  return state.offerings.filter((o) => ids.has(o.id))
+}
+
 export const useAppStore = create<AppState>()((set, get) => ({
-  topics: [],
+  version: 2,
+  boards: [],
   subjects: [],
+  offerings: [],
   papers: [],
+  topics: [],
   sessions: [],
   notes: [],
   userState: { energyLevel: 3, stress: 2 },
   onboarded: false,
   initialized: false,
+  selectedOfferingIds: [],
   dailyPlan: [],
   planDay: '',
 
   init: async () => {
-    const saved = await loadFromIdb()
-    if (saved && saved.topics.length > 0) {
-      // Ensure plan fields exist (backward compat)
-      if (!saved.dailyPlan) saved.dailyPlan = []
-      if (!saved.planDay) saved.planDay = ''
+    const loaded = await loadFromIdb()
 
-      // Plan cleanup — strict equality
-      const today = getLocalDayKey(new Date())
-      if (saved.planDay && saved.planDay !== today) {
-        const hasSessionsOnPlanDay = saved.sessions.some((s) => s.date === saved.planDay)
-        if (hasSessionsOnPlanDay) {
-          saved.dailyPlan = []
-          saved.planDay = today
-        } else {
-          saved.planDay = today
-        }
-      }
-
-      set({ ...saved, initialized: true })
-      await saveToIdb(saved)
+    let state: PersistedState
+    if (!loaded) {
+      // No saved state or invalid schema — fresh seed
+      state = deepCloneSeed()
+    } else if (loaded.needsMerge) {
+      // Valid schema but stale seed revision — merge user data into fresh catalog
+      state = mergeWithFreshSeed(loaded.state, deepCloneSeed())
     } else {
-      const seed = deepCloneSeed()
-      set({ ...seed, initialized: true })
-      await saveToIdb(seed)
+      // Current seed revision — use as-is
+      state = loaded.state
     }
+
+    // Backfill optional fields from older persisted states
+    if (!state.dailyPlan) state.dailyPlan = []
+    if (!state.planDay) state.planDay = ''
+    if (!state.selectedOfferingIds) state.selectedOfferingIds = []
+
+    // Plan-day cleanup
+    const today = getLocalDayKey(new Date())
+    if (state.planDay && state.planDay !== today) {
+      const hasSessionsOnPlanDay = state.sessions.some((s) => s.date === state.planDay)
+      if (hasSessionsOnPlanDay) {
+        state.dailyPlan = []
+      }
+      state.planDay = today
+    }
+
+    set({ ...state, initialized: true })
+    await saveToIdb(state)
   },
 
   logSession: (topicId: string, rawScore: number, today: Date, durationSeconds?: number, source?: ScheduleSource) => {
@@ -185,28 +287,33 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   getDayPlan: (today: Date): DayPlan => {
     const state = get()
-    const scored = scoreAllTopics(state.topics, state.papers, state.subjects, today)
+    const t = selectedTopics(state)
+    const p = selectedPapers(state)
+    const o = selectedOfferings(state)
+    const scored = scoreAllTopics(t, p, o, state.subjects, today)
     return buildDayPlan(scored, state.userState, today)
   },
 
   getAllTopicsScored: (today: Date): ScoredTopic[] => {
     const state = get()
-    return scoreAllTopics(state.topics, state.papers, state.subjects, today)
+    const t = selectedTopics(state)
+    const p = selectedPapers(state)
+    const o = selectedOfferings(state)
+    return scoreAllTopics(t, p, o, state.subjects, today)
   },
 
-  completeOnboarding: (subjectIds: string[], confidences: Map<string, number>) => {
+  completeOnboarding: (offeringIds: string[], confidences: Map<string, number>) => {
     const state = get()
-    const kept = new Set(subjectIds)
-    const subjects = state.subjects.filter((s) => kept.has(s.id))
-    const papers = state.papers.filter((p) => kept.has(p.subjectId))
-    const topics = state.topics
-      .filter((t) => kept.has(t.subjectId))
-      .map((t) => ({
-        ...t,
-        confidence: confidences.get(t.subjectId) ?? t.confidence,
-      }))
+    const kept = new Set(offeringIds)
 
-    set({ subjects, papers, topics, onboarded: true })
+    // Update confidence on topics belonging to selected offerings
+    const topics = state.topics.map((t) => {
+      if (!kept.has(t.offeringId)) return t
+      const conf = confidences.get(t.offeringId)
+      return conf !== undefined ? { ...t, confidence: conf } : t
+    })
+
+    set({ topics, selectedOfferingIds: offeringIds, onboarded: true })
     saveToIdb(extractPersisted(get()))
   },
 
@@ -221,10 +328,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
     saveToIdb(extractPersisted(get()))
   },
 
-  getTopicsForSubject: (subjectId: string, today: Date): ScoredTopic[] => {
+  getTopicsForOffering: (offeringId: string, today: Date): ScoredTopic[] => {
     const state = get()
-    const subjectTopics = state.topics.filter((t) => t.subjectId === subjectId)
-    const scored = scoreAllTopics(subjectTopics, state.papers, state.subjects, today)
+    const offeringTopics = state.topics.filter((t) => t.offeringId === offeringId)
+    const offeringPapers = state.papers.filter((p) => p.offeringId === offeringId)
+    const offering = state.offerings.filter((o) => o.id === offeringId)
+    const scored = scoreAllTopics(offeringTopics, offeringPapers, offering, state.subjects, today)
     return scored.sort((a, b) => b.score - a.score)
   },
 
@@ -261,7 +370,10 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const state = get()
     const dayKey = getLocalDayKey(today)
     const currentItems = state.planDay === dayKey ? state.dailyPlan : []
-    const scored = scoreAllTopics(state.topics, state.papers, state.subjects, today)
+    const t = selectedTopics(state)
+    const p = selectedPapers(state)
+    const o = selectedOfferings(state)
+    const scored = scoreAllTopics(t, p, o, state.subjects, today)
     const newItems = autoFillPlanItems(scored, currentItems, dayKey, Date.now())
     set({ dailyPlan: [...currentItems, ...newItems], planDay: dayKey })
     saveToIdb(extractPersisted(get()))
@@ -273,8 +385,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
   },
 
   resetAll: async () => {
-    const seed = deepCloneSeed()
-    set({ ...seed, initialized: true })
-    await saveToIdb(seed)
+    const freshSeed = deepCloneSeed()
+    set({ ...freshSeed, initialized: true })
+    await saveToIdb(freshSeed)
   },
 }))

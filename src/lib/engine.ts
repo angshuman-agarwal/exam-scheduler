@@ -1,9 +1,9 @@
-import type { Topic, Paper, Subject, ScoredTopic, DayPlan, UserState, ScheduleItem } from '../types'
+import type { Topic, Paper, Subject, Offering, ScoredTopic, DayPlan, UserState, ScheduleItem } from '../types'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 export const TOTAL_BLOCKS = 4
 
-// ── Utilities ──
+// -- Utilities --
 
 export function toMidnightUTC(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
@@ -24,45 +24,23 @@ export function daysSince(lastISO: string | null, today: Date): number {
   return Math.max(0, diff)
 }
 
-// ── Core Formulas ──
+// -- Core Formulas --
 
-// Weighted blend of how poorly the student is doing on a topic.
-// perf (0–1): rolling session performance score.
-// confidence (1–5): student self-rated initially, then auto-adjusted after sessions.
-// confNorm maps 1–5 → 0.2–1.0 so both inputs are on a 0–1 scale.
-// 70% weight on actual performance, 30% on self-confidence — performance
-// dominates because it's objective, but confidence captures "I understand it
-// but keep making silly mistakes" vs "I genuinely don't get this".
-// Output range: 0 (mastered) → 1 (completely weak).
 export function weakness(perf: number, confidence: number): number {
   const confNorm = confidence / 5
   return 0.7 * (1 - perf) + 0.3 * (1 - confNorm)
 }
 
-// Inverse square-root of days until exam.
-// Makes topics spike in priority as the exam approaches:
-//   30 days → 0.18,  7 days → 0.38,  1 day → 1.0
-// Square-root (not linear) avoids over-weighting far-off exams while still
-// giving a meaningful boost as deadlines loom.
 export function urgency(paperExamISO: string, today: Date): number {
   return 1 / Math.sqrt(daysRemaining(paperExamISO, today))
 }
 
-// Multiplier that boosts topics the student hasn't studied recently.
-// Scales linearly from 1.0 (studied today) → 1.2 (30+ days ago), capped at 1.2.
-// Never-studied topics get the max 1.2 — treated as 30+ days stale.
-// The 0.2 range keeps it a gentle nudge (max 20% boost), not a hard override,
-// so weakness and urgency remain the primary drivers.
 export function recencyFactor(lastISO: string | null, today: Date): number {
   if (!lastISO) return 1.2
   const since = daysSince(lastISO, today)
   return 1 + 0.2 * Math.min(since / 30, 1)
 }
 
-// Combined priority score: weakness × urgency × recency.
-// Multiplicative so all three must be non-trivial to rank high —
-// a strong topic won't surface just because the exam is tomorrow,
-// and a weak topic won't dominate if the exam is months away.
 export function topicScore(
   perf: number,
   confidence: number,
@@ -73,18 +51,12 @@ export function topicScore(
   return weakness(perf, confidence) * urgency(paperExamISO, today) * recencyFactor(lastISO, today)
 }
 
-// ── Performance Updates ──
+// -- Performance Updates --
 
-// Exponential moving average: 70% historical, 30% latest session.
-// Smooths out one-off bad/good sessions while still reacting to trends.
-// A student scoring 1.0 on a topic at 0.0 moves to 0.3, not 1.0.
 export function updatePerformance(oldScore: number, sessionScore: number): number {
   return 0.7 * oldScore + 0.3 * sessionScore
 }
 
-// Bumps confidence down on poor sessions (<50%) and up on strong ones (>80%).
-// Clamped to [1, 5]. Middle-range sessions (50–80%) leave confidence unchanged.
-// This auto-corrects over-/under-confident self-ratings over time.
 export function adjustConfidence(conf: number, sessionScore: number): number {
   let next = conf
   if (sessionScore < 0.5) next -= 1
@@ -92,35 +64,37 @@ export function adjustConfidence(conf: number, sessionScore: number): number {
   return Math.min(5, Math.max(1, next))
 }
 
-// ── Daily Load ──
+// -- Daily Load --
 
-// Caps deep-study blocks based on energy (1–5) and stress (1–5).
-// Base = energy level (max 4 blocks), minus 1 if stress is high (≥4).
-// Prevents burnout: a tired, stressed student gets fewer deep blocks
-// and more lightweight recall blocks instead.
 export function maxDeepBlocks(energy: number, stress: number): number {
   const base = Math.min(energy, 4)
   const penalty = stress >= 4 ? 1 : 0
   return Math.max(0, Math.min(4, base - penalty))
 }
 
-// ── Scoring ──
+// -- Scoring --
+// Resolves topic -> paper -> offering -> subject
 
 export function scoreAllTopics(
   topics: Topic[],
   papers: Paper[],
+  offerings: Offering[],
   subjects: Subject[],
   today: Date,
 ): ScoredTopic[] {
   const paperMap = new Map(papers.map((p) => [p.id, p]))
+  const offeringMap = new Map(offerings.map((o) => [o.id, o]))
   const subjectMap = new Map(subjects.map((s) => [s.id, s]))
 
   const result: ScoredTopic[] = []
 
   for (const topic of topics) {
     const paper = paperMap.get(topic.paperId)
-    const subject = subjectMap.get(topic.subjectId)
-    if (!paper || !subject) continue
+    if (!paper) continue
+    const offering = offeringMap.get(topic.offeringId)
+    if (!offering) continue
+    const subject = subjectMap.get(offering.subjectId)
+    if (!subject) continue
     if (toMidnightUTC(today) > toMidnightUTC(new Date(paper.examDate))) continue
 
     const w = weakness(topic.performanceScore, topic.confidence)
@@ -128,13 +102,13 @@ export function scoreAllTopics(
     const u = urgency(paper.examDate, today)
     const score = w * u * r
 
-    result.push({ topic, paper, subject, score, blockType: 'deep', weakness: w, recencyFactor: r })
+    result.push({ topic, paper, offering, subject, score, blockType: 'deep', weakness: w, recencyFactor: r })
   }
 
   return result
 }
 
-// ── Sorting ──
+// -- Sorting --
 
 export function sortScoredTopics(topics: ScoredTopic[]): ScoredTopic[] {
   return [...topics].sort((a, b) => {
@@ -147,11 +121,9 @@ export function sortScoredTopics(topics: ScoredTopic[]): ScoredTopic[] {
   })
 }
 
-// ── Subject Diversity ──
+// -- Subject Diversity --
+// Diversity is grouped by generic subjectId, not offeringId
 
-// Prevents the plan from being dominated by one subject.
-// Max 2 topics per subject unless the exam is within 7 days —
-// cramming override: if your exam is next week, subject variety takes a back seat.
 const MAX_PER_SUBJECT = 2
 const URGENT_DAYS_THRESHOLD = 7
 
@@ -174,11 +146,8 @@ export function diversifyTopics(sorted: ScoredTopic[], limit: number, today: Dat
   return selected
 }
 
-// ── Day Plan ──
+// -- Day Plan --
 
-// Builds a balanced study plan: sorts by priority, diversifies across subjects,
-// then splits into deep-study vs recall blocks based on the student's energy/stress.
-// High-priority topics get deep blocks; overflow gets lighter recall blocks.
 export function buildDayPlan(scoredTopics: ScoredTopic[], userState: UserState, today: Date): DayPlan {
   const sorted = sortScoredTopics(scoredTopics)
   const selected = diversifyTopics(sorted, TOTAL_BLOCKS, today)
@@ -190,7 +159,7 @@ export function buildDayPlan(scoredTopics: ScoredTopic[], userState: UserState, 
   return { deep, recall }
 }
 
-// ── Suggestions ──
+// -- Suggestions --
 
 export function getSuggestions(scored: ScoredTopic[], excludeTopicIds: Set<string>): ScoredTopic[] {
   return sortScoredTopics(scored)
@@ -198,13 +167,8 @@ export function getSuggestions(scored: ScoredTopic[], excludeTopicIds: Set<strin
     .slice(0, 6)
 }
 
-// ── Overdue Detection ──
+// -- Overdue Detection --
 
-// Flags topics that are both weak AND neglected — "falling through the cracks".
-// recency ≥ 1.15 → not studied in ~22+ days (0.15/0.2 × 30 ≈ 22.5), or never studied.
-// weakness ≥ 0.6 → genuinely struggling (e.g. perf ~0.4, confidence ~2).
-// Both must be true — a stale topic the student aces isn't overdue,
-// and a weak topic studied yesterday isn't neglected.
 export const OVERDUE_RECENCY_THRESHOLD = 1.15
 export const OVERDUE_WEAKNESS_THRESHOLD = 0.6
 
@@ -214,12 +178,9 @@ export function getOverdueTopics(scoredTopics: ScoredTopic[]): ScoredTopic[] {
   )
 }
 
-// ── Auto-Fill Plan ──
+// -- Auto-Fill Plan --
+// Diversity counter uses subject.id (generic), not offering
 
-// Fills remaining plan slots (up to TOTAL_BLOCKS) with the highest-priority
-// topics not already in the plan, respecting the 2-per-subject diversity cap.
-// Seeds the subject counter from existing tray items so auto-fill doesn't
-// stack a third topic from a subject the student already picked manually.
 export function autoFillPlanItems(
   scored: ScoredTopic[],
   existingItems: ScheduleItem[],
@@ -232,7 +193,6 @@ export function autoFillPlanItems(
   const scoredMap = new Map(scored.map((s) => [s.topic.id, s]))
   const existingTopicIds = new Set(existingItems.map((i) => i.topicId))
 
-  // Seed subject counter from existing tray items
   const subjectCount = new Map<string, number>()
   for (const item of existingItems) {
     const resolved = scoredMap.get(item.topicId)

@@ -6,7 +6,7 @@ import TodayPlan from './components/TodayPlan'
 import SubjectPicker from './components/SubjectPicker'
 import SessionLogger from './components/SessionLogger'
 import Progress from './components/Progress'
-import type { ScoredTopic, Subject, Paper, ScheduleSource } from './types'
+import type { ScoredTopic, Offering, Subject, Paper, ScheduleSource } from './types'
 
 function App() {
   const init = useAppStore((s) => s.init)
@@ -19,6 +19,7 @@ function App() {
     source: ScheduleSource
     scheduleItemId?: string
   } | null>(null)
+  const [activeOffering, setActiveOffering] = useState<Offering | null>(null)
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null)
   const [activePaper, setActivePaper] = useState<Paper | null>(null)
 
@@ -51,13 +52,14 @@ function App() {
     )
   }
 
-  // Subject picker
-  if (activeSubject) {
+  // Subject picker (offering-aware)
+  if (activeOffering && activeSubject) {
     return (
       <SubjectPicker
+        offering={activeOffering}
         subject={activeSubject}
         paper={activePaper}
-        onBack={() => { setActiveSubject(null); setActivePaper(null) }}
+        onBack={() => { setActiveOffering(null); setActiveSubject(null); setActivePaper(null) }}
         onStartSession={(scored, source, scheduleItemId) => {
           setActiveSession({ scored, source, scheduleItemId })
         }}
@@ -72,7 +74,8 @@ function App() {
           onStartSession={(scored, source, scheduleItemId) =>
             setActiveSession({ scored, source, scheduleItemId })
           }
-          onBrowseSubject={(subject, paper) => {
+          onBrowseOffering={(offering, subject, paper) => {
+            setActiveOffering(offering)
             setActiveSubject(subject)
             setActivePaper(paper ?? null)
           }}

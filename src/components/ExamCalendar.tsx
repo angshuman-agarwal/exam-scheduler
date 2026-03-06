@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
-import type { Paper, Subject } from '../types'
+import type { Paper, Subject, Offering } from '../types'
 
-export type PaperWithSubject = { paper: Paper; subject: Subject }
+export type PaperWithSubject = { paper: Paper; subject: Subject; offering: Offering }
 
 interface ExamCalendarProps {
   examDateMap: Map<string, PaperWithSubject[]>
-  onSelectPaper: (subject: Subject, paper: Paper) => void
+  onSelectPaper: (offering: Offering, subject: Subject, paper: Paper) => void
 }
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -61,14 +61,12 @@ export default function ExamCalendar({ examDateMap, onSelectPaper }: ExamCalenda
     setSelectedDay(null)
   }
 
-  // Build calendar grid cells
   const cells = useMemo(() => {
     const year = currentMonth.getFullYear()
     const month = currentMonth.getMonth()
     const firstDay = new Date(year, month, 1)
     const daysInMonth = new Date(year, month + 1, 0).getDate()
 
-    // Monday=0 ... Sunday=6
     let startDow = firstDay.getDay() - 1
     if (startDow < 0) startDow = 6
 
@@ -84,6 +82,9 @@ export default function ExamCalendar({ examDateMap, onSelectPaper }: ExamCalenda
 
   return (
     <div>
+      <h2 className="text-base font-semibold text-gray-900">Exam Calendar</h2>
+      <p className="text-xs text-gray-400 mt-0.5 mb-3">Tap a date to see exams and plan topics to study</p>
+
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-3">
         <button
@@ -153,7 +154,7 @@ export default function ExamCalendar({ examDateMap, onSelectPaper }: ExamCalenda
                   {papers.map((pw) => (
                     <span
                       key={pw.paper.id}
-                      className="w-1.5 h-1.5 rounded-full"
+                      className="w-1.5 h-1.5 rotate-45 rounded-[1px]"
                       style={{ backgroundColor: pw.subject.color }}
                     />
                   ))}
@@ -178,17 +179,19 @@ export default function ExamCalendar({ examDateMap, onSelectPaper }: ExamCalenda
             {selectedPapers.map((pw) => (
               <button
                 key={pw.paper.id}
-                onClick={() => onSelectPaper(pw.subject, pw.paper)}
+                onClick={() => onSelectPaper(pw.offering, pw.subject, pw.paper)}
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all active:scale-[0.98]"
                 style={{ backgroundColor: pw.subject.color + '14' }}
               >
                 <span
-                  className="w-2 h-2 rounded-full shrink-0"
+                  className="w-2 h-2 rotate-45 rounded-[1px] shrink-0"
                   style={{ backgroundColor: pw.subject.color }}
                 />
                 <div className="min-w-0 flex-1">
                   <span className="text-sm font-medium text-gray-900">{pw.subject.name}</span>
                   <span className="text-xs text-gray-400 ml-1.5">{pw.paper.name}</span>
+                  <span className="text-xs text-gray-300 ml-1.5">{pw.offering.label}</span>
+                  <span className="text-xs text-gray-400 ml-1.5">{pw.paper.examTime ?? 'Time TBC'}</span>
                 </div>
                 <svg className="w-3.5 h-3.5 shrink-0 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

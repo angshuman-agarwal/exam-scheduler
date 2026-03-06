@@ -1,9 +1,11 @@
+import { useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, daysSince } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
-import type { ScoredTopic, Subject, Paper, ScheduleSource } from '../types'
+import type { ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../types'
 
 interface SubjectPickerProps {
+  offering: Offering
   subject: Subject
   paper?: Paper | null
   onBack: () => void
@@ -12,14 +14,17 @@ interface SubjectPickerProps {
 
 const SUGGESTED_COUNT = 3
 
-function ConfidenceDots({ level, color }: { level: number; color: string }) {
+const CONFIDENCE_COLORS = ['#ef4444', '#f59e0b', '#84cc16', '#16a34a', '#0d9488'] as const
+
+function ConfidenceDots({ level }: { level: number; color: string }) {
+  const fill = CONFIDENCE_COLORS[Math.max(0, Math.min(4, level - 1))]
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((i) => (
         <span
           key={i}
           className="w-1.5 h-1.5 rounded-full"
-          style={{ backgroundColor: i <= level ? color : '#e5e7eb' }}
+          style={{ backgroundColor: i <= level ? fill : '#e5e7eb' }}
         />
       ))}
     </div>
@@ -38,17 +43,33 @@ function LastStudiedLabel({ lastReviewed, today }: { lastReviewed: string | null
   )
 }
 
+function SwapButton({ swapName, onSwap }: { swapName: string; onSwap: () => void }) {
+  return (
+    <button
+      onClick={onSwap}
+      className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-amber-600 bg-amber-50 border border-amber-200 transition-colors hover:bg-amber-100"
+      aria-label={`Swap out ${swapName}`}
+    >
+      ↕ Swap out {swapName.length > 12 ? swapName.slice(0, 12) + '…' : swapName}
+    </button>
+  )
+}
+
 function SuggestedCard({
   scored,
   inPlan,
   planFull,
   onAdd,
+  onSwap,
+  swapName,
   today,
 }: {
   scored: ScoredTopic
   inPlan: boolean
   planFull: boolean
   onAdd: () => void
+  onSwap?: () => void
+  swapName?: string
   today: Date
 }) {
   const { topic, paper, subject } = scored
@@ -65,13 +86,15 @@ function SuggestedCard({
           ) : !planFull ? (
             <button
               onClick={onAdd}
-              className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 transition-colors hover:bg-blue-50 hover:border-blue-300 hover:text-blue-500"
+              className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-500 transition-colors hover:bg-blue-100 hover:border-blue-400 hover:text-blue-600"
               aria-label="Add to plan"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14" />
               </svg>
             </button>
+          ) : onSwap && swapName ? (
+            <SwapButton swapName={swapName} onSwap={onSwap} />
           ) : null}
         </div>
         <div className="flex items-center gap-3 mt-1.5">
@@ -91,12 +114,16 @@ function CompactRow({
   inPlan,
   planFull,
   onAdd,
+  onSwap,
+  swapName,
   today,
 }: {
   scored: ScoredTopic
   inPlan: boolean
   planFull: boolean
   onAdd: () => void
+  onSwap?: () => void
+  swapName?: string
   today: Date
 }) {
   const { topic, subject } = scored
@@ -114,26 +141,29 @@ function CompactRow({
       ) : !planFull ? (
         <button
           onClick={onAdd}
-          className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 transition-colors hover:bg-blue-50 hover:border-blue-300 hover:text-blue-500"
+          className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-500 transition-colors hover:bg-blue-100 hover:border-blue-400 hover:text-blue-600"
           aria-label="Add to plan"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14" />
           </svg>
         </button>
+      ) : onSwap && swapName ? (
+        <SwapButton swapName={swapName} onSwap={onSwap} />
       ) : null}
     </div>
   )
 }
 
-export default function SubjectPicker({ subject, paper, onBack, onStartSession }: SubjectPickerProps) {
-  const getTopicsForSubject = useAppStore((s) => s.getTopicsForSubject)
+export default function SubjectPicker({ offering, subject, paper, onBack, onStartSession }: SubjectPickerProps) {
+  const getTopicsForOffering = useAppStore((s) => s.getTopicsForOffering)
   const dailyPlan = useAppStore((s) => s.dailyPlan)
   const planDay = useAppStore((s) => s.planDay)
   const addToPlan = useAppStore((s) => s.addToPlan)
   const removeFromPlan = useAppStore((s) => s.removeFromPlan)
   const topics = useAppStore((s) => s.topics)
   const papers = useAppStore((s) => s.papers)
+  const allOfferings = useAppStore((s) => s.offerings)
   const subjects = useAppStore((s) => s.subjects)
 
   const today = new Date()
@@ -145,25 +175,43 @@ export default function SubjectPicker({ subject, paper, onBack, onStartSession }
   // Resolve plan items for tray display
   const topicMap = new Map(topics.map((t) => [t.id, t]))
   const paperMap = new Map(papers.map((p) => [p.id, p]))
+  const offeringMap = new Map(allOfferings.map((o) => [o.id, o]))
   const subjectMap = new Map(subjects.map((s) => [s.id, s]))
 
   const resolvedPlan = planItems
     .map((item) => {
       const topic = topicMap.get(item.topicId)
       if (!topic) return null
-      const paper = paperMap.get(topic.paperId)
-      const sub = subjectMap.get(topic.subjectId)
-      if (!paper || !sub) return null
+      const p = paperMap.get(topic.paperId)
+      const off = offeringMap.get(topic.offeringId)
+      if (!p || !off) return null
+      const sub = subjectMap.get(off.subjectId)
+      if (!sub) return null
       const scored: ScoredTopic = {
-        topic, paper, subject: sub,
+        topic, paper: p, offering: off, subject: sub,
         score: 0, blockType: 'deep', weakness: 0, recencyFactor: 0,
       }
       return { item, scored }
     })
     .filter(Boolean) as { item: typeof planItems[number]; scored: ScoredTopic }[]
 
-  const subjectScored = getTopicsForSubject(subject.id, today)
-  const allScored = paper ? subjectScored.filter((s) => s.paper.id === paper.id) : subjectScored
+  const swapCandidate = useMemo(() => {
+    if (resolvedPlan.length === 0) return null
+    return [...resolvedPlan].sort((a, b) => {
+      if (a.item.source === 'auto' && b.item.source !== 'auto') return -1
+      if (a.item.source !== 'auto' && b.item.source === 'auto') return 1
+      return a.scored.score - b.scored.score
+    })[0]
+  }, [resolvedPlan])
+
+  const handleSwap = (topicId: string) => {
+    if (!swapCandidate) return
+    removeFromPlan(swapCandidate.item.id)
+    setTimeout(() => addToPlan(topicId, 'manual', new Date()), 0)
+  }
+
+  const offeringScored = getTopicsForOffering(offering.id, today)
+  const allScored = paper ? offeringScored.filter((s) => s.paper.id === paper.id) : offeringScored
   const suggested = allScored.slice(0, SUGGESTED_COUNT)
   const rest = allScored.slice(SUGGESTED_COUNT)
 
@@ -179,7 +227,7 @@ export default function SubjectPicker({ subject, paper, onBack, onStartSession }
         Back
       </button>
 
-      {/* Plan Tray — always visible, with Start */}
+      {/* Plan Tray */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
@@ -208,7 +256,7 @@ export default function SubjectPicker({ subject, paper, onBack, onStartSession }
                 className="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors hover:bg-gray-50"
               >
                 <div
-                  className="w-2 h-2 rounded-full shrink-0"
+                  className="w-2 h-2 rotate-45 rounded-[1px] shrink-0"
                   style={{ backgroundColor: s.subject.color }}
                 />
                 <span className="text-sm text-gray-800 truncate flex-1">{s.topic.name}</span>
@@ -228,12 +276,13 @@ export default function SubjectPicker({ subject, paper, onBack, onStartSession }
       </div>
 
       {/* Subject header */}
-      <div className="flex items-center gap-2 mb-6">
-        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: subject.color }} />
+      <div className="flex items-center gap-2 mb-1">
+        <div className="w-3 h-3 rotate-45 rounded-[1px]" style={{ backgroundColor: subject.color }} />
         <h1 className="text-2xl font-bold text-gray-900">
           {subject.name}{paper ? ` — ${paper.name}` : ''}
         </h1>
       </div>
+      <p className="text-sm text-gray-400 mb-6">{offering.label}</p>
 
       {allScored.length === 0 ? (
         <div className="text-center py-16">
@@ -254,6 +303,8 @@ export default function SubjectPicker({ subject, paper, onBack, onStartSession }
                 inPlan={planTopicIds.has(scored.topic.id)}
                 planFull={planFull}
                 onAdd={() => addToPlan(scored.topic.id, 'manual', new Date())}
+                onSwap={swapCandidate ? () => handleSwap(scored.topic.id) : undefined}
+                swapName={swapCandidate?.scored.topic.name}
                 today={today}
               />
             ))}
@@ -273,6 +324,8 @@ export default function SubjectPicker({ subject, paper, onBack, onStartSession }
                     inPlan={planTopicIds.has(scored.topic.id)}
                     planFull={planFull}
                     onAdd={() => addToPlan(scored.topic.id, 'manual', new Date())}
+                    onSwap={swapCandidate ? () => handleSwap(scored.topic.id) : undefined}
+                    swapName={swapCandidate?.scored.topic.name}
                     today={today}
                   />
                 ))}
