@@ -50,7 +50,7 @@ function SwapButton({ swapName, onSwap }: { swapName: string; onSwap: () => void
       className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-amber-600 bg-amber-50 border border-amber-200 transition-colors hover:bg-amber-100"
       aria-label={`Swap out ${swapName}`}
     >
-      ↕ Swap out {swapName.length > 12 ? swapName.slice(0, 12) + '…' : swapName}
+      {'\u21C5'} Swap out {swapName.length > 12 ? swapName.slice(0, 12) + '\u2026' : swapName}
     </button>
   )
 }
@@ -76,17 +76,17 @@ function SuggestedCard({
   const days = daysRemaining(paper.examDate, today)
 
   return (
-    <div className="w-full flex items-stretch rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+    <div className="w-full flex items-stretch rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
       <div className="w-1.5 shrink-0" style={{ backgroundColor: subject.color }} />
       <div className="flex-1 p-4 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <p className="text-base font-semibold text-gray-900 truncate">{topic.name}</p>
           {inPlan ? (
-            <span className="text-xs text-gray-400 shrink-0 mt-1">In Plan</span>
+            <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 shrink-0 mt-0.5">In plan</span>
           ) : !planFull ? (
             <button
               onClick={onAdd}
-              className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-500 transition-colors hover:bg-blue-100 hover:border-blue-400 hover:text-blue-600"
+              className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-500 transition-colors hover:bg-blue-100 hover:border-blue-400 hover:text-blue-600"
               aria-label="Add to plan"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -97,7 +97,7 @@ function SuggestedCard({
             <SwapButton swapName={swapName} onSwap={onSwap} />
           ) : null}
         </div>
-        <div className="flex items-center gap-3 mt-1.5">
+        <div className="flex items-center gap-3 mt-2">
           <ConfidenceDots level={topic.confidence} color={subject.color} />
           <span className="text-xs text-gray-400">
             Exam in {days} {days === 1 ? 'day' : 'days'}
@@ -128,7 +128,7 @@ function CompactRow({
 }) {
   const { topic, subject } = scored
   return (
-    <div className="flex items-center justify-between py-3 px-1 rounded-lg gap-2">
+    <div className="flex items-center justify-between py-3 px-1 gap-2">
       <div className="flex-1 min-w-0">
         <span className="text-sm text-gray-900 truncate block">{topic.name}</span>
         <div className="flex items-center gap-2 mt-1">
@@ -137,11 +137,11 @@ function CompactRow({
         </div>
       </div>
       {inPlan ? (
-        <span className="text-xs text-gray-400 shrink-0">In Plan</span>
+        <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 shrink-0">In plan</span>
       ) : !planFull ? (
         <button
           onClick={onAdd}
-          className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-500 transition-colors hover:bg-blue-100 hover:border-blue-400 hover:text-blue-600"
+          className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-500 transition-colors hover:bg-blue-100 hover:border-blue-400 hover:text-blue-600"
           aria-label="Add to plan"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -216,10 +216,11 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
   const rest = allScored.slice(SUGGESTED_COUNT)
 
   return (
-    <div className="px-4 pt-6 min-h-screen bg-gray-50">
+    <div className="px-4 pt-6 pb-8 min-h-screen bg-[#faf9f7]">
+      {/* Back button */}
       <button
         onClick={onBack}
-        className="text-sm text-gray-500 mb-6 flex items-center gap-1"
+        className="flex items-center gap-1.5 text-sm text-gray-500 mb-6 -ml-1 py-1 px-1.5 rounded-lg transition-colors hover:bg-white hover:text-gray-700"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -227,25 +228,34 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
         Back
       </button>
 
+      {/* Subject header */}
+      <div className="flex items-center gap-2.5 mb-1">
+        <div className="w-1.5 h-6 rounded-full shrink-0" style={{ backgroundColor: subject.color }} />
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          {subject.name}{paper ? ` \u2014 ${paper.name}` : ''}
+        </h1>
+      </div>
+      <p className="text-sm text-gray-400 ml-4 mb-8">{offering.label}</p>
+
       {/* Plan Tray */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-            Your Plan
-          </h2>
+      <div className="mb-8">
+        <div className="flex items-center gap-2.5 mb-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+            Your plan
+          </p>
           {planItems.length > 0 && (
-            <span className="text-xs bg-blue-100 text-blue-700 font-medium px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
               {planItems.length}
             </span>
           )}
         </div>
 
         {resolvedPlan.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 text-center">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-4 text-center">
             <p className="text-gray-400 text-sm">No topics added yet</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-50">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-50">
             {resolvedPlan.map(({ item, scored: s }) => (
               <div
                 key={item.id}
@@ -253,16 +263,16 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
                 tabIndex={0}
                 onClick={() => onStartSession(s, item.source, item.id)}
                 onKeyDown={(e) => { if (e.key === 'Enter') onStartSession(s, item.source, item.id) }}
-                className="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors hover:bg-gray-50"
+                className="flex items-center gap-2.5 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50/50"
               >
                 <div
-                  className="w-2 h-2 rotate-45 rounded-[1px] shrink-0"
+                  className="w-1.5 h-5 rounded-full shrink-0"
                   style={{ backgroundColor: s.subject.color }}
                 />
                 <span className="text-sm text-gray-800 truncate flex-1">{s.topic.name}</span>
                 <button
                   onClick={(e) => { e.stopPropagation(); removeFromPlan(item.id) }}
-                  className="shrink-0 p-0.5 text-red-300 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                  className="shrink-0 p-1 text-red-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
                   aria-label="Remove from plan"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -275,15 +285,6 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
         )}
       </div>
 
-      {/* Subject header */}
-      <div className="flex items-center gap-2 mb-1">
-        <div className="w-3 h-3 rotate-45 rounded-[1px]" style={{ backgroundColor: subject.color }} />
-        <h1 className="text-2xl font-bold text-gray-900">
-          {subject.name}{paper ? ` — ${paper.name}` : ''}
-        </h1>
-      </div>
-      <p className="text-sm text-gray-400 mb-6">{offering.label}</p>
-
       {allScored.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-gray-400 text-lg">No topics available</p>
@@ -292,9 +293,9 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
       ) : (
         <>
           {/* Suggested */}
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
             Suggested
-          </h2>
+          </p>
           <div className="flex flex-col gap-3 mb-8">
             {suggested.map((scored) => (
               <SuggestedCard
@@ -310,13 +311,14 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
             ))}
           </div>
 
-          {/* All Topics */}
+          {/* Divider */}
           {rest.length > 0 && (
             <>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                All Topics
-              </h2>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100 px-3 mb-8">
+              <div className="border-t border-gray-100 mb-6" />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
+                All topics
+              </p>
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100 px-3 mb-8">
                 {rest.map((scored) => (
                   <CompactRow
                     key={scored.topic.id}

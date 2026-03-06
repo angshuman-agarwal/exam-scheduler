@@ -28,8 +28,9 @@ function ConfidenceRow({
   onSet: (offeringId: string, level: number) => void
 }) {
   return (
-    <div className="pt-3">
-      <p className="text-sm text-gray-600 mb-2">
+    <div className="pt-4 mt-1">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">Confidence</p>
+      <p className="text-sm text-gray-600 mb-3">
         How confident do you feel in {subjectName}?
       </p>
       <div className="flex justify-between items-end">
@@ -52,7 +53,7 @@ function ConfidenceRow({
           )
         })}
       </div>
-      <div className="flex justify-between mt-1 px-1">
+      <div className="flex justify-between mt-1.5 px-1">
         <span className="text-[10px] text-gray-400">Need lots of work</span>
         <span className="text-[10px] text-gray-400">Feeling strong</span>
       </div>
@@ -80,18 +81,18 @@ function BoardTile({
   return (
     <button
       onClick={onSelect}
-      className={`flex-1 min-w-[120px] rounded-xl border-2 p-3 text-left transition-all duration-150 ${
+      className={`flex-1 min-w-[120px] rounded-xl border-2 p-4 text-left transition-all duration-150 ${
         selected
           ? 'shadow-sm'
           : 'border-gray-200 bg-white hover:border-gray-300 active:scale-[0.98]'
       }`}
       style={selected ? {
         borderColor: subjectColor,
-        backgroundColor: pastel(subjectColor, 0.06),
+        backgroundColor: pastel(subjectColor, 0.05),
       } : undefined}
     >
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-bold text-gray-900">{boardName}</span>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-base font-semibold text-gray-900">{boardName}</span>
         {selected && (
           <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: subjectColor }}>
             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -100,29 +101,31 @@ function BoardTile({
           </div>
         )}
       </div>
-      <p className="text-xs font-medium text-gray-500">{offering.spec}</p>
-      {firstExamLabel && (
-        <p className="text-xs text-gray-400 mt-1">First exam: {firstExamLabel}</p>
-      )}
-      <p className="text-xs text-gray-400">{paperCount} {paperCount === 1 ? 'paper' : 'papers'}</p>
+      <p className="text-sm text-gray-500 mb-2">{offering.spec}</p>
+      <div className="flex flex-col gap-0.5">
+        {firstExamLabel && (
+          <p className="text-xs text-gray-400">First exam: {firstExamLabel}</p>
+        )}
+        <p className="text-xs text-gray-400">{paperCount} {paperCount === 1 ? 'paper' : 'papers'}</p>
+      </div>
     </button>
   )
 }
 
 function StatusBadge({ isSelected, chosenLabel }: { isSelected: boolean; chosenLabel: string | null }) {
   if (!isSelected) {
-    return <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Not taking</span>
+    return <span className="text-[11px] text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">Not taking</span>
   }
   if (!chosenLabel) {
-    return <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Board not chosen</span>
+    return <span className="text-[11px] text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">Pick board</span>
   }
-  return <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full font-medium">{chosenLabel}</span>
+  return <span className="text-[11px] text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full font-medium">{chosenLabel}</span>
 }
 
 function PaperSchedule({ papers, subjectColor }: { papers: Paper[]; subjectColor: string }) {
   if (papers.length === 0) {
     return (
-      <div className="mt-3 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2.5">
+      <div className="mt-4 rounded-xl bg-gray-50/80 border border-gray-100 px-4 py-3">
         <p className="text-xs text-gray-400">Exam schedule not added yet</p>
       </div>
     )
@@ -138,32 +141,31 @@ function PaperSchedule({ papers, subjectColor }: { papers: Paper[]; subjectColor
     new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   const fmtTime = (t?: string) => t ?? 'Time TBC'
 
-  // Find the nearest upcoming paper (not in the past)
   const todayISO = today.toISOString().slice(0, 10)
   const nearestIdx = sorted.findIndex((p) => p.examDate >= todayISO)
   const nearestDays = nearestIdx >= 0 ? daysRemaining(sorted[nearestIdx].examDate, today) : null
   const nearestPaper = nearestIdx >= 0 ? sorted[nearestIdx] : null
 
   return (
-    <div className="mt-3 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2.5">
-      <p className="text-xs text-gray-500 mb-2">
+    <div className="mt-4 rounded-xl bg-gray-50/80 border border-gray-100 px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">
         {sorted.length} {sorted.length === 1 ? 'paper' : 'papers'}
         {nearestDays !== null && nearestPaper && (
-          <span>
-            {' '}&middot; First exam {fmtDate(nearestPaper.examDate)}{' '}
-            {nearestPaper.examTime ? `at ${nearestPaper.examTime}` : <>&middot; Time TBC</>}
+          <span className="normal-case tracking-normal font-normal text-gray-400">
+            {' \u00B7 '}First exam {fmtDate(nearestPaper.examDate)}{' '}
+            {nearestPaper.examTime ? `at ${nearestPaper.examTime}` : '\u00B7 Time TBC'}
           </span>
         )}
       </p>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5">
         {sorted.map((p, i) => {
           const isNearest = i === nearestIdx
           return (
             <div key={p.id} className="flex items-center justify-between gap-2">
-              <span className={`text-xs shrink-0 ${isNearest ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>
+              <span className={`text-sm shrink-0 ${isNearest ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
                 {p.name}
               </span>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 {isNearest && (
                   <span
                     className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
@@ -175,7 +177,7 @@ function PaperSchedule({ papers, subjectColor }: { papers: Paper[]; subjectColor
                 <span className={`text-xs tabular-nums ${isNearest ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
                   {fmtDate(p.examDate)}
                 </span>
-                <span className={`text-xs tabular-nums ${isNearest ? 'text-gray-600' : 'text-gray-300'}`}>
+                <span className={`text-xs tabular-nums ${isNearest ? 'text-gray-500' : 'text-gray-300'}`}>
                   {fmtTime(p.examTime)}
                 </span>
               </div>
@@ -210,7 +212,6 @@ function SummaryTray({
 }) {
   const selectedSubjects = subjects.filter((s) => selectedSubjectIds.has(s.id))
 
-  // Find nearest exam across all selected offerings
   let nearestSubjectName: string | null = null
   let nearestDays = Infinity
   for (const s of selectedSubjects) {
@@ -224,12 +225,12 @@ function SummaryTray({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
       {selectedSubjects.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-2">No subjects selected yet</p>
+        <p className="text-sm text-gray-400 text-center py-3">No subjects selected yet</p>
       ) : (
         <>
-          <div className="flex flex-col gap-2 mb-3">
+          <div className="flex flex-col gap-2.5 mb-4">
             {selectedSubjects.map((s) => {
               const oid = chosenOffering.get(s.id)
               const subjectOfferings = offeringsBySubject.get(s.id) || []
@@ -238,10 +239,10 @@ function SummaryTray({
               const conf = oid ? confidences.get(oid) : undefined
               return (
                 <div key={s.id} className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 rotate-45 rounded-[1px] shrink-0" style={{ backgroundColor: s.color }} />
-                  <span className="text-sm text-gray-800 flex-1 truncate">{s.name}</span>
+                  <div className="w-1.5 h-5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                  <span className="text-sm font-medium text-gray-800 flex-1 truncate">{s.name}</span>
                   {off ? (
-                    <span className="text-xs text-gray-500 shrink-0">{board?.name} {off.spec}</span>
+                    <span className="text-xs text-gray-400 shrink-0">{board?.name} {off.spec}</span>
                   ) : (
                     <span className="text-xs text-amber-500 shrink-0">Pick board</span>
                   )}
@@ -252,10 +253,10 @@ function SummaryTray({
               )
             })}
           </div>
-          <div className="text-xs text-gray-400 mb-3">
+          <div className="text-xs text-gray-400 mb-4">
             <span>{selectedSubjects.length} {selectedSubjects.length === 1 ? 'subject' : 'subjects'} selected</span>
             {nearestSubjectName && nearestDays < Infinity && (
-              <span> &middot; Nearest exam: {nearestSubjectName} in {nearestDays} {nearestDays === 1 ? 'day' : 'days'}</span>
+              <span> {'\u00B7'} Nearest exam: {nearestSubjectName} in {nearestDays} {nearestDays === 1 ? 'day' : 'days'}</span>
             )}
           </div>
         </>
@@ -263,7 +264,7 @@ function SummaryTray({
       <button
         onClick={onFinish}
         disabled={!canFinish}
-        className="w-full py-3 bg-blue-500 text-white font-medium rounded-xl transition-colors hover:bg-blue-600 active:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         Start studying
       </button>
@@ -295,7 +296,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     return map
   }, [offerings])
 
-  // Paper count and nearest upcoming exam per offering
   const offeringMeta = useMemo(() => {
     const todayISO = new Date().toISOString().slice(0, 10)
     const meta = new Map<string, { paperCount: number; nearestDate: string | null; nearestDays: number | null }>()
@@ -361,7 +361,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       } else {
         next.delete(subjectId)
         setChosenOffering((m) => { const n = new Map(m); n.delete(subjectId); return n })
-        // Clear confidence for all offerings of this subject
         const subjectOfferings = offeringsBySubject.get(subjectId) || []
         setConfidences((prev) => {
           const n = new Map(prev)
@@ -374,7 +373,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   }
 
   const selectOffering = (subjectId: string, offeringId: string) => {
-    // Clear old confidence if switching
     const oldOid = chosenOffering.get(subjectId)
     if (oldOid && oldOid !== offeringId) {
       setConfidences((prev) => { const n = new Map(prev); n.delete(oldOid); return n })
@@ -403,12 +401,12 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#faf9f7]">
       <div className="flex flex-col sm:flex-row sm:gap-6 max-w-4xl mx-auto">
         {/* Main column */}
-        <div className="flex-1 min-w-0 px-4 pt-10 pb-8 sm:pb-10">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Build your exam setup</h1>
-          <p className="text-sm text-gray-500 mb-6">
+        <div className="flex-1 min-w-0 px-4 pt-12 pb-8 sm:pb-10">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">Build your exam setup</h1>
+          <p className="text-sm text-gray-500 leading-relaxed mb-8">
             Pick the subjects you take, choose the right board, and rate your confidence.
           </p>
 
@@ -425,26 +423,25 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               return (
                 <div
                   key={s.id}
-                  className={`rounded-xl border overflow-hidden transition-all duration-200 ${
+                  className={`rounded-2xl border overflow-hidden transition-all duration-200 ${
                     isSelected
-                      ? 'border-gray-200 shadow-sm'
+                      ? 'border-gray-200 shadow-sm bg-white'
                       : 'border-gray-100 bg-white'
                   }`}
-                  style={isSelected ? { backgroundColor: pastel(s.color, 0.04) } : undefined}
                 >
                   {/* Color accent bar */}
                   <div
                     className="h-1 transition-all duration-200"
-                    style={{ backgroundColor: isSelected ? s.color : pastel(s.color, 0.3) }}
+                    style={{ backgroundColor: isSelected ? s.color : pastel(s.color, 0.25) }}
                   />
 
-                  {/* Card header — always visible */}
+                  {/* Card header */}
                   <button
                     onClick={() => toggleExpanded(s.id)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
                   >
                     <div
-                      className="w-2.5 h-2.5 rotate-45 rounded-[1px] shrink-0"
+                      className="w-1.5 h-5 rounded-full shrink-0"
                       style={{ backgroundColor: s.color }}
                     />
                     <span className={`text-sm font-semibold flex-1 truncate ${isSelected ? 'text-gray-900' : 'text-gray-500'}`}>
@@ -471,14 +468,14 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                     style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
                   >
                     <div className="overflow-hidden">
-                      <div className="px-4 pb-4 border-t border-gray-100">
+                      <div className="px-4 pb-5 border-t border-gray-50">
                         {/* Take this subject? */}
-                        <div className="pt-3 pb-2">
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Take this subject?</p>
+                        <div className="pt-4 pb-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">Take this subject?</p>
                           <div className="flex gap-2">
                             <button
                               onClick={() => setSelected(s.id, false)}
-                              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                                 !isSelected
                                   ? 'bg-gray-200 text-gray-700'
                                   : 'bg-gray-50 text-gray-400 border border-gray-200 hover:bg-gray-100'
@@ -488,7 +485,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                             </button>
                             <button
                               onClick={() => setSelected(s.id, true)}
-                              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                                 isSelected
                                   ? 'text-white'
                                   : 'bg-gray-50 text-gray-400 border border-gray-200 hover:bg-gray-100'
@@ -504,8 +501,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                           <>
                             {/* Board selection */}
                             {hasMultipleOfferings ? (
-                              <div className="pt-2">
-                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Choose your board</p>
+                              <div className="pt-3">
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">Choose your board</p>
                                 <div className="flex gap-3">
                                   {subjectOfferings.map((o) => {
                                     const board = boardMap.get(o.boardId)
@@ -529,9 +526,9 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                                 </div>
                               </div>
                             ) : chosenOff ? (
-                              <div className="pt-2">
-                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Board</p>
-                                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100">
+                              <div className="pt-3">
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">Board</p>
+                                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50/80 border border-gray-100">
                                   <span className="text-sm font-medium text-gray-700">{chosenOff.label}</span>
                                   {(() => {
                                     const meta = offeringMeta.get(chosenOff.id)
@@ -571,7 +568,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           </div>
 
           {/* Mobile-only footer tray */}
-          <div className="sm:hidden mt-6">
+          <div className="sm:hidden mt-8">
             <SummaryTray
               subjects={subjects}
               selectedSubjectIds={selectedSubjectIds}
@@ -587,9 +584,9 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         </div>
 
         {/* Desktop sticky summary sidebar */}
-        <div className="hidden sm:block sm:w-72 shrink-0 pt-10 pr-4">
+        <div className="hidden sm:block sm:w-72 shrink-0 pt-12 pr-4">
           <div className="sticky top-6">
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Your setup</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">Your setup</p>
             <SummaryTray
               subjects={subjects}
               selectedSubjectIds={selectedSubjectIds}

@@ -83,6 +83,7 @@ function App() {
         source={activeSession.source}
         scheduleItemId={activeSession.scheduleItemId}
         onBack={() => setActiveSession(null)}
+        onGoToProgress={() => { setActiveSession(null); setPage('progress') }}
       />
     )
   }

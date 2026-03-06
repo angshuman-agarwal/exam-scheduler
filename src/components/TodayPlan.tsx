@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
-import { daysRemaining, scoreAllTopics } from '../lib/engine'
+import { daysRemaining, scoreAllTopics, autoFillPlanItems } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
 import NudgeBanner from './NudgeBanner'
 import ExamCalendar from './ExamCalendar'
@@ -88,7 +88,6 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
     const groups = new Map<string, { subject: Subject; offering: Offering; topics: ScoredTopic[]; nearestExamDays: number }>()
     for (const s of scored) {
       const sub = s.subject
-      // Group by subject.id for diversity, but carry offering for navigation
       let group = groups.get(sub.id)
       if (!group) {
         const days = daysRemaining(s.paper.examDate, today)
@@ -108,7 +107,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
   const planTopicIds = new Set(planItems.map((i) => i.topicId))
   const planFull = planItems.length >= 4
   const hasUserItems = planItems.some((i) => i.source !== 'auto')
-  const planLabel = planItems.length === 0 || !hasUserItems ? 'Suggested Plan' : 'Your Plan'
+  const planLabel = planItems.length === 0 || !hasUserItems ? 'Suggested plan' : 'Your plan'
 
   // Resolve plan items to scored topics
   const resolvedPlan = planItems
@@ -124,13 +123,18 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
     })[0]
   }, [resolvedPlan])
 
+  const canAutoFill = useMemo(() => {
+    if (planFull) return false
+    return autoFillPlanItems(scored, planItems, todayKey, Date.now()).length > 0
+  }, [scored, planItems, todayKey, planFull])
+
   if (!initialized) {
     return <div className="p-6 text-center text-gray-400">Loading...</div>
   }
 
   return (
-    <div className="px-4 pt-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Study Planner</h1>
+    <div className="px-4 pt-6 pb-8 min-h-screen bg-[#faf9f7]">
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-6">Study Planner</h1>
 
       <div className="flex flex-col sm:flex-row sm:gap-6">
         {/* Mobile-only calendar */}
@@ -144,14 +148,15 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
           <NudgeBanner scoredTopics={scored} />
 
           {/* 2. Plan Tray */}
-          <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          <div className="mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3.5">
+              <div className="flex items-center gap-2.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
                   {planLabel}
-                </h2>
+                </p>
                 {planItems.length > 0 && (
-                  <span className="text-xs bg-blue-100 text-blue-700 font-medium px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
                     {planItems.length}
                   </span>
                 )}
@@ -159,7 +164,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
               {hasUserItems && (
                 <button
                   onClick={() => { clearPlan(); autoFillPlan(today) }}
-                  className="flex items-center gap-1 text-xs text-gray-400 font-medium transition-colors hover:text-blue-600"
+                  className="flex items-center gap-1 text-[11px] text-gray-400 font-medium transition-colors hover:text-blue-600"
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
@@ -169,8 +174,9 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
               )}
             </div>
 
+            {/* Plan items */}
             {resolvedPlan.length > 0 && (
-              <div className="flex flex-col gap-3">
+              <div className="border-t border-gray-100 divide-y divide-gray-50">
                 {resolvedPlan.map(({ item, scored: s }) => {
                   const days = daysRemaining(s.paper.examDate, today)
                   return (
@@ -180,65 +186,67 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
                       tabIndex={0}
                       onClick={() => onStartSession(s, item.source, item.id)}
                       onKeyDown={(e) => { if (e.key === 'Enter') onStartSession(s, item.source, item.id) }}
-                      className="flex items-stretch rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden cursor-pointer transition-all hover:shadow-md active:scale-[0.99]"
+                      className="flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-colors hover:bg-gray-50/50"
                     >
-                      <div className="w-1.5 shrink-0" style={{ backgroundColor: s.subject.color }} />
-                      <div className="flex-1 p-4 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="text-base font-semibold text-gray-900 truncate">{s.topic.name}</p>
-                            <p className="text-sm text-gray-500 mt-0.5">{s.subject.name} <span className="text-gray-300">·</span> {s.offering.label}</p>
-                          </div>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); removeFromPlan(item.id) }}
-                            className="shrink-0 p-1 text-red-300 hover:text-red-500 transition-colors rounded-md hover:bg-red-50"
-                            aria-label="Remove from plan"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                            </svg>
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-3 mt-2">
-                          <ConfidenceDots level={s.topic.confidence} color={s.subject.color} />
-                          <span className="text-xs text-gray-400">
-                            Exam in {days} {days === 1 ? 'day' : 'days'}
-                          </span>
-                        </div>
+                      <div
+                        className="w-1.5 h-5 rounded-full shrink-0"
+                        style={{ backgroundColor: s.subject.color }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{s.topic.name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {s.subject.name}
+                          <span className="text-gray-300 mx-1">{'\u00B7'}</span>
+                          {s.offering.label}
+                          <span className="text-gray-300 mx-1">{'\u00B7'}</span>
+                          Exam in {days} {days === 1 ? 'day' : 'days'}
+                        </p>
                       </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); removeFromPlan(item.id) }}
+                        className="shrink-0 p-1 text-red-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+                        aria-label="Remove from plan"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
                     </div>
                   )
                 })}
               </div>
             )}
 
+            {/* Footer CTA */}
             {!planFull && (
-              <div className="mt-3 flex flex-col gap-2">
-                {resolvedPlan.length === 0 ? (
-                  <button
-                    onClick={() => autoFillPlan(today)}
-                    className="w-full py-2.5 bg-blue-50 border border-blue-200 text-sm text-blue-700 font-medium rounded-xl transition-colors hover:bg-blue-100"
-                  >
-                    🚀 Crack on with the suggested plan
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => autoFillPlan(today)}
-                    className="w-full py-2.5 border border-dashed border-gray-300 text-sm text-gray-500 font-medium rounded-xl transition-colors hover:border-blue-400 hover:text-blue-600"
-                  >
-                    Fill remaining slots
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    const existing = new Set(planItems.map((i) => i.topicId))
-                    const next = scored.find((s) => !existing.has(s.topic.id))
-                    if (next) addToPlan(next.topic.id, 'auto', today)
-                  }}
-                  className="w-full py-2.5 text-sm text-gray-400 font-medium rounded-xl transition-colors hover:text-purple-600 hover:bg-purple-50"
-                >
-                  🤷 Can't decide? We'll pick one for you
-                </button>
+              <div className="border-t border-gray-100 px-5 py-4">
+                {canAutoFill ? (
+                  resolvedPlan.length === 0 ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => autoFillPlan(today)}
+                        className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl transition-colors hover:bg-blue-700"
+                      >
+                        Create suggested plan
+                      </button>
+                      <p className="text-xs text-gray-400 text-center mt-1.5">Start with a balanced set of topics.</p>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => autoFillPlan(today)}
+                        className="w-full py-2.5 border border-dashed border-blue-200 text-sm text-blue-600 font-medium rounded-xl transition-colors hover:border-blue-400 hover:bg-blue-50"
+                      >
+                        Complete plan
+                      </button>
+                      <p className="text-xs text-gray-400 text-center mt-1.5">We'll add the best remaining topics for you.</p>
+                    </>
+                  )
+                ) : resolvedPlan.length > 0 ? (
+                  <p className="text-xs text-gray-400 text-center">Your plan already includes the best available topics. Add a topic manually below.</p>
+                ) : null}
               </div>
             )}
           </div>
@@ -247,9 +255,9 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
           {subjectGroups.length > 0 && (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-                  Add Topics to Plan
-                </h2>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+                  Add topics to plan
+                </p>
                 <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
                   {CONFIDENCE_COLORS.map((c, i) => (
                     <span key={i} className="flex items-center gap-0.5">
@@ -266,37 +274,36 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
                   return (
                     <div
                       key={subject.id}
-                      className="rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden"
+                      className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden"
                     >
                       <button
                         onClick={() => setExpanded(isExpanded ? null : subject.id)}
-                        className="w-full flex items-stretch text-left transition-shadow hover:shadow-md active:scale-[0.99]"
+                        className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-gray-50/50"
                       >
-                        <div className="w-1.5 shrink-0" style={{ backgroundColor: subject.color }} />
-                        <div className="flex-1 p-4 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="text-base font-semibold text-gray-900 truncate">{subject.name}</p>
-                              <p className="text-xs text-gray-400 mt-0.5">{offering.label}</p>
-                              <p className={`text-xs mt-0.5 ${urgencyColor}`}>
-                                Exam in {nearestExamDays} {nearestExamDays === 1 ? 'day' : 'days'}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-xs bg-gray-100 text-gray-500 font-medium px-2 py-0.5 rounded-full">
-                                {subjectTopics.length}
-                              </span>
-                              <svg
-                                className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </div>
-                          </div>
+                        <div className="w-1.5 h-5 rounded-full shrink-0" style={{ backgroundColor: subject.color }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-semibold text-gray-900 truncate">{subject.name}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {offering.label}
+                            <span className="text-gray-300 mx-1">{'\u00B7'}</span>
+                            <span className={urgencyColor}>
+                              Exam in {nearestExamDays} {nearestExamDays === 1 ? 'day' : 'days'}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[11px] font-semibold bg-gray-50 text-gray-500 px-2 py-0.5 rounded-full border border-gray-100">
+                            {subjectTopics.length}
+                          </span>
+                          <svg
+                            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
                         </div>
                       </button>
                       <div
@@ -304,7 +311,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
                         style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
                       >
                         <div className="overflow-hidden">
-                          <div className="px-4 pb-3 border-t border-gray-50">
+                          <div className="px-5 pb-3 border-t border-gray-100">
                             {subjectTopics.map((s) => {
                               const inPlan = planTopicIds.has(s.topic.id)
                               return (
@@ -317,11 +324,11 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
                                     <ConfidenceDots level={s.topic.confidence} color={subject.color} />
                                   </div>
                                   {inPlan ? (
-                                    <span className="text-xs text-gray-400 shrink-0">In Plan</span>
+                                    <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 shrink-0">In plan</span>
                                   ) : !planFull ? (
                                     <button
                                       onClick={() => addToPlan(s.topic.id, 'suggested', new Date())}
-                                      className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-500 transition-colors hover:bg-blue-100 hover:border-blue-400 hover:text-blue-600"
+                                      className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-500 transition-colors hover:bg-blue-100 hover:border-blue-400 hover:text-blue-600"
                                       aria-label={`Add ${s.topic.name} to plan`}
                                     >
                                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -337,8 +344,8 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
                                       className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-amber-600 bg-amber-50 border border-amber-200 transition-colors hover:bg-amber-100"
                                       aria-label={`Swap ${swapCandidate.scored.topic.name} for ${s.topic.name}`}
                                     >
-                                      ↕ Swap out {swapCandidate.scored.topic.name.length > 12
-                                        ? swapCandidate.scored.topic.name.slice(0, 12) + '…'
+                                      {'\u21C5'} Swap out {swapCandidate.scored.topic.name.length > 12
+                                        ? swapCandidate.scored.topic.name.slice(0, 12) + '\u2026'
                                         : swapCandidate.scored.topic.name}
                                     </button>
                                   ) : null}

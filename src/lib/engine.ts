@@ -217,12 +217,15 @@ export function autoFillPlanItems(
     }
   }
 
+  const uniqueSubjects = new Set(scored.map((s) => s.subject.id)).size
+  const maxPerSubject = uniqueSubjects >= TOTAL_BLOCKS ? 2 : Math.ceil(TOTAL_BLOCKS / Math.max(1, uniqueSubjects))
+
   const result: ScheduleItem[] = []
   for (const candidate of sortScoredTopics(scored)) {
     if (result.length >= remainingSlots) break
     if (existingTopicIds.has(candidate.topic.id)) continue
     const sid = candidate.subject.id
-    if ((subjectCount.get(sid) ?? 0) >= 2) continue
+    if ((subjectCount.get(sid) ?? 0) >= maxPerSubject) continue
 
     result.push({
       id: `si-${now}-${result.length}`,

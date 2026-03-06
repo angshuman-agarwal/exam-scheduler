@@ -9,6 +9,7 @@ interface SessionLoggerProps {
   source: ScheduleSource
   scheduleItemId?: string
   onBack: () => void
+  onGoToProgress: () => void
 }
 
 const EMOJIS = ['\u{1F630}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F60E}']
@@ -218,7 +219,7 @@ function ConfidenceDots({ value }: { value: number; color: string }) {
   )
 }
 
-export default function SessionLogger({ scored, source, scheduleItemId, onBack }: SessionLoggerProps) {
+export default function SessionLogger({ scored, source, scheduleItemId, onBack, onGoToProgress }: SessionLoggerProps) {
   const { topic, subject, offering } = scored
   const logSession = useAppStore((s) => s.logSession)
   const addNote = useAppStore((s) => s.addNote)
@@ -355,6 +356,16 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack }
   const topics = useAppStore((s) => s.topics)
   const updatedTopic = submitted ? topics.find((t) => t.id === topic.id) : null
   const confidenceAfter = updatedTopic?.confidence ?? confidenceBefore
+
+  function flushAndNavigate(navigate: () => void) {
+    const trimmed = noteText.trim()
+    if (trimmed) {
+      addNote(topic.id, trimmed)
+      setNoteText('')
+    }
+    discard()
+    navigate()
+  }
 
   const rawScore = confidenceLevel != null ? SCORE_MAP[confidenceLevel - 1] : 50
 
@@ -501,7 +512,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack }
             onClick={() => setConfirmAction('stop')}
             className="w-full py-4 bg-red-500 text-white text-lg font-semibold rounded-xl transition-colors hover:bg-red-600 active:bg-red-700 mb-3"
           >
-            Stop Studying
+            Finish studying
           </button>
           <button
             onClick={pause}
@@ -549,7 +560,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack }
             onClick={() => setConfirmAction('stop')}
             className="w-full py-3 bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors hover:bg-gray-200"
           >
-            Finish Session
+            Finish studying
           </button>
         </div>
       )}
@@ -623,23 +634,27 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack }
           <textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
-            onBlur={() => {
-              if (noteText.trim()) {
-                addNote(topic.id, noteText.trim())
-                setNoteText('')
-              }
-            }}
             placeholder="Add a note? (optional)"
             rows={2}
             className="w-full p-3 bg-gray-50 rounded-xl border border-gray-100 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
 
-          <button
-            onClick={() => { discard(); onBack() }}
-            className="w-full mt-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors hover:bg-gray-200"
-          >
-            Back to Plan
-          </button>
+          <p className="text-xs text-gray-400 text-center mt-4 mb-3">Your progress has been updated</p>
+
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => flushAndNavigate(onBack)}
+              className="w-full bg-blue-600 text-white font-semibold rounded-xl py-3 hover:bg-blue-700"
+            >
+              Back to plan
+            </button>
+            <button
+              onClick={() => flushAndNavigate(onGoToProgress)}
+              className="w-full bg-white text-gray-700 font-medium rounded-xl py-3 border border-gray-200 hover:bg-gray-50"
+            >
+              View progress
+            </button>
+          </div>
         </div>
       )}
 
