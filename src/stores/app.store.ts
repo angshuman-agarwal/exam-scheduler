@@ -1,13 +1,10 @@
 import { create } from 'zustand'
-import { openDB, type IDBPDatabase } from 'idb'
 import type { Topic, Paper, Subject, Board, Offering, Session, ScoredTopic, DayPlan, UserState, Note, ScheduleItem, ScheduleSource, SeedDataV2 } from '../types'
 import { scoreAllTopics, buildDayPlan, updatePerformance, adjustConfidence, autoFillPlanItems, TOTAL_BLOCKS } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
+import { loadFromIdbRaw, saveToIdbRaw } from '../lib/idb'
 import seedData from '../data/subjects.json'
 
-const DB_NAME = 'gcse-scheduler'
-const DB_VERSION = 2
-const STORE_NAME = 'state'
 const STATE_KEY = 'app'
 
 const seed = seedData as SeedDataV2
@@ -125,31 +122,14 @@ function mergeWithFreshSeed(saved: PersistedState, fresh: PersistedState): Persi
   }
 }
 
-let dbPromise: Promise<IDBPDatabase> | null = null
-
-function getDb() {
-  if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME)
-        }
-      },
-    })
-  }
-  return dbPromise
-}
-
 async function loadFromIdb(): Promise<{ state: PersistedState; needsMerge: boolean } | null> {
-  const db = await getDb()
-  const data = await db.get(STORE_NAME, STATE_KEY)
+  const data = await loadFromIdbRaw<PersistedState>(STATE_KEY)
   if (!hasValidSchema(data)) return null
   return { state: data, needsMerge: !isSeedCurrent(data) }
 }
 
 async function saveToIdb(state: PersistedState): Promise<void> {
-  const db = await getDb()
-  await db.put(STORE_NAME, state, STATE_KEY)
+  await saveToIdbRaw(STATE_KEY, state)
 }
 
 function extractPersisted(state: AppState): PersistedState {

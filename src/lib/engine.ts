@@ -159,6 +159,22 @@ export function buildDayPlan(scoredTopics: ScoredTopic[], userState: UserState, 
   return { deep, recall }
 }
 
+// -- Single Topic Scoring --
+
+export function scoreSingleTopic(
+  topic: Topic,
+  paper: Paper,
+  offering: Offering,
+  subject: Subject,
+  today: Date,
+): ScoredTopic {
+  const w = weakness(topic.performanceScore, topic.confidence)
+  const r = recencyFactor(topic.lastReviewed, today)
+  const u = urgency(paper.examDate, today)
+  const score = w * u * r
+  return { topic, paper, offering, subject, score, blockType: 'deep', weakness: w, recencyFactor: r }
+}
+
 // -- Suggestions --
 
 export function getSuggestions(scored: ScoredTopic[], excludeTopicIds: Set<string>): ScoredTopic[] {
