@@ -9,6 +9,7 @@ import type { ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../t
 interface TodayPlanProps {
   onStartSession: (scored: ScoredTopic, source: ScheduleSource, scheduleItemId?: string) => void
   onBrowseOffering: (offering: Offering, subject: Subject, paper?: Paper) => void
+  onEditSubjects: () => void
 }
 
 const CONFIDENCE_COLORS = ['#ef4444', '#f59e0b', '#84cc16', '#16a34a', '#0d9488'] as const
@@ -28,7 +29,7 @@ function ConfidenceDots({ level }: { level: number; color: string }) {
   )
 }
 
-export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPlanProps) {
+export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubjects }: TodayPlanProps) {
   const topics = useAppStore((s) => s.topics)
   const papers = useAppStore((s) => s.papers)
   const subjects = useAppStore((s) => s.subjects)
@@ -134,7 +135,18 @@ export default function TodayPlan({ onStartSession, onBrowseOffering }: TodayPla
 
   return (
     <div className="px-4 pt-6 pb-8 min-h-screen bg-[#faf9f7]">
-      <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-6">Study Planner</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Study Planner</h1>
+        <button
+          onClick={onEditSubjects}
+          className="flex items-center gap-1.5 text-xs text-gray-400 font-medium transition-colors hover:text-blue-600"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+          </svg>
+          Edit subjects
+        </button>
+      </div>
 
       <div className="flex flex-col sm:flex-row sm:gap-6">
         {/* Mobile-only calendar */}

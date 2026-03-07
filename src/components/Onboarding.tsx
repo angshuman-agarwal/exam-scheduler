@@ -11,7 +11,9 @@ function pastel(hex: string, alpha = 0.08): string {
 }
 
 interface OnboardingProps {
+  mode?: 'initial' | 'edit'
   onComplete: () => void
+  onCancel?: () => void
 }
 
 const EMOJIS = ['\u{1F630}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F60E}'] as const
@@ -199,6 +201,8 @@ function SummaryTray({
   nearestExamByOffering,
   canFinish,
   onFinish,
+  finishLabel,
+  onCancel,
 }: {
   subjects: Subject[]
   selectedSubjectIds: Set<string>
@@ -209,6 +213,8 @@ function SummaryTray({
   nearestExamByOffering: Map<string, { date: string; days: number }>
   canFinish: boolean
   onFinish: () => void
+  finishLabel: string
+  onCancel?: () => void
 }) {
   const selectedSubjects = subjects.filter((s) => selectedSubjectIds.has(s.id))
 
@@ -266,22 +272,64 @@ function SummaryTray({
         disabled={!canFinish}
         className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        Start studying
+        {finishLabel}
       </button>
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          className="w-full py-3 mt-2 bg-white text-gray-700 font-medium rounded-xl border border-gray-200 transition-colors hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+      )}
     </div>
   )
 }
 
-export default function Onboarding({ onComplete }: OnboardingProps) {
+export default function Onboarding({ mode = 'initial', onComplete, onCancel }: OnboardingProps) {
   const subjects = useAppStore((s) => s.subjects)
   const offerings = useAppStore((s) => s.offerings)
   const papers = useAppStore((s) => s.papers)
   const boards = useAppStore((s) => s.boards)
+  const topics = useAppStore((s) => s.topics)
+  const selectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
   const completeOnboarding = useAppStore((s) => s.completeOnboarding)
+  const updateSelectedOfferings = useAppStore((s) => s.updateSelectedOfferings)
 
-  const [selectedSubjectIds, setSelectedSubjectIds] = useState<Set<string>>(() => new Set())
-  const [chosenOffering, setChosenOffering] = useState<Map<string, string>>(() => new Map())
-  const [confidences, setConfidences] = useState<Map<string, number>>(() => new Map())
+  const isEdit = mode === 'edit'
+
+  // Build prefill data from current selection for edit mode
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<Set<string>>(() => {
+    if (!isEdit) return new Set()
+    const subjectIds = new Set<string>()
+    for (const oid of selectedOfferingIds) {
+      const off = offerings.find((o) => o.id === oid)
+      if (off) subjectIds.add(off.subjectId)
+    }
+    return subjectIds
+  })
+  const [chosenOffering, setChosenOffering] = useState<Map<string, string>>(() => {
+    if (!isEdit) return new Map()
+    const map = new Map<string, string>()
+    for (const oid of selectedOfferingIds) {
+      const off = offerings.find((o) => o.id === oid)
+      if (off) map.set(off.subjectId, oid)
+    }
+    return map
+  })
+  const [confidences, setConfidences] = useState<Map<string, number>>(() => {
+    if (!isEdit) return new Map()
+    // For existing offerings, show current average topic confidence
+    const map = new Map<string, number>()
+    for (const oid of selectedOfferingIds) {
+      const offeringTopics = topics.filter((t) => t.offeringId === oid)
+      if (offeringTopics.length > 0) {
+        const avg = Math.round(offeringTopics.reduce((sum, t) => sum + t.confidence, 0) / offeringTopics.length)
+        map.set(oid, Math.max(1, Math.min(5, avg)))
+      }
+    }
+    return map
+  })
   const [expandedCards, setExpandedCards] = useState<Set<string>>(() => new Set())
 
   const boardMap = useMemo(() => new Map(boards.map((b) => [b.id, b])), [boards])
@@ -396,7 +444,11 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     for (const oid of offeringIds) {
       finalConf.set(oid, confidences.get(oid) ?? 3)
     }
-    completeOnboarding(offeringIds, finalConf)
+    if (isEdit) {
+      updateSelectedOfferings(offeringIds, finalConf)
+    } else {
+      completeOnboarding(offeringIds, finalConf)
+    }
     onComplete()
   }
 
@@ -405,10 +457,18 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       <div className="flex flex-col sm:flex-row sm:gap-6 max-w-4xl mx-auto">
         {/* Main column */}
         <div className="flex-1 min-w-0 px-4 pt-12 pb-8 sm:pb-10">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">Build your exam setup</h1>
-          <p className="text-sm text-gray-500 leading-relaxed mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
+            {isEdit ? 'Update your exam setup' : 'Build your exam setup'}
+          </h1>
+          <p className="text-sm text-gray-500 leading-relaxed mb-1">
             Pick the subjects you take, choose the right board, and rate your confidence.
           </p>
+          {isEdit && (
+            <p className="text-xs text-gray-400 mb-7">
+              Changing your setup won't erase past study history.
+            </p>
+          )}
+          {!isEdit && <div className="mb-8" />}
 
           <div className="flex flex-col gap-3">
             {subjects.map((s) => {
@@ -579,6 +639,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               nearestExamByOffering={nearestExamByOffering}
               canFinish={canFinish}
               onFinish={handleFinish}
+              finishLabel={isEdit ? 'Save changes' : 'Start studying'}
+              onCancel={isEdit ? onCancel : undefined}
             />
           </div>
         </div>
@@ -597,6 +659,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               nearestExamByOffering={nearestExamByOffering}
               canFinish={canFinish}
               onFinish={handleFinish}
+              finishLabel={isEdit ? 'Save changes' : 'Start studying'}
+              onCancel={isEdit ? onCancel : undefined}
             />
           </div>
         </div>

@@ -37,6 +37,7 @@ interface AppState extends PersistedState {
   getDayPlan: (today: Date) => DayPlan
   getAllTopicsScored: (today: Date) => ScoredTopic[]
   completeOnboarding: (offeringIds: string[], confidences: Map<string, number>) => void
+  updateSelectedOfferings: (offeringIds: string[], confidences: Map<string, number>) => void
   addNote: (topicId: string, text: string) => void
   getTopicsForOffering: (offeringId: string, today: Date) => ScoredTopic[]
   resetAll: () => Promise<void>
@@ -292,6 +293,24 @@ export const useAppStore = create<AppState>()((set, get) => ({
     })
 
     set({ topics, selectedOfferingIds: offeringIds, onboarded: true })
+    saveToIdb(extractPersisted(get()))
+  },
+
+  updateSelectedOfferings: (offeringIds: string[], confidences: Map<string, number>) => {
+    const state = get()
+    const previouslySelected = new Set(state.selectedOfferingIds)
+
+    // Only set confidence on topics for newly added offerings
+    const topics = state.topics.map((t) => {
+      if (!offeringIds.includes(t.offeringId)) return t
+      // Already selected before — preserve existing confidence/performance
+      if (previouslySelected.has(t.offeringId)) return t
+      // Newly added — initialize from form
+      const conf = confidences.get(t.offeringId)
+      return conf !== undefined ? { ...t, confidence: conf } : t
+    })
+
+    set({ topics, selectedOfferingIds: offeringIds })
     saveToIdb(extractPersisted(get()))
   },
 

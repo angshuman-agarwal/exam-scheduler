@@ -44,6 +44,7 @@ function App() {
   const [activeOffering, setActiveOffering] = useState<Offering | null>(null)
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null)
   const [activePaper, setActivePaper] = useState<Paper | null>(null)
+  const [editingSetup, setEditingSetup] = useState(false)
   const [recoveryDone, setRecoveryDone] = useState(false)
   const recoveryRan = useRef(false)
 
@@ -73,6 +74,17 @@ function App() {
   // Onboarding gate
   if (!onboarded) {
     return <Onboarding onComplete={() => {}} />
+  }
+
+  // Edit subjects mode
+  if (editingSetup) {
+    return (
+      <Onboarding
+        mode="edit"
+        onComplete={() => setEditingSetup(false)}
+        onCancel={() => setEditingSetup(false)}
+      />
+    )
   }
 
   // Session logger
@@ -115,6 +127,7 @@ function App() {
             setActiveSubject(subject)
             setActivePaper(paper ?? null)
           }}
+          onEditSubjects={() => setEditingSetup(true)}
         />
       )}
       {page === 'progress' && <Progress onGoToToday={() => setPage('today')} />}
