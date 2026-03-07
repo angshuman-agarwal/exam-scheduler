@@ -548,7 +548,7 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel }: O
                               className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                                 isSelected
                                   ? 'text-white'
-                                  : 'bg-gray-50 text-gray-400 border border-gray-200 hover:bg-gray-100'
+                                  : 'bg-blue-50/60 text-blue-400 border border-blue-200/60 hover:bg-blue-100/80 hover:text-blue-500'
                               }`}
                               style={isSelected ? { backgroundColor: s.color } : undefined}
                             >

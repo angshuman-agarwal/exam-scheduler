@@ -97,12 +97,7 @@ export function scoreAllTopics(
     if (!subject) continue
     if (toMidnightUTC(today) > toMidnightUTC(new Date(paper.examDate))) continue
 
-    const w = weakness(topic.performanceScore, topic.confidence)
-    const r = recencyFactor(topic.lastReviewed, today)
-    const u = urgency(paper.examDate, today)
-    const score = w * u * r
-
-    result.push({ topic, paper, offering, subject, score, blockType: 'deep', weakness: w, recencyFactor: r })
+    result.push(scoreSingleTopic(topic, paper, offering, subject, today))
   }
 
   return result
@@ -170,8 +165,7 @@ export function scoreSingleTopic(
 ): ScoredTopic {
   const w = weakness(topic.performanceScore, topic.confidence)
   const r = recencyFactor(topic.lastReviewed, today)
-  const u = urgency(paper.examDate, today)
-  const score = w * u * r
+  const score = topicScore(topic.performanceScore, topic.confidence, paper.examDate, topic.lastReviewed, today)
   return { topic, paper, offering, subject, score, blockType: 'deep', weakness: w, recencyFactor: r }
 }
 
