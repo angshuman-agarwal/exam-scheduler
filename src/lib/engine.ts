@@ -36,9 +36,14 @@ export function urgency(paperExamISO: string, today: Date): number {
 }
 
 export function recencyFactor(lastISO: string | null, today: Date): number {
-  if (!lastISO) return 1.2
+  if (!lastISO) return 1.4
   const since = daysSince(lastISO, today)
-  return 1 + 0.2 * Math.min(since / 30, 1)
+  if (since === 0) return 0.5
+  if (since <= 3) return 0.7
+  if (since <= 6) return 0.85
+  if (since <= 13) return 1.0
+  if (since <= 20) return 1.15
+  return 1.4
 }
 
 export function topicScore(
@@ -179,12 +184,15 @@ export function getSuggestions(scored: ScoredTopic[], excludeTopicIds: Set<strin
 
 // -- Overdue Detection --
 
-export const OVERDUE_RECENCY_THRESHOLD = 1.15
+export const OVERDUE_RECENCY_THRESHOLD = 1.4
 export const OVERDUE_WEAKNESS_THRESHOLD = 0.6
 
 export function getOverdueTopics(scoredTopics: ScoredTopic[]): ScoredTopic[] {
   return scoredTopics.filter(
-    (s) => s.recencyFactor >= OVERDUE_RECENCY_THRESHOLD && s.weakness >= OVERDUE_WEAKNESS_THRESHOLD,
+    (s) =>
+      s.topic.lastReviewed !== null &&
+      s.recencyFactor >= OVERDUE_RECENCY_THRESHOLD &&
+      s.weakness >= OVERDUE_WEAKNESS_THRESHOLD,
   )
 }
 
