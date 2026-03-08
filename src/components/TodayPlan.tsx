@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
-import { daysRemaining, scoreAllTopics, autoFillPlanItems } from '../lib/engine'
+import { daysRemaining, scoreAllTopics, autoFillPlanItems, getPlanningMode, nearestExamDays as calcNearestExamDays } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
 import NudgeBanner from './NudgeBanner'
 import ExamCalendar from './ExamCalendar'
@@ -55,10 +55,21 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
   const selPapers = useMemo(() => papers.filter((p) => selOfferingSet.has(p.offeringId)), [papers, selOfferingSet])
   const selOfferings = useMemo(() => allOfferings.filter((o) => selOfferingSet.has(o.id)), [allOfferings, selOfferingSet])
 
-  const scored = useMemo(
-    () => scoreAllTopics(selTopics, selPapers, selOfferings, subjects, today),
+  const planningMode = useMemo(
+    () => getPlanningMode(today, selPapers),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selTopics, selPapers, selOfferings, subjects, todayKey],
+    [selPapers, todayKey],
+  )
+  const nearestDays = useMemo(
+    () => calcNearestExamDays(today, selPapers),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selPapers, todayKey],
+  )
+
+  const scored = useMemo(
+    () => scoreAllTopics(selTopics, selPapers, selOfferings, subjects, today, planningMode),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selTopics, selPapers, selOfferings, subjects, todayKey, planningMode],
   )
 
   const scoredMap = useMemo(
@@ -126,8 +137,9 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
 
   const canAutoFill = useMemo(() => {
     if (planFull) return false
-    return autoFillPlanItems(scored, planItems, todayKey, Date.now()).length > 0
-  }, [scored, planItems, todayKey, planFull])
+    return autoFillPlanItems(scored, planItems, todayKey, Date.now(), today, planningMode).length > 0
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scored, planItems, todayKey, planFull, planningMode])
 
   if (!initialized) {
     return <div className="p-6 text-center text-gray-400">Loading...</div>
@@ -136,7 +148,17 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
   return (
     <div className="px-4 pt-6 pb-8 min-h-screen bg-[#faf9f7]">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Study Planner</h1>
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Study Planner</h1>
+          {planningMode === 'crunch' && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 border border-amber-200/60">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Crunch mode
+            </span>
+          )}
+        </div>
         <button
           onClick={onEditSubjects}
           className="flex items-center gap-1.5 text-xs text-gray-400 font-medium transition-colors hover:text-blue-600"
@@ -156,8 +178,8 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
 
         {/* Main column */}
         <div className="flex-1 min-w-0">
-          {/* 1. Nudge Banner */}
-          <NudgeBanner scoredTopics={scored} />
+          {/* 1. Nudge Banner — only after plan exists */}
+          <NudgeBanner scoredTopics={scored} mode={planningMode} nearestExamDays={nearestDays} enabled={planItems.length > 0} />
 
           {/* 2. Plan Tray */}
           <div className="mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -211,7 +233,9 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                           <span className="text-gray-300 mx-1">{'\u00B7'}</span>
                           {s.offering.label}
                           <span className="text-gray-300 mx-1">{'\u00B7'}</span>
-                          Exam in {days} {days === 1 ? 'day' : 'days'}
+                          <span className={days <= 3 ? 'text-red-500' : days <= 7 ? 'text-amber-500' : planningMode === 'crunch' && days <= 21 ? 'text-amber-400' : ''}>
+                            Exam in {days} {days === 1 ? 'day' : 'days'}
+                          </span>
                         </p>
                       </div>
                       <button
@@ -282,7 +306,10 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
               <div className="flex flex-col gap-3">
                 {subjectGroups.map(({ subject, offering, topics: subjectTopics, nearestExamDays }) => {
                   const isExpanded = expanded === subject.id
-                  const urgencyColor = nearestExamDays <= 3 ? 'text-red-500' : nearestExamDays <= 7 ? 'text-amber-500' : 'text-gray-400'
+                  const urgencyColor = nearestExamDays <= 3 ? 'text-red-500'
+                    : nearestExamDays <= 7 ? 'text-amber-500'
+                    : planningMode === 'crunch' && nearestExamDays <= 21 ? 'text-amber-400'
+                    : 'text-gray-400'
                   return (
                     <div
                       key={subject.id}

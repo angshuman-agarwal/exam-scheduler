@@ -2,6 +2,9 @@ import type { Topic, Paper, Subject, Offering, ScoredTopic, DayPlan, UserState, 
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 export const TOTAL_BLOCKS = 4
+export const CRUNCH_DAYS_THRESHOLD = 21
+
+export type PlanningMode = 'normal' | 'crunch'
 
 // -- Utilities --
 
@@ -46,6 +49,74 @@ export function recencyFactor(lastISO: string | null, today: Date): number {
   return 1.4
 }
 
+// -- Crunch Mode --
+
+export function futurePapers(papers: Paper[], today: Date): Paper[] {
+  const todayMid = toMidnightUTC(today)
+  return papers.filter((p) => toMidnightUTC(new Date(p.examDate)) >= todayMid)
+}
+
+export function getPlanningMode(today: Date, papers: Paper[]): PlanningMode {
+  const future = futurePapers(papers, today)
+  if (future.length === 0) return 'normal'
+  let nearest = Infinity
+  for (const p of future) {
+    const days = daysRemaining(p.examDate, today)
+    if (days < nearest) nearest = days
+  }
+  return nearest <= CRUNCH_DAYS_THRESHOLD ? 'crunch' : 'normal'
+}
+
+export function nearestExamDays(today: Date, papers: Paper[]): number {
+  const future = futurePapers(papers, today)
+  let nearest = Infinity
+  for (const p of future) {
+    const days = daysRemaining(p.examDate, today)
+    if (days < nearest) nearest = days
+  }
+  return nearest === Infinity ? 0 : nearest
+}
+
+export function examWindowBoost(days: number): number {
+  if (days <= 3) return 1.6
+  if (days <= 7) return 1.4
+  if (days <= 14) return 1.2
+  if (days <= 21) return 1.1
+  return 1.0
+}
+
+export function notStartedBoost(topic: Topic, days: number): number {
+  if (topic.lastReviewed !== null) return 1.0
+  if (days <= 7) return 1.5
+  if (days <= 14) return 1.3
+  if (days <= 21) return 1.15
+  return 1.0
+}
+
+export function coolingFactor(lastISO: string | null, today: Date, mode: PlanningMode): number {
+  const base = recencyFactor(lastISO, today)
+  if (mode === 'normal') return base
+  // In crunch mode, soften the cooldown penalties so urgent weak gaps can resurface
+  if (base < 1.0) return base + (1.0 - base) * 0.5 // halve the penalty
+  return base
+}
+
+export function crunchTopicScore(
+  topic: Topic,
+  paper: Paper,
+  today: Date,
+  mode: PlanningMode,
+): number {
+  const w = weakness(topic.performanceScore, topic.confidence)
+  const u = urgency(paper.examDate, today)
+  const c = coolingFactor(topic.lastReviewed, today, mode)
+
+  if (mode === 'normal') return w * u * c
+
+  const days = daysRemaining(paper.examDate, today)
+  return w * u * c * examWindowBoost(days) * notStartedBoost(topic, days)
+}
+
 export function topicScore(
   perf: number,
   confidence: number,
@@ -86,6 +157,7 @@ export function scoreAllTopics(
   offerings: Offering[],
   subjects: Subject[],
   today: Date,
+  mode: PlanningMode = 'normal',
 ): ScoredTopic[] {
   const paperMap = new Map(papers.map((p) => [p.id, p]))
   const offeringMap = new Map(offerings.map((o) => [o.id, o]))
@@ -102,7 +174,7 @@ export function scoreAllTopics(
     if (!subject) continue
     if (toMidnightUTC(today) > toMidnightUTC(new Date(paper.examDate))) continue
 
-    result.push(scoreSingleTopic(topic, paper, offering, subject, today))
+    result.push(scoreSingleTopic(topic, paper, offering, subject, today, mode))
   }
 
   return result
@@ -127,7 +199,16 @@ export function sortScoredTopics(topics: ScoredTopic[]): ScoredTopic[] {
 const MAX_PER_SUBJECT = 2
 const URGENT_DAYS_THRESHOLD = 7
 
-export function diversifyTopics(sorted: ScoredTopic[], limit: number, today: Date): ScoredTopic[] {
+export function subjectCap(days: number, mode: PlanningMode): number {
+  const urgent = days <= URGENT_DAYS_THRESHOLD
+  // Urgent papers: no cap in either mode (original behavior preserved)
+  if (urgent) return Infinity
+  // Non-urgent in crunch mode: relax from 2 → 3
+  if (mode === 'crunch') return 3
+  return MAX_PER_SUBJECT
+}
+
+export function diversifyTopics(sorted: ScoredTopic[], limit: number, today: Date, mode: PlanningMode = 'normal'): ScoredTopic[] {
   const selected: ScoredTopic[] = []
   const subjectCount = new Map<string, number>()
 
@@ -137,7 +218,7 @@ export function diversifyTopics(sorted: ScoredTopic[], limit: number, today: Dat
     const count = subjectCount.get(sid) ?? 0
     const days = daysRemaining(t.paper.examDate, today)
 
-    if (count >= MAX_PER_SUBJECT && days >= URGENT_DAYS_THRESHOLD) continue
+    if (count >= subjectCap(days, mode)) continue
 
     selected.push(t)
     subjectCount.set(sid, count + 1)
@@ -148,9 +229,9 @@ export function diversifyTopics(sorted: ScoredTopic[], limit: number, today: Dat
 
 // -- Day Plan --
 
-export function buildDayPlan(scoredTopics: ScoredTopic[], userState: UserState, today: Date): DayPlan {
+export function buildDayPlan(scoredTopics: ScoredTopic[], userState: UserState, today: Date, mode: PlanningMode = 'normal'): DayPlan {
   const sorted = sortScoredTopics(scoredTopics)
-  const selected = diversifyTopics(sorted, TOTAL_BLOCKS, today)
+  const selected = diversifyTopics(sorted, TOTAL_BLOCKS, today, mode)
   const deepCount = maxDeepBlocks(userState.energyLevel, userState.stress)
 
   const deep = selected.slice(0, deepCount).map((t) => ({ ...t, blockType: 'deep' as const }))
@@ -167,10 +248,13 @@ export function scoreSingleTopic(
   offering: Offering,
   subject: Subject,
   today: Date,
+  mode: PlanningMode = 'normal',
 ): ScoredTopic {
   const w = weakness(topic.performanceScore, topic.confidence)
   const r = recencyFactor(topic.lastReviewed, today)
-  const score = topicScore(topic.performanceScore, topic.confidence, paper.examDate, topic.lastReviewed, today)
+  const score = mode === 'normal'
+    ? topicScore(topic.performanceScore, topic.confidence, paper.examDate, topic.lastReviewed, today)
+    : crunchTopicScore(topic, paper, today, mode)
   return { topic, paper, offering, subject, score, blockType: 'deep', weakness: w, recencyFactor: r }
 }
 
@@ -204,6 +288,8 @@ export function autoFillPlanItems(
   existingItems: ScheduleItem[],
   dayKey: string,
   now: number,
+  today: Date = new Date(),
+  mode: PlanningMode = 'normal',
 ): ScheduleItem[] {
   const remainingSlots = TOTAL_BLOCKS - existingItems.length
   if (remainingSlots <= 0) return []
@@ -220,14 +306,18 @@ export function autoFillPlanItems(
   }
 
   const uniqueSubjects = new Set(scored.map((s) => s.subject.id)).size
-  const maxPerSubject = uniqueSubjects >= TOTAL_BLOCKS ? 2 : Math.ceil(TOTAL_BLOCKS / Math.max(1, uniqueSubjects))
+  const fallbackMax = uniqueSubjects >= TOTAL_BLOCKS ? 2 : Math.ceil(TOTAL_BLOCKS / Math.max(1, uniqueSubjects))
 
   const result: ScheduleItem[] = []
   for (const candidate of sortScoredTopics(scored)) {
     if (result.length >= remainingSlots) break
     if (existingTopicIds.has(candidate.topic.id)) continue
     const sid = candidate.subject.id
-    if ((subjectCount.get(sid) ?? 0) >= maxPerSubject) continue
+    const days = daysRemaining(candidate.paper.examDate, today)
+    const modeCap = subjectCap(days, mode)
+    // Use whichever cap is more permissive, but never exceed TOTAL_BLOCKS
+    const cap = Math.min(Math.max(modeCap, fallbackMax), TOTAL_BLOCKS)
+    if ((subjectCount.get(sid) ?? 0) >= cap) continue
 
     result.push({
       id: `si-${now}-${result.length}`,

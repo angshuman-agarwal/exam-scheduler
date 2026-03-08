@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Topic, Paper, Subject, Board, Offering, Session, ScoredTopic, DayPlan, UserState, Note, ScheduleItem, ScheduleSource, SeedDataV2 } from '../types'
-import { scoreAllTopics, buildDayPlan, updatePerformance, adjustConfidence, autoFillPlanItems, TOTAL_BLOCKS } from '../lib/engine'
+import { scoreAllTopics, buildDayPlan, updatePerformance, adjustConfidence, autoFillPlanItems, TOTAL_BLOCKS, getPlanningMode } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
 import { loadFromIdbRaw, saveToIdbRaw } from '../lib/idb'
 import seedData from '../data/subjects.json'
@@ -269,8 +269,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const t = selectedTopics(state)
     const p = selectedPapers(state)
     const o = selectedOfferings(state)
-    const scored = scoreAllTopics(t, p, o, state.subjects, today)
-    return buildDayPlan(scored, state.userState, today)
+    const mode = getPlanningMode(today, p)
+    const scored = scoreAllTopics(t, p, o, state.subjects, today, mode)
+    return buildDayPlan(scored, state.userState, today, mode)
   },
 
   getAllTopicsScored: (today: Date): ScoredTopic[] => {
@@ -278,7 +279,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const t = selectedTopics(state)
     const p = selectedPapers(state)
     const o = selectedOfferings(state)
-    return scoreAllTopics(t, p, o, state.subjects, today)
+    const mode = getPlanningMode(today, p)
+    return scoreAllTopics(t, p, o, state.subjects, today, mode)
   },
 
   completeOnboarding: (offeringIds: string[], confidences: Map<string, number>) => {
@@ -330,7 +332,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const offeringTopics = state.topics.filter((t) => t.offeringId === offeringId)
     const offeringPapers = state.papers.filter((p) => p.offeringId === offeringId)
     const offering = state.offerings.filter((o) => o.id === offeringId)
-    const scored = scoreAllTopics(offeringTopics, offeringPapers, offering, state.subjects, today)
+    const mode = getPlanningMode(today, selectedPapers(state))
+    const scored = scoreAllTopics(offeringTopics, offeringPapers, offering, state.subjects, today, mode)
     return scored.sort((a, b) => b.score - a.score)
   },
 
@@ -370,8 +373,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const t = selectedTopics(state)
     const p = selectedPapers(state)
     const o = selectedOfferings(state)
-    const scored = scoreAllTopics(t, p, o, state.subjects, today)
-    const newItems = autoFillPlanItems(scored, currentItems, dayKey, Date.now())
+    const mode = getPlanningMode(today, p)
+    const scored = scoreAllTopics(t, p, o, state.subjects, today, mode)
+    const newItems = autoFillPlanItems(scored, currentItems, dayKey, Date.now(), today, mode)
     set({ dailyPlan: [...currentItems, ...newItems], planDay: dayKey })
     saveToIdb(extractPersisted(get()))
   },

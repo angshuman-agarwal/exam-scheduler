@@ -15,6 +15,11 @@ import {
   getSuggestions,
   getOverdueTopics,
   autoFillPlanItems,
+  getPlanningMode,
+  examWindowBoost,
+  notStartedBoost,
+  coolingFactor,
+  crunchTopicScore,
   OVERDUE_RECENCY_THRESHOLD,
   OVERDUE_WEAKNESS_THRESHOLD,
 } from './engine'
@@ -250,11 +255,23 @@ describe('diversifyTopics', () => {
     expect(result).toHaveLength(4)
   })
 
-  it('allows >2 per subject if exam < 7 days', () => {
+  it('allows >2 per subject if exam <= 7 days', () => {
     const topics = [
       mkScored('a', 'cs', 0.9, '2026-05-05'),
       mkScored('b', 'cs', 0.8, '2026-05-05'),
       mkScored('c', 'cs', 0.7, '2026-05-05'),
+      mkScored('d', 'maths', 0.6),
+    ]
+    const result = diversifyTopics(topics, 4, TODAY)
+    const csCount = result.filter((t) => t.subject.id === 'cs').length
+    expect(csCount).toBe(3)
+  })
+
+  it('allows >2 per subject at exactly 7 days boundary', () => {
+    const topics = [
+      mkScored('a', 'cs', 0.9, '2026-05-08'),
+      mkScored('b', 'cs', 0.8, '2026-05-08'),
+      mkScored('c', 'cs', 0.7, '2026-05-08'),
       mkScored('d', 'maths', 0.6),
     ]
     const result = diversifyTopics(topics, 4, TODAY)
@@ -441,6 +458,65 @@ describe('autoFillPlanItems', () => {
     const result = autoFillPlanItems(scored, existing, '2026-05-01', 2000)
     expect(result).toHaveLength(0)
   })
+
+  // -- Crunch-aware cap tests --
+
+  const mkScoredWithExam = (id: string, score: number, subjectId: string, examDate: string): ScoredTopic => ({
+    topic: { id, paperId: `p-${id}`, offeringId: `o-${subjectId}`, name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
+    paper: { id: `p-${id}`, offeringId: `o-${subjectId}`, name: 'P', examDate },
+    offering: mkOffering(`o-${subjectId}`, subjectId),
+    subject: { id: subjectId, name: subjectId, color: '#000' },
+    score,
+    blockType: 'deep',
+    weakness: 0.5,
+    recencyFactor: 1.0,
+  })
+
+  it('crunch mode allows 3 topics from one non-urgent subject', () => {
+    // Exam 15 days away — non-urgent but in crunch window
+    const examDate = '2026-05-16'
+    const today = new Date('2026-05-01')
+    const scored = [
+      mkScoredWithExam('a', 0.9, 'bio', examDate),
+      mkScoredWithExam('b', 0.8, 'bio', examDate),
+      mkScoredWithExam('c', 0.7, 'bio', examDate),
+      mkScoredWithExam('d', 0.6, 'cs', examDate),
+    ]
+    const result = autoFillPlanItems(scored, [], '2026-05-01', 2000, today, 'crunch')
+    const bioCount = result.filter((i) => ['a', 'b', 'c'].includes(i.topicId)).length
+    expect(bioCount).toBe(3)
+    expect(result).toHaveLength(4)
+  })
+
+  it('normal mode caps non-urgent subject at 2 in auto-fill', () => {
+    const examDate = '2026-05-16'
+    const today = new Date('2026-05-01')
+    const scored = [
+      mkScoredWithExam('a', 0.9, 'bio', examDate),
+      mkScoredWithExam('b', 0.8, 'bio', examDate),
+      mkScoredWithExam('c', 0.7, 'bio', examDate),
+      mkScoredWithExam('d', 0.6, 'cs', examDate),
+      mkScoredWithExam('e', 0.5, 'cs', examDate),
+    ]
+    const result = autoFillPlanItems(scored, [], '2026-05-01', 2000, today, 'normal')
+    const bioCount = result.filter((i) => ['a', 'b', 'c'].includes(i.topicId)).length
+    expect(bioCount).toBe(2)
+  })
+
+  it('urgent subject can fill all 4 slots in crunch mode', () => {
+    // Exam 5 days away — urgent
+    const examDate = '2026-05-06'
+    const today = new Date('2026-05-01')
+    const scored = [
+      mkScoredWithExam('a', 0.9, 'bio', examDate),
+      mkScoredWithExam('b', 0.8, 'bio', examDate),
+      mkScoredWithExam('c', 0.7, 'bio', examDate),
+      mkScoredWithExam('d', 0.6, 'bio', examDate),
+    ]
+    const result = autoFillPlanItems(scored, [], '2026-05-01', 2000, today, 'crunch')
+    expect(result).toHaveLength(4)
+    expect(result.every((i) => ['a', 'b', 'c', 'd'].includes(i.topicId))).toBe(true)
+  })
 })
 
 // -- Behavioral Rotation Tests --
@@ -488,5 +564,177 @@ describe('piecewise cooldown rotation', () => {
     const top4 = sorted.slice(0, 4)
     const uniqueSubjects = new Set(top4.map((s) => s.subject.id))
     expect(uniqueSubjects.size).toBeGreaterThanOrEqual(3)
+  })
+})
+
+// -- Crunch Mode --
+
+describe('getPlanningMode', () => {
+  it('nearest exam > 21 days → normal', () => {
+    const papers: Paper[] = [
+      { id: 'p1', offeringId: 'o1', name: 'P1', examDate: '2026-05-30' },
+    ]
+    expect(getPlanningMode(TODAY, papers)).toBe('normal')
+  })
+
+  it('nearest exam <= 21 days → crunch', () => {
+    const papers: Paper[] = [
+      { id: 'p1', offeringId: 'o1', name: 'P1', examDate: '2026-05-20' },
+    ]
+    expect(getPlanningMode(TODAY, papers)).toBe('crunch')
+  })
+
+  it('no papers → normal', () => {
+    expect(getPlanningMode(TODAY, [])).toBe('normal')
+  })
+
+  it('exactly 21 days → crunch', () => {
+    const papers: Paper[] = [
+      { id: 'p1', offeringId: 'o1', name: 'P1', examDate: '2026-05-22' },
+    ]
+    expect(getPlanningMode(TODAY, papers)).toBe('crunch')
+  })
+
+  it('ignores past papers when determining mode', () => {
+    const papers: Paper[] = [
+      { id: 'p-past', offeringId: 'o1', name: 'Past', examDate: '2026-04-15' },
+      { id: 'p-future', offeringId: 'o1', name: 'Future', examDate: '2026-06-10' },
+    ]
+    // Past paper would clamp to 1 day via daysRemaining, but should be excluded
+    expect(getPlanningMode(TODAY, papers)).toBe('normal')
+  })
+
+  it('only past papers → normal', () => {
+    const papers: Paper[] = [
+      { id: 'p-past', offeringId: 'o1', name: 'Past', examDate: '2026-04-15' },
+    ]
+    expect(getPlanningMode(TODAY, papers)).toBe('normal')
+  })
+})
+
+describe('crunch scoring helpers', () => {
+  it('examWindowBoost increases as exam gets closer', () => {
+    expect(examWindowBoost(30)).toBe(1.0)
+    expect(examWindowBoost(21)).toBe(1.1)
+    expect(examWindowBoost(14)).toBe(1.2)
+    expect(examWindowBoost(7)).toBe(1.4)
+    expect(examWindowBoost(3)).toBe(1.6)
+    expect(examWindowBoost(1)).toBe(1.6)
+  })
+
+  it('notStartedBoost only applies to never-reviewed topics', () => {
+    const reviewed: Topic = { id: 't1', paperId: 'p1', offeringId: 'o1', name: 'T', confidence: 3, performanceScore: 0.5, lastReviewed: '2026-04-20' }
+    const fresh: Topic = { id: 't2', paperId: 'p1', offeringId: 'o1', name: 'T', confidence: 3, performanceScore: 0.5, lastReviewed: null }
+    expect(notStartedBoost(reviewed, 5)).toBe(1.0)
+    expect(notStartedBoost(fresh, 5)).toBe(1.5)
+    expect(notStartedBoost(fresh, 10)).toBe(1.3)
+    expect(notStartedBoost(fresh, 18)).toBe(1.15)
+    expect(notStartedBoost(fresh, 25)).toBe(1.0)
+  })
+
+  it('coolingFactor softens penalties in crunch mode', () => {
+    // 0 days: normal = 0.5, crunch = 0.75 (halfway between 0.5 and 1.0)
+    expect(coolingFactor('2026-05-01', TODAY, 'normal')).toBe(0.5)
+    expect(coolingFactor('2026-05-01', TODAY, 'crunch')).toBe(0.75)
+    // 2 days: normal = 0.7, crunch = 0.85
+    expect(coolingFactor('2026-04-29', TODAY, 'normal')).toBe(0.7)
+    expect(coolingFactor('2026-04-29', TODAY, 'crunch')).toBe(0.85)
+    // ≥1.0 stays the same in crunch mode
+    expect(coolingFactor('2026-04-21', TODAY, 'crunch')).toBe(1.0)
+    expect(coolingFactor('2026-04-01', TODAY, 'crunch')).toBe(1.4)
+  })
+})
+
+describe('crunch mode scoring', () => {
+  it('urgent topic from near exam beats similarly weak far-exam topic', () => {
+    const nearTopic: Topic = { id: 't1', paperId: 'p1', offeringId: 'o1', name: 'Near', confidence: 3, performanceScore: 0.5, lastReviewed: '2026-04-21' }
+    const farTopic: Topic = { id: 't2', paperId: 'p2', offeringId: 'o2', name: 'Far', confidence: 3, performanceScore: 0.5, lastReviewed: '2026-04-21' }
+    const nearPaper: Paper = { id: 'p1', offeringId: 'o1', name: 'Near Paper', examDate: '2026-05-10' }
+    const farPaper: Paper = { id: 'p2', offeringId: 'o2', name: 'Far Paper', examDate: '2026-06-01' }
+
+    const nearScore = crunchTopicScore(nearTopic, nearPaper, TODAY, 'crunch')
+    const farScore = crunchTopicScore(farTopic, farPaper, TODAY, 'crunch')
+    expect(nearScore).toBeGreaterThan(farScore)
+  })
+
+  it('not-started urgent topic gets boosted in crunch mode', () => {
+    const started: Topic = { id: 't1', paperId: 'p1', offeringId: 'o1', name: 'Started', confidence: 3, performanceScore: 0.5, lastReviewed: '2026-04-21' }
+    const notStarted: Topic = { id: 't2', paperId: 'p1', offeringId: 'o1', name: 'Fresh', confidence: 3, performanceScore: 0.5, lastReviewed: null }
+    const paper: Paper = { id: 'p1', offeringId: 'o1', name: 'P1', examDate: '2026-05-08' }
+
+    const startedScore = crunchTopicScore(started, paper, TODAY, 'crunch')
+    const freshScore = crunchTopicScore(notStarted, paper, TODAY, 'crunch')
+    expect(freshScore).toBeGreaterThan(startedScore)
+  })
+
+  it('same recently reviewed topic is penalized less in crunch than normal', () => {
+    const topic: Topic = { id: 't1', paperId: 'p1', offeringId: 'o1', name: 'T', confidence: 3, performanceScore: 0.5, lastReviewed: '2026-05-01' }
+    const paper: Paper = { id: 'p1', offeringId: 'o1', name: 'P1', examDate: '2026-05-10' }
+
+    const normalScore = crunchTopicScore(topic, paper, TODAY, 'normal')
+    const crunchScore = crunchTopicScore(topic, paper, TODAY, 'crunch')
+    expect(crunchScore).toBeGreaterThan(normalScore)
+  })
+})
+
+describe('crunch mode diversity relaxation', () => {
+  const mkScored = (id: string, subjectId: string, score: number, examDate = '2026-05-30'): ScoredTopic => ({
+    topic: { id, paperId: 'p', offeringId: `o-${subjectId}`, name: id, confidence: 3, performanceScore: 0.5, lastReviewed: null },
+    paper: { id: 'p', offeringId: `o-${subjectId}`, name: 'P1', examDate },
+    offering: mkOffering(`o-${subjectId}`, subjectId),
+    subject: { id: subjectId, name: subjectId, color: '#000' },
+    score,
+    blockType: 'deep',
+    weakness: 0.5,
+    recencyFactor: 1.0,
+  })
+
+  it('crunch mode allows 3 from same subject when paper <= 7 days', () => {
+    const topics = [
+      mkScored('a', 'cs', 0.9, '2026-05-05'),
+      mkScored('b', 'cs', 0.8, '2026-05-05'),
+      mkScored('c', 'cs', 0.7, '2026-05-05'),
+      mkScored('d', 'maths', 0.6),
+    ]
+    const result = diversifyTopics(topics, 4, TODAY, 'crunch')
+    const csCount = result.filter((t) => t.subject.id === 'cs').length
+    expect(csCount).toBe(3)
+    expect(result).toHaveLength(4)
+  })
+
+  it('crunch mode allows 3 at exactly 7 days boundary', () => {
+    const topics = [
+      mkScored('a', 'cs', 0.9, '2026-05-08'),
+      mkScored('b', 'cs', 0.8, '2026-05-08'),
+      mkScored('c', 'cs', 0.7, '2026-05-08'),
+      mkScored('d', 'maths', 0.6),
+    ]
+    const result = diversifyTopics(topics, 4, TODAY, 'crunch')
+    const csCount = result.filter((t) => t.subject.id === 'cs').length
+    expect(csCount).toBe(3)
+  })
+
+  it('crunch mode relaxes non-urgent cap to 3', () => {
+    const topics = [
+      mkScored('a', 'cs', 0.9, '2026-05-20'),
+      mkScored('b', 'cs', 0.8, '2026-05-20'),
+      mkScored('c', 'cs', 0.7, '2026-05-20'),
+      mkScored('d', 'maths', 0.6),
+    ]
+    const result = diversifyTopics(topics, 4, TODAY, 'crunch')
+    const csCount = result.filter((t) => t.subject.id === 'cs').length
+    expect(csCount).toBe(3)
+  })
+
+  it('normal mode still caps non-urgent at 2', () => {
+    const topics = [
+      mkScored('a', 'cs', 0.9, '2026-05-20'),
+      mkScored('b', 'cs', 0.8, '2026-05-20'),
+      mkScored('c', 'cs', 0.7, '2026-05-20'),
+      mkScored('d', 'maths', 0.6),
+    ]
+    const result = diversifyTopics(topics, 4, TODAY, 'normal')
+    const csCount = result.filter((t) => t.subject.id === 'cs').length
+    expect(csCount).toBe(2)
   })
 })
