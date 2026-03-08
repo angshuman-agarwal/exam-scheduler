@@ -9,7 +9,7 @@ export default defineConfig({
   reporter: 'html',
   snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{testFilePath}/{arg}{ext}',
   use: {
-    baseURL: 'http://127.0.0.1:4173/exam-scheduler/',
+    baseURL: 'http://127.0.0.1:4173/',
     viewport: { width: 1280, height: 900 },
     animations: 'disabled',
     trace: 'on-first-retry',

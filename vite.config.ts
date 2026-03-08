@@ -3,14 +3,18 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import packageJson from './package.json' with { type: 'json' }
 
 export default defineConfig({
-  base: '/exam-scheduler/',
+  base: '/',
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['icon.svg', 'favicon.ico', 'apple-touch-icon-180x180.png'],
       manifest: {
         name: 'Exam Scheduler',
@@ -19,8 +23,8 @@ export default defineConfig({
         theme_color: '#3B82F6',
         background_color: '#F9FAFB',
         display: 'standalone',
-        scope: '/exam-scheduler/',
-        start_url: '/exam-scheduler/',
+        scope: '/',
+        start_url: '/',
         icons: [
           {
             src: 'pwa-64x64.png',
@@ -46,7 +50,11 @@ export default defineConfig({
         ],
       },
       workbox: {
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globIgnores: ['**/version.json'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
