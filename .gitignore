@@ -37,3 +37,10 @@ playwright-report/
 
 # Generated
 public/version.json
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
