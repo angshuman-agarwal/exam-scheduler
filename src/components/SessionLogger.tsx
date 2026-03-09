@@ -133,11 +133,12 @@ interface ConfirmSheetProps {
   body: string
   confirmLabel: string
   cancelLabel: string
+  destructive?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
 
-function ConfirmSheet({ title, body, confirmLabel, cancelLabel, onConfirm, onCancel }: ConfirmSheetProps) {
+function ConfirmSheet({ title, body, confirmLabel, cancelLabel, destructive, onConfirm, onCancel }: ConfirmSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
 
@@ -201,7 +202,7 @@ function ConfirmSheet({ title, body, confirmLabel, cancelLabel, onConfirm, onCan
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-3 bg-red-500 text-white font-medium rounded-xl transition-colors hover:bg-red-600 active:bg-red-700"
+            className={`flex-1 py-3 text-white font-medium rounded-xl transition-colors ${destructive ? 'bg-red-500 hover:bg-red-600 active:bg-red-700' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}`}
           >
             {confirmLabel}
           </button>
@@ -211,7 +212,7 @@ function ConfirmSheet({ title, body, confirmLabel, cancelLabel, onConfirm, onCan
   )
 }
 
-function ConfidenceDots({ value }: { value: number; color: string }) {
+function ConfidenceDots({ value }: { value: number }) {
   return (
     <span className="text-sm leading-none" title={`Confidence: ${value}/5`}>
       {CONFIDENCE_EMOJI[Math.max(0, Math.min(4, value - 1))] ?? '\u{1F610}'}
@@ -385,11 +386,13 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
       )}
 
       {/* Topic header */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: subject.color }} />
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">{topic.name}</h2>
-          <p className="text-sm text-gray-500">{subject.name} <span className="text-gray-300">&middot;</span> {offering.label}</p>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: subject.color }} />
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">{topic.name}</h2>
+            <p className="text-sm text-gray-500">{subject.name} <span className="text-gray-300">&middot;</span> {offering.label}</p>
+          </div>
         </div>
       </div>
 
@@ -420,7 +423,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
       {/* Pre phase */}
       {phase === 'pre' && (
         <div>
-          <div className="text-center mt-12">
+          <div className="text-center mt-8">
             <button
               onClick={() => start(topic.id, source, scheduleItemId)}
               className="w-full py-4 bg-blue-600 text-white text-lg font-semibold rounded-xl transition-colors hover:bg-blue-700 active:bg-blue-800"
@@ -430,8 +433,8 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
           </div>
 
           {/* Session rules */}
-          <div className="mt-6 bg-gradient-to-br from-gray-50/70 via-white to-white rounded-xl p-3 shadow-sm border border-gray-100">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 px-1 mb-2">Session rules</p>
+          <div className="mt-4 bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 px-1 mb-2">Session preferences</p>
             <div className="space-y-1">
               <SettingsToggleRow
                 icon={<ShieldIcon className="w-4 h-4" />}
@@ -490,7 +493,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
           <p className="text-5xl font-mono font-bold text-gray-900 tabular-nums tracking-tight mb-1">
             {formatTime(displaySeconds)}
           </p>
-          <p className="text-sm text-gray-400 mt-1 mb-4 animate-pulse">Session in progress</p>
+          <p className="text-sm text-blue-500 font-medium mt-1 mb-4">Session in progress</p>
 
           {/* Status badges */}
           <div className="flex justify-center gap-2 mb-6">
@@ -510,7 +513,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
 
           <button
             onClick={() => setConfirmAction('stop')}
-            className="w-full py-4 bg-red-500 text-white text-lg font-semibold rounded-xl transition-colors hover:bg-red-600 active:bg-red-700 mb-3"
+            className="w-full py-4 bg-blue-600 text-white text-lg font-semibold rounded-xl transition-colors hover:bg-blue-700 active:bg-blue-800 mb-3"
           >
             Finish studying
           </button>
@@ -567,33 +570,31 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
 
       {/* Post phase: review (stopped) */}
       {phase === 'post-review' && !submitted && (
-        <div>
-          <p className="text-center text-sm text-gray-500 mb-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <p className="text-center text-sm text-gray-400 mb-5">
             Session: {formatTime(displaySeconds)}
           </p>
 
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+          <p className="text-base font-semibold text-gray-900 mb-3 text-center">
             How did it go?
-          </label>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <div className="flex justify-center gap-4">
-              {EMOJIS.map((emoji, i) => (
-                <button
-                  key={i}
-                  onClick={() => setConfidenceLevel(i + 1)}
-                  className={`text-3xl transition-all ${
-                    confidenceLevel === i + 1
-                      ? 'scale-125 drop-shadow-sm'
-                      : confidenceLevel != null
-                        ? 'opacity-40 grayscale'
-                        : ''
-                  }`}
-                  aria-label={`Confidence ${i + 1} of 5`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
+          </p>
+          <div className="flex justify-center gap-4 mb-4">
+            {EMOJIS.map((emoji, i) => (
+              <button
+                key={i}
+                onClick={() => setConfidenceLevel(i + 1)}
+                className={`text-3xl transition-all ${
+                  confidenceLevel === i + 1
+                    ? 'scale-125 drop-shadow-sm'
+                    : confidenceLevel != null
+                      ? 'opacity-40 grayscale'
+                      : ''
+                }`}
+                aria-label={`Confidence ${i + 1} of 5`}
+              >
+                {emoji}
+              </button>
+            ))}
           </div>
 
           <textarea
@@ -601,13 +602,13 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Any notes? (optional)"
             rows={2}
-            className="w-full mt-4 p-3 bg-white rounded-xl border border-gray-100 shadow-sm text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 bg-white rounded-xl border border-gray-200 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
 
           <button
             onClick={handleComplete}
             disabled={confidenceLevel == null}
-            className="w-full mt-6 py-3.5 bg-blue-600 text-white font-medium rounded-xl transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full mt-4 py-3.5 bg-blue-600 text-white font-medium rounded-xl transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Complete
           </button>
@@ -616,15 +617,15 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
 
       {/* Post phase: review submitted */}
       {phase === 'post-review' && submitted && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center mt-1">
           <p className="text-lg font-semibold text-gray-900 mb-3">
             {getEncouragement(rawScore)}
           </p>
 
           <div className="flex items-center justify-center gap-2 text-sm mb-3">
-            <ConfidenceDots value={confidenceBefore} color={subject.color} />
+            <ConfidenceDots value={confidenceBefore} />
             <span className="text-gray-400">{'\u2192'}</span>
-            <ConfidenceDots value={confidenceAfter} color={subject.color} />
+            <ConfidenceDots value={confidenceAfter} />
           </div>
 
           <p className="text-sm text-gray-500 mb-4">
@@ -636,7 +637,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Add a note? (optional)"
             rows={2}
-            className="w-full p-3 bg-gray-50 rounded-xl border border-gray-100 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 bg-white rounded-xl border border-gray-200 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
 
           <p className="text-xs text-gray-400 text-center mt-4 mb-3">Your progress has been updated</p>
@@ -660,32 +661,36 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
 
       {/* Post phase: interrupted */}
       {phase === 'post-interrupted' && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center">
-          <div className="text-4xl mb-4">{'\u26A0\uFE0F'}</div>
-          <p className="text-lg font-semibold text-gray-900 mb-2">Session interrupted</p>
-          <p className="text-sm text-gray-500 mb-6">
-            You were away for too long while strict mode was on. This session won't be counted.
-          </p>
-          <button
-            onClick={() => { discard(); onBack() }}
-            className="w-full py-3 bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors hover:bg-gray-200"
-          >
-            Back to Plan
-          </button>
+        <div className="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
+          <div className="h-1 bg-red-400" />
+          <div className="p-6 text-center">
+            <div className="text-4xl mb-4">{'\u26A0\uFE0F'}</div>
+            <p className="text-lg font-semibold text-gray-900 mb-2">Session interrupted</p>
+            <p className="text-sm text-gray-500 mb-6">
+              You were away for too long while strict mode was on. This session won't be counted.
+            </p>
+            <button
+              onClick={() => { discard(); onBack() }}
+              className="w-full py-3 bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors hover:bg-gray-200"
+            >
+              Back to Plan
+            </button>
+          </div>
         </div>
       )}
 
       {/* Confirm sheet */}
       {confirmAction && (
         <ConfirmSheet
-          title="End session?"
+          title={confirmAction === 'stop' ? 'End session?' : 'Discard session?'}
           body={
             confirmAction === 'stop'
               ? "You'll move to review and can still log how it went."
               : 'This session will be lost.'
           }
-          confirmLabel="End session"
+          confirmLabel={confirmAction === 'stop' ? 'End session' : 'Discard'}
           cancelLabel={confirmAction === 'stop' ? 'Keep studying' : 'Cancel'}
+          destructive={confirmAction === 'discard'}
           onConfirm={handleConfirm}
           onCancel={handleCancelConfirm}
         />
