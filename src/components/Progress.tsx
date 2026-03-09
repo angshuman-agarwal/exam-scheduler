@@ -121,6 +121,32 @@ function focusSuggestion(
   return { topicName: t.name, subjectName: s.name, subjectColor: s.color }
 }
 
+function sessionResult(score: number): { emoji: string; label: string; chipClass: string } {
+  if (score >= 80) return { emoji: '\uD83D\uDE0E', label: 'Strong', chipClass: 'bg-green-50 text-green-700' }
+  if (score >= 60) return { emoji: '\uD83D\uDE42', label: 'Solid', chipClass: 'bg-blue-50 text-blue-700' }
+  return { emoji: '\uD83D\uDE1F', label: 'Needs attention', chipClass: 'bg-amber-50 text-amber-700' }
+}
+
+function subjectRecencyLabel(topicIds: Set<string>, allSessions: Session[], todayISO: string): { text: string; stale: boolean } {
+  let latest: string | null = null
+  for (const s of allSessions) {
+    if (topicIds.has(s.topicId) && (!latest || s.date > latest)) latest = s.date
+  }
+  if (!latest) return { text: 'Not yet studied', stale: true }
+  if (latest === todayISO) return { text: 'Studied today', stale: false }
+
+  // Parse day keys as local-midnight dates for safe integer day diff
+  const [ly, lm, ld] = latest.split('-').map(Number)
+  const [ty, tm, td] = todayISO.split('-').map(Number)
+  const latestMidnight = new Date(ly, lm - 1, ld)
+  const todayMidnight = new Date(ty, tm - 1, td)
+  const diffDays = Math.floor((todayMidnight.getTime() - latestMidnight.getTime()) / 86400000)
+
+  if (diffDays === 1) return { text: 'Studied yesterday', stale: false }
+  if (diffDays <= 7) return { text: `Studied ${diffDays} days ago`, stale: false }
+  return { text: 'Not studied this week', stale: true }
+}
+
 function outcomeChip(score: number): { label: string; color: string } {
   if (score >= 0.8) return { label: 'Strong', color: 'bg-green-100 text-green-700' }
   if (score >= 0.6) return { label: 'Solid', color: 'bg-blue-100 text-blue-700' }
@@ -466,6 +492,7 @@ function SubjectRow({
   const d7ISO = getLocalDayKey(d7)
   const recentSubj = allSessions.filter((s) => topicIds.has(s.topicId) && s.date > d7ISO && s.date <= todayISO)
   const avgScore7d = recentSubj.length > 0 ? Math.round((recentSubj.reduce((a, s) => a + s.score, 0) / recentSubj.length) * 100) : null
+  const recency = subjectRecencyLabel(topicIds, allSessions, todayISO)
 
   // Notes
   const allOfferingNotes: (Note & { topicName: string })[] = []
@@ -501,6 +528,9 @@ function SubjectRow({
                 )}
                 <span className="text-xs text-gray-400">
                   {'\u00B7'} {studied} / {totalTopics} topics studied
+                </span>
+                <span className={`text-xs ${recency.stale ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {'\u00B7'} {recency.text}
                 </span>
               </div>
             </div>
@@ -538,8 +568,11 @@ function SubjectRow({
         <div className="overflow-hidden">
           <div className="px-4 pb-4 border-t border-gray-100">
             {avgScore7d !== null && (
-              <div className="mt-3 mb-3">
-                <p className="text-xs text-gray-500">Average result this week: <span className={`font-semibold ${outcomeChip(avgScore7d / 100).color} px-1.5 py-0.5 rounded-full`}>{outcomeChip(avgScore7d / 100).label}</span> <span className="text-gray-400">&middot; {avgScore7d}%</span></p>
+              <div className="mt-3 mb-3 flex items-center gap-2">
+                <span className="text-xs text-gray-500">This week's session result</span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${sessionResult(avgScore7d).chipClass}`}>
+                  {sessionResult(avgScore7d).emoji} {sessionResult(avgScore7d).label}
+                </span>
               </div>
             )}
 
@@ -859,6 +892,7 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
   }
 
   const hasSessions = filteredSessions.length > 0
+  const weeklyResult = momentum.thisWeek > 0 ? sessionResult(momentum.thisWeek) : null
 
   // SubjectAllocationCard show guard
   const showDistribution = useMemo(() => {
@@ -888,11 +922,23 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
       {hasSessions && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <MetricTile label="Topics reviewed" value={String(topicsReviewedThisWeek)} />
-          <MetricTile
-            label="Avg score"
-            value={momentum.thisWeek > 0 ? `${momentum.thisWeek}%` : '\u2014'}
-            delta={momentum.delta !== 0 ? { value: `${momentum.delta > 0 ? '+' : ''}${momentum.delta}%`, positive: momentum.delta > 0 } : undefined}
-          />
+          <div className="bg-white rounded-xl border border-gray-100 p-3.5">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Session result</p>
+            {weeklyResult ? (
+              <>
+                <p className="text-lg font-bold text-gray-900">
+                  {weeklyResult.emoji} {weeklyResult.label}
+                </p>
+                {momentum.delta !== 0 && !momentum.prevEmpty && (
+                  <p className={`text-[10px] ${momentum.delta > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                    {momentum.delta > 0 ? 'Up from last week' : 'Down from last week'}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-lg font-bold text-gray-900">{'\u2014'}</p>
+            )}
+          </div>
           <MetricTile label="Subjects active" value={String(subjectsActiveThisWeek)} />
           <MetricTile label="Days to exam" value={nearestExam ? String(nearestExam.days) : '\u2014'} />
         </div>
