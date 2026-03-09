@@ -461,11 +461,13 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel, onB
           {!isEdit && onBackToHome && (
             <button
               onClick={onBackToHome}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white text-gray-500 text-sm font-medium px-3 py-1.5 hover:bg-gray-50 active:scale-[0.98] transition-all duration-150 mb-4"
+              className="inline-flex items-center gap-2 rounded-2xl border border-gray-200/80 bg-white text-gray-700 text-sm font-semibold tracking-tight pl-1.5 pr-4 py-1.5 shadow-sm hover:bg-gray-50 hover:shadow-md hover:border-gray-300/80 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-150 mb-6"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-              </svg>
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-slate-100">
+                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                </svg>
+              </span>
               Back to home
             </button>
           )}
