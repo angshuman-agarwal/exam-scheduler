@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import LandingPage from './components/LandingPage'
+import FeedbackSheet from './components/FeedbackSheet'
 import { useAppStore } from './stores/app.store'
 import { useTimerStore } from './stores/timer.store'
 import { scoreSingleTopic } from './lib/engine'
@@ -59,6 +60,7 @@ function App() {
   const [activePaper, setActivePaper] = useState<Paper | null>(null)
   const [editingSetup, setEditingSetup] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showFeedback, setShowFeedback] = useState(false)
   const [recoveryDone, setRecoveryDone] = useState(false)
   const recoveryRan = useRef(false)
 
@@ -211,15 +213,19 @@ function App() {
   // Returning-user Home: full-screen front door, no bottom nav
   if (page === 'home') {
     return (
-      <LandingPage
-        onboarded={true}
-        onGetStarted={() => {}}
-        onContinuePlanning={() => navigateTo('today')}
-        onViewProgress={() => navigateTo('progress')}
-        onEditSubjects={() => setEditingSetup(true)}
-        nearestUserExam={nearestUserExam}
-        selectedSubjectDetails={selectedSubjectDetails}
-      />
+      <>
+        <LandingPage
+          onboarded={true}
+          onGetStarted={() => {}}
+          onContinuePlanning={() => navigateTo('today')}
+          onViewProgress={() => navigateTo('progress')}
+          onEditSubjects={() => setEditingSetup(true)}
+          onOpenFeedback={() => setShowFeedback(true)}
+          nearestUserExam={nearestUserExam}
+          selectedSubjectDetails={selectedSubjectDetails}
+        />
+        {showFeedback && <FeedbackSheet onClose={() => setShowFeedback(false)} />}
+      </>
     )
   }
 

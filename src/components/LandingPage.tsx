@@ -7,6 +7,7 @@ interface LandingPageProps {
   onContinuePlanning?: () => void
   onViewProgress?: () => void
   onEditSubjects?: () => void
+  onOpenFeedback?: () => void
   nearestUserExam?: { days: number; subjectName: string; paperName: string; board: string } | null
   selectedSubjectDetails?: { name: string; board: string }[]
 }
@@ -214,6 +215,7 @@ export default function LandingPage({
   onContinuePlanning,
   onViewProgress,
   onEditSubjects,
+  onOpenFeedback,
   nearestUserExam,
   selectedSubjectDetails,
 }: LandingPageProps) {
@@ -424,6 +426,22 @@ export default function LandingPage({
               </svg>
               <p className="text-sm font-semibold text-gray-900 mb-0.5">Edit setup</p>
               <p className="text-xs text-gray-500">Add or change subjects</p>
+            </button>
+          </div>
+          <div className="mt-3">
+            <button
+              onClick={onOpenFeedback}
+              className="rounded-xl border border-gray-100 bg-white p-4 hover:border-gray-200 hover:shadow-sm transition cursor-pointer text-left w-full"
+            >
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38a1.125 1.125 0 0 1-1.536-.41 12.012 12.012 0 0 1-1.634-4.264m5.305-5.305c.688.06 1.386.09 2.09.09h.75a4.5 4.5 0 0 1 0 9h-.75c-.704 0-1.402.03-2.09.09m0-9.18c-.253-.962-.584-1.892-.985-2.783a1.125 1.125 0 0 1 .463-1.511l.657-.38c.55-.318 1.247-.106 1.536.41a12.012 12.012 0 0 1 1.634 4.264" />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Share feedback</p>
+                  <p className="text-xs text-gray-400">Tell us what felt confusing, useful, or broken</p>
+                </div>
+              </div>
             </button>
           </div>
         </section>
