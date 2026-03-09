@@ -34,41 +34,179 @@ function getCountdown() {
   return earliest
 }
 
-const VALUE_SECTIONS = [
+const STORY_STEPS = [
   {
-    label: 'Build your setup',
-    title: 'Pick your subjects and exam boards',
-    description:
-      'Choose the subjects you\'re sitting, and the app maps every paper and topic for you. No blank spreadsheets, no guesswork.',
-    icon: (
-      <svg className="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-      </svg>
-    ),
+    step: 1,
+    title: 'Choose your subjects',
+    description: 'Pick the subjects you\'re sitting. The app maps every paper and topic automatically.',
   },
   {
-    label: 'Get a plan that shifts with exam dates',
-    title: 'Revision that knows what\'s urgent',
-    description:
-      'The planner weighs exam proximity, your confidence, and what you\'ve already covered. As dates get closer, it shifts focus automatically.',
-    icon: (
-      <svg className="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-      </svg>
-    ),
+    step: 2,
+    title: 'Get today\'s plan',
+    description: 'A ranked revision list that shifts with exam dates, confidence, and what you\'ve already covered.',
   },
   {
-    label: 'Track progress without losing momentum',
-    title: 'See where you stand at a glance',
-    description:
-      'Log sessions, rate your confidence, and watch coverage build across every paper. No surprises on exam day.',
-    icon: (
-      <svg className="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-      </svg>
-    ),
+    step: 3,
+    title: 'Focus and study',
+    description: 'Start a timed session on the topic that matters most. Rate your confidence when you finish.',
   },
 ]
+
+function SetupPreview() {
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5">
+        {['Maths', 'Chemistry', 'English'].map((s) => (
+          <span key={s} className="rounded-md bg-blue-50 border border-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">{s}</span>
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500">AQA</span>
+        <div className="flex gap-0.5">
+          {[true, true, true, false, false].map((on, i) => (
+            <span key={i} className={`w-1.5 h-1.5 rounded-full ${on ? 'bg-blue-400' : 'bg-gray-200'}`} />
+          ))}
+        </div>
+        <span className="text-[10px] text-gray-400">Confidence</span>
+      </div>
+    </div>
+  )
+}
+
+function PlanPreview() {
+  const topics = [
+    { name: 'Algebra & Functions', tag: 'Recommended', accent: true },
+    { name: 'Organic Chemistry', tag: '12 days left', accent: false },
+    { name: 'Shakespeare Analysis', tag: null, accent: false },
+  ]
+  return (
+    <div className="space-y-1.5">
+      {topics.map((t) => (
+        <div key={t.name} className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs ${t.accent ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50 border border-gray-100'}`}>
+          <span className={`font-medium ${t.accent ? 'text-blue-800' : 'text-gray-700'}`}>{t.name}</span>
+          {t.tag && <span className={`text-[10px] font-semibold ${t.accent ? 'text-blue-500' : 'text-gray-400'}`}>{t.tag}</span>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SessionPreview() {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">Studying</span>
+        <span className="inline-flex items-center gap-1 text-[10px] text-gray-400">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          Active
+        </span>
+      </div>
+      <div className="text-center py-1">
+        <p className="text-2xl font-bold tabular-nums text-gray-900 tracking-tight">24:00</p>
+      </div>
+      <div className="rounded-lg bg-white border border-gray-100 px-2.5 py-1.5">
+        <p className="text-xs font-medium text-gray-800">Algebra &amp; Functions</p>
+        <p className="text-[10px] text-gray-400">Maths P1</p>
+      </div>
+      <div className="flex items-center justify-center gap-3">
+        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-gray-200 bg-white">
+          <svg className="w-2.5 h-2.5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
+        </span>
+        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-gray-200 bg-white">
+          <svg className="w-2.5 h-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" /></svg>
+        </span>
+      </div>
+      <div className="text-center">
+        <span className="text-[10px] text-gray-400">Confidence check after session</span>
+      </div>
+    </div>
+  )
+}
+
+function StoryStepCard({ step, title, description, children }: { step: number; title: string; description: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 flex flex-col">
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600 text-sm font-bold mb-4">{step}</span>
+      <h3 className="text-lg font-semibold text-gray-900 mb-1.5">{title}</h3>
+      <p className="text-sm text-gray-500 leading-relaxed mb-5">{description}</p>
+      <div className="mt-auto rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function ProductShowcase() {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 sm:p-8">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-4">
+        Your revision journey
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Setup card */}
+        <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <span className="inline-block rounded-md bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 mb-3">Setup</span>
+          <div className="space-y-1.5">
+            {['Maths — AQA', 'Chemistry — OCR', 'English Lit — AQA'].map((s) => (
+              <div key={s} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                <span className="text-xs text-gray-700">{s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Today card */}
+        <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
+          <span className="inline-block rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 mb-3">Recommended</span>
+          <div className="space-y-1.5">
+            <div className="rounded-lg bg-white border border-blue-100 px-2.5 py-1.5">
+              <p className="text-xs font-medium text-blue-800">Algebra & Functions</p>
+              <p className="text-[10px] text-blue-500">Maths P1 — 12 days</p>
+            </div>
+            <div className="rounded-lg bg-white/70 border border-gray-100 px-2.5 py-1.5">
+              <p className="text-xs font-medium text-gray-700">Organic Chemistry</p>
+              <p className="text-[10px] text-gray-400">Chem P2 — 18 days</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Study session card */}
+        <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <span className="inline-block rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 mb-3">Focus</span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-bold tabular-nums text-gray-900">24:00</span>
+              <span className="inline-flex items-center gap-1 text-[10px] text-gray-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Active
+              </span>
+            </div>
+            <div className="rounded-lg bg-white border border-gray-100 px-2.5 py-1.5">
+              <p className="text-xs font-medium text-gray-800">Algebra &amp; Functions</p>
+              <p className="text-[10px] text-gray-400">Maths P1</p>
+            </div>
+            <p className="text-[10px] text-gray-400 text-center">Confidence check after session</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Workflow strip */}
+      <div className="flex items-center justify-center gap-2 mt-6 flex-wrap">
+        {['Setup', "Today's plan", 'Study session', 'Progress'].map((label, i, arr) => (
+          <span key={label} className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-500">{label}</span>
+            {i < arr.length - 1 && (
+              <svg className="w-3 h-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            )}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function LandingPage({
   onboarded,
@@ -237,7 +375,7 @@ export default function LandingPage({
                 </button>
                 <button
                   onClick={scrollToDemo}
-                  className="px-6 py-3 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium text-sm
+                  className="sm:hidden px-6 py-3 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium text-sm
                              hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all duration-150"
                 >
                   See how it works
@@ -294,40 +432,43 @@ export default function LandingPage({
       {!onboarded && (
         <>
           {/* Demo video — mobile below hero */}
-          <section ref={demoRef} className="px-5 pb-10 sm:hidden max-w-5xl mx-auto">
+          <section className="px-5 pb-10 sm:hidden max-w-5xl mx-auto">
             <DemoMedia />
           </section>
 
-          {/* Value sections */}
-          <section className="px-5 py-12 sm:py-16 max-w-5xl mx-auto">
-            <div className="sm:grid sm:grid-cols-3 sm:gap-8 space-y-6 sm:space-y-0">
-              {VALUE_SECTIONS.map((section) => (
-                <div
-                  key={section.label}
-                  className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5"
-                >
-                  <div className="mb-3">{section.icon}</div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-1">
-                    {section.label}
-                  </p>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">
-                    {section.title}
-                  </h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">
-                    {section.description}
-                  </p>
-                </div>
+          {/* How it works — story steps */}
+          <section ref={demoRef} className="px-5 py-14 sm:py-20 max-w-5xl mx-auto">
+            <div className="mb-8 sm:mb-10">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-600 mb-2">
+                How it works
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
+                From exam setup to focused study
+              </h2>
+              <p className="text-base text-gray-500 max-w-lg">
+                Three steps to a revision plan that adapts as your exams approach.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+              {STORY_STEPS.map((s) => (
+                <StoryStepCard key={s.step} step={s.step} title={s.title} description={s.description}>
+                  {s.step === 1 && <SetupPreview />}
+                  {s.step === 2 && <PlanPreview />}
+                  {s.step === 3 && <SessionPreview />}
+                </StoryStepCard>
               ))}
             </div>
           </section>
 
+          {/* Product showcase */}
+          <section className="px-5 pb-12 sm:pb-16 max-w-5xl mx-auto">
+            <ProductShowcase />
+          </section>
+
           {/* Trust strip */}
-          <section className="px-5 py-8 pb-12 max-w-5xl mx-auto text-center">
-            <p className="text-xs text-gray-400 mb-1">
-              Works offline-first
-            </p>
+          <section className="px-5 py-6 pb-10 max-w-5xl mx-auto text-center">
             <p className="text-xs text-gray-400">
-              Built for GCSE, A-level, and beyond
+              Works offline-first &middot; Built for GCSE, A-level, and beyond
             </p>
           </section>
         </>
