@@ -91,7 +91,7 @@ function BoardTile({
       }`}
       style={selected ? {
         borderColor: subjectColor,
-        backgroundColor: pastel(subjectColor, 0.05),
+        backgroundColor: '#fff',
       } : undefined}
     >
       <div className="flex items-center justify-between mb-1.5">
@@ -120,7 +120,7 @@ function StatusBadge({ isSelected, chosenLabel }: { isSelected: boolean; chosenL
     return <span className="text-[11px] text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">Not taking</span>
   }
   if (!chosenLabel) {
-    return <span className="text-[11px] text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">Pick board</span>
+    return <span className="text-[11px] text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">Pick board</span>
   }
   return <span className="text-[11px] text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full font-medium">{chosenLabel}</span>
 }
@@ -246,12 +246,12 @@ function SummaryTray({
               const conf = oid ? confidences.get(oid) : undefined
               return (
                 <div key={s.id} className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                  <div className="w-1 h-4 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
                   <span className="text-sm font-medium text-gray-800 flex-1 truncate">{s.name}</span>
                   {off ? (
                     <span className="text-xs text-gray-400 shrink-0">{board?.name} {off.spec}</span>
                   ) : (
-                    <span className="text-xs text-amber-500 shrink-0">Pick board</span>
+                    <span className="text-xs text-gray-400 shrink-0">Pick board</span>
                   )}
                   {conf !== undefined && (
                     <span className="text-sm leading-none shrink-0">{EMOJIS[Math.max(0, Math.min(4, conf - 1))]}</span>
@@ -471,18 +471,18 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel, onB
               Back to home
             </button>
           )}
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-3">
             {isEdit ? 'Update your exam setup' : 'Build your exam setup'}
           </h1>
-          <p className="text-sm text-gray-500 leading-relaxed mb-1">
+          <p className="text-sm text-gray-500 leading-relaxed mb-2">
             Pick the subjects you take, choose the right board, and rate your confidence.
           </p>
           {isEdit && (
-            <p className="text-xs text-gray-400 mb-7">
+            <p className="text-xs text-gray-400 mb-10">
               Changing your setup won't erase past study history.
             </p>
           )}
-          {!isEdit && <div className="mb-8" />}
+          {!isEdit && <div className="mb-10" />}
 
           <div className="flex flex-col gap-3">
             {subjects.map((s) => {
@@ -497,28 +497,19 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel, onB
               return (
                 <div
                   key={s.id}
-                  className={`rounded-2xl border overflow-hidden transition-all duration-200 ${
+                  className={`rounded-2xl border border-l-[3px] overflow-hidden transition-all duration-200 ${
                     isSelected
-                      ? 'border-gray-200 shadow-sm bg-white'
+                      ? 'border-gray-200 shadow-md ring-1 ring-gray-200/60 bg-white'
                       : 'border-gray-100 bg-white'
                   }`}
+                  style={{ borderLeftColor: isSelected ? s.color : '#e5e7eb' }}
                 >
-                  {/* Color accent bar */}
-                  <div
-                    className="h-1 transition-all duration-200"
-                    style={{ backgroundColor: isSelected ? s.color : pastel(s.color, 0.25) }}
-                  />
-
                   {/* Card header */}
                   <button
                     onClick={() => toggleExpanded(s.id)}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+                    className="w-full flex items-center gap-3.5 px-5 py-4 text-left"
                   >
-                    <div
-                      className="w-1.5 h-5 rounded-full shrink-0"
-                      style={{ backgroundColor: s.color }}
-                    />
-                    <span className={`text-sm font-semibold flex-1 truncate ${isSelected ? 'text-gray-900' : 'text-gray-500'}`}>
+                    <span className={`text-[15px] font-semibold flex-1 truncate ${isSelected ? 'text-gray-900' : 'text-gray-500'}`}>
                       {s.name}
                     </span>
                     <StatusBadge
@@ -542,29 +533,28 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel, onB
                     style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
                   >
                     <div className="overflow-hidden">
-                      <div className="px-4 pb-5 border-t border-gray-50">
+                      <div className="mx-3 mb-3 mt-1 px-4 pb-5 pt-1 rounded-xl bg-gray-50/70 border border-gray-100">
                         {/* Take this subject? */}
                         <div className="pt-4 pb-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">Take this subject?</p>
-                          <div className="flex gap-2">
+                          <div className="flex rounded-xl bg-gray-100 p-1 gap-1">
                             <button
                               onClick={() => setSelected(s.id, false)}
-                              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                                 !isSelected
-                                  ? 'bg-gray-200 text-gray-700'
-                                  : 'bg-gray-50 text-gray-400 border border-gray-200 hover:bg-gray-100'
+                                  ? 'bg-white text-gray-700 shadow-sm'
+                                  : 'text-gray-400 hover:text-gray-500'
                               }`}
                             >
                               Not taking
                             </button>
                             <button
                               onClick={() => setSelected(s.id, true)}
-                              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                                 isSelected
-                                  ? 'text-white'
-                                  : 'bg-blue-50/60 text-blue-400 border border-blue-200/60 hover:bg-blue-100/80 hover:text-blue-500'
+                                  ? 'bg-blue-600 text-white shadow-sm'
+                                  : 'text-gray-400 hover:text-gray-500'
                               }`}
-                              style={isSelected ? { backgroundColor: s.color } : undefined}
                             >
                               Yes, I take this
                             </button>
