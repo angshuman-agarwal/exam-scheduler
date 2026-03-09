@@ -17,8 +17,7 @@ export default function UpdateToast({
   const [needRefreshValue, setNeedRefresh] = needRefresh
   const [offlineReadyValue, setOfflineReady] = offlineReady
 
-  const timerMode = useTimerStore((s) => s.session?.mode ?? null)
-  const hasActiveSession = timerMode === 'running' || timerMode === 'paused'
+  const hasActiveSessionFlow = useTimerStore((s) => s.session !== null)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [refreshing, setRefreshing] = useState(false)
@@ -77,7 +76,7 @@ export default function UpdateToast({
             ? 'opacity-60 cursor-not-allowed'
             : ''
         } ${
-          hasActiveSession
+          hasActiveSessionFlow
             ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
             : 'text-white bg-blue-500 hover:bg-blue-600'
         }`}
@@ -86,9 +85,9 @@ export default function UpdateToast({
       </button>
     )
 
-    if (hasActiveSession) {
+    if (hasActiveSessionFlow) {
       return (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-xl px-5 py-4 shadow-lg max-w-sm w-[calc(100%-2rem)]">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-xl px-5 py-4 shadow-lg max-w-sm w-[calc(100%-2rem)]">
           <p className="text-sm font-semibold text-gray-900">Refresh required</p>
           <p className="text-sm text-gray-600 mt-1">
             Finish this session first if needed, then refresh to continue.
