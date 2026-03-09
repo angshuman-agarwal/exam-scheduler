@@ -25,18 +25,6 @@ function sessionsInWindow(sessions: Session[], today: Date, daysBack: number): S
   return sessions.filter((s) => s.date > cutoffISO)
 }
 
-type DotIntensity = 'none' | 'light' | 'medium' | 'dark'
-
-function weekDotIntensity(sessions: Session[], dayISO: string): DotIntensity {
-  const daySessions = sessions.filter((s) => s.date === dayISO)
-  if (daySessions.length === 0) return 'none'
-  const dur = totalDurationSeconds(daySessions)
-  if (dur === 0) return 'light'
-  if (dur < 1200) return 'light'
-  if (dur < 2700) return 'medium'
-  return 'dark'
-}
-
 function topicToSubjectId(topicId: string, topicMap: Map<string, Topic>, offeringMap: Map<string, Offering>): string | undefined {
   const topic = topicMap.get(topicId)
   if (!topic) return undefined
@@ -117,7 +105,6 @@ function focusSuggestion(
   todayISO: string,
   today: Date,
 ): { topicName: string; subjectName: string; subjectColor: string } | null {
-  // Only consider topics whose paper has a future exam
   const now = toMidnightUTC(today)
   const futureTopics = topics.filter((t) => {
     const paper = papers.find((p) => p.id === t.paperId)
@@ -138,21 +125,6 @@ function outcomeChip(score: number): { label: string; color: string } {
   if (score >= 0.8) return { label: 'Strong', color: 'bg-green-100 text-green-700' }
   if (score >= 0.6) return { label: 'Solid', color: 'bg-blue-100 text-blue-700' }
   return { label: 'Needs work', color: 'bg-amber-100 text-amber-700' }
-}
-
-function getWeekDots(sessions: Session[], today: Date): { day: string; intensity: DotIntensity }[] {
-  const dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-  const todayDay = today.getDay()
-  const mondayOffset = todayDay === 0 ? 6 : todayDay - 1
-  const monday = new Date(today)
-  monday.setDate(monday.getDate() - mondayOffset)
-
-  return dayNames.map((day, i) => {
-    const d = new Date(monday)
-    d.setDate(d.getDate() + i)
-    const iso = getLocalDayKey(d)
-    return { day, intensity: weekDotIntensity(sessions, iso) }
-  })
 }
 
 function momentumData(
@@ -199,17 +171,14 @@ function deriveStatusChip(
   const days = exam ? daysRemaining(exam, today) : null
   const coverage = coveragePct(group.topics)
 
-  // At risk soon
   if (days !== null && days <= 30 && coverage < 0.6) {
     return { label: 'At risk soon', color: 'bg-red-100 text-red-700', priority: 0 }
   }
 
-  // Needs attention
   if (weakestTopics(group.topics, 1, todayISO).length > 0) {
     return { label: 'Needs attention', color: 'bg-amber-100 text-amber-700', priority: 1 }
   }
 
-  // Improving — compare recent vs prev week avg scores
   const topicIds = new Set(group.topics.map((t) => t.id))
   const d7 = new Date(today)
   d7.setDate(d7.getDate() - 7)
@@ -229,13 +198,11 @@ function deriveStatusChip(
     }
   }
 
-  // Not started — no topics studied yet (and not already caught by At risk soon)
   const studied = group.topics.filter((t) => t.lastReviewed !== null).length
   if (studied === 0) {
     return { label: 'Not started', color: 'bg-gray-100 text-gray-600', priority: 3 }
   }
 
-  // On track
   return { label: 'On track', color: 'bg-blue-100 text-blue-700', priority: 4 }
 }
 
@@ -247,36 +214,36 @@ function supportiveCopy(weekSessionCount: number): string {
 
 // -- Sub-components --
 
-const CONFIDENCE_EMOJI = ['\u{1F630}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F60E}'] as const
+const CONFIDENCE_COLORS = ['#ef4444', '#f59e0b', '#84cc16', '#16a34a', '#0d9488'] as const
 
-function ConfidenceDots({ level }: { level: number; color: string }) {
+function ConfidenceDots({ level }: { level: number; color?: string }) {
+  const fill = CONFIDENCE_COLORS[Math.max(0, Math.min(4, level - 1))]
   return (
-    <span className="text-sm leading-none" title={`Confidence: ${level}/5`}>
-      {CONFIDENCE_EMOJI[Math.max(0, Math.min(4, level - 1))] ?? '\u{1F610}'}
-    </span>
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span
+          key={i}
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ backgroundColor: i <= level ? fill : '#e5e7eb' }}
+        />
+      ))}
+    </div>
   )
 }
 
-const intensityColor: Record<DotIntensity, string> = {
-  none: 'bg-gray-100',
-  light: 'bg-blue-200',
-  medium: 'bg-blue-400',
-  dark: 'bg-blue-600',
-}
-
-// Block 1
-function WeeklySnapshotHero({
+// Block 1: OverviewHero
+function OverviewHero({
   streak,
   weekDuration,
   weekSessionCount,
-  weekDots,
+  nearestExam,
   hasSessions,
   onGoToToday,
 }: {
   streak: number
   weekDuration: number
   weekSessionCount: number
-  weekDots: { day: string; intensity: DotIntensity }[]
+  nearestExam: { date: string; days: number } | null
   hasSessions: boolean
   onGoToToday: () => void
 }) {
@@ -284,27 +251,41 @@ function WeeklySnapshotHero({
   const ctaLabel = !hasSessions ? 'Plan today\u2019s study' : 'Keep the streak going'
 
   return (
-    <div data-testid="progress-hero" className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-5">
-      <p className="text-base font-semibold text-gray-900">
-        {streak >= 2 ? (
-          <>
-            <span className="mr-1">{'\uD83D\uDD25'}</span>
-            {streak} day streak
-          </>
-        ) : streak === 1 ? (
-          'You studied today'
-        ) : (
-          'Start a streak today'
-        )}
-      </p>
+    <div data-testid="progress-hero" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+        <p className="text-base font-semibold text-gray-900">
+          {streak >= 2 ? (
+            <>
+              <span className="mr-1">{'\uD83D\uDD25'}</span>
+              {streak} day streak
+            </>
+          ) : streak === 1 ? (
+            'You studied today'
+          ) : (
+            'Start a streak today'
+          )}
+        </p>
+        <p className="text-sm text-gray-400">{supportiveCopy(weekSessionCount)}</p>
+      </div>
 
       {hasSessions && (
-        <p className="text-sm text-gray-500 mt-1">
-          {weekDuration > 0 ? formatDuration(weekDuration) : '0m'} across {weekSessionCount} {weekSessionCount === 1 ? 'session' : 'sessions'} this week
-        </p>
+        <div className="mt-3">
+          <p className="text-2xl font-bold text-gray-900">
+            {weekDuration > 0 ? formatDuration(weekDuration) : '0m'}
+          </p>
+          <p className="text-sm text-gray-500">
+            across {weekSessionCount} {weekSessionCount === 1 ? 'session' : 'sessions'} this week
+          </p>
+        </div>
       )}
 
-      <p className="text-sm text-gray-400 mt-1">{supportiveCopy(weekSessionCount)}</p>
+      {nearestExam && (
+        <div className="mt-3 bg-gray-50 rounded-lg px-3 py-2">
+          <p className="text-xs text-gray-500">
+            Next exam in <span className="font-semibold text-gray-700">{nearestExam.days} {nearestExam.days === 1 ? 'day' : 'days'}</span>
+          </p>
+        </div>
+      )}
 
       {showCta && (
         <button
@@ -315,11 +296,63 @@ function WeeklySnapshotHero({
           {ctaLabel}
         </button>
       )}
+    </div>
+  )
+}
 
-      <div className="flex justify-between mt-3 pt-3 border-t border-gray-50">
-        {weekDots.map((d, i) => (
-          <div key={i} className="flex flex-col items-center gap-1">
-            <div className={`w-3.5 h-3.5 rounded-full transition-colors ${intensityColor[d.intensity]}`} />
+// MetricTile
+function MetricTile({ label, value, delta }: { label: string; value: string; delta?: { value: string; positive: boolean } }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-3.5">
+      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-lg font-bold text-gray-900">{value}</p>
+      {delta && (
+        <p className={`text-[10px] ${delta.positive ? 'text-green-600' : 'text-red-500'}`}>
+          {delta.value}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// MomentumChart
+function MomentumChart({
+  dailyStudyMinutes,
+  weekDurationDeltaPct,
+}: {
+  dailyStudyMinutes: { day: string; minutes: number }[]
+  weekDurationDeltaPct: number
+}) {
+  const maxMinutes = Math.max(...dailyStudyMinutes.map((d) => d.minutes), 1)
+  const todayIdx = new Date().getDay()
+  // Convert JS day (0=Sun) to our array index (0=Mon)
+  const todayBarIdx = todayIdx === 0 ? 6 : todayIdx - 1
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">This week</p>
+        {weekDurationDeltaPct !== 0 && (
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+            weekDurationDeltaPct > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
+          }`}>
+            {weekDurationDeltaPct > 0 ? '+' : ''}{weekDurationDeltaPct}% vs last week
+          </span>
+        )}
+      </div>
+      <div className="flex items-end justify-between gap-2 h-28">
+        {dailyStudyMinutes.map((d, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+            <div className="w-full flex items-end justify-center" style={{ height: '100%' }}>
+              {d.minutes > 0 ? (
+                <div
+                  className={`w-full max-w-[28px] rounded-t-md ${i === todayBarIdx ? 'bg-blue-500' : 'bg-blue-200'}`}
+                  style={{ height: `${(d.minutes / maxMinutes) * 100}%`, minHeight: '4px' }}
+                />
+              ) : (
+                <div className="w-full max-w-[28px] bg-gray-200 rounded-t-md" style={{ height: '2px' }} />
+              )}
+            </div>
             <span className="text-[10px] text-gray-400">{d.day}</span>
           </div>
         ))}
@@ -328,29 +361,18 @@ function WeeklySnapshotHero({
   )
 }
 
-// Block 2
-function ConsistencySection({
-  weekDuration,
-  prevWeekDuration,
-  momentum,
-  topicsReviewedThisWeek,
+// SubjectAllocationCard
+function SubjectAllocationCard({
   last7Sessions,
   subjects,
   topicMap,
   offeringMap,
 }: {
-  weekDuration: number
-  prevWeekDuration: number
-  momentum: { delta: number; prevEmpty: boolean }
-  topicsReviewedThisWeek: number
   last7Sessions: Session[]
   subjects: Subject[]
   topicMap: Map<string, Topic>
   offeringMap: Map<string, Offering>
 }) {
-  const durationDelta = weekDuration - prevWeekDuration
-
-  // Distribution bar: only if 2+ subjects have sessions in last 7d
   const durBySubject = new Map<string, number>()
   const countBySubject = new Map<string, number>()
   for (const s of last7Sessions) {
@@ -373,65 +395,31 @@ function ConsistencySection({
     .filter((e) => e.subject)
     .sort((a, b) => b.value - a.value)
 
-  const showDistribution = distEntries.length >= 2
+  if (distEntries.length < 2) return null
 
   return (
-    <div data-testid="progress-consistency" className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-5">
-      <div className="grid grid-cols-3 gap-3">
-        <div>
-          <p className="text-[10px] text-gray-400 mb-0.5">Study time</p>
-          <p className="text-lg font-bold text-gray-900">{formatDuration(weekDuration)}</p>
-          {durationDelta !== 0 && (
-            <p className={`text-[10px] ${durationDelta > 0 ? 'text-green-600' : 'text-red-500'}`}>
-              {durationDelta > 0 ? '+' : ''}{formatDuration(Math.abs(durationDelta))} vs prev
-            </p>
-          )}
-        </div>
-        <div>
-          <p className="text-[10px] text-gray-400 mb-0.5">Score trend</p>
-          {momentum.prevEmpty ? (
-            <p className="text-sm font-semibold text-gray-500">{'\u2192'} New baseline</p>
-          ) : (
-            <p className={`text-lg font-bold ${
-              momentum.delta > 0 ? 'text-green-600' : momentum.delta < 0 ? 'text-red-500' : 'text-gray-500'
-            }`}>
-              {momentum.delta > 0 ? '\u2191' : momentum.delta < 0 ? '\u2193' : '\u2192'}{' '}
-              {momentum.delta > 0 ? '+' : ''}{momentum.delta}%
-            </p>
-          )}
-          <p className="text-[10px] text-gray-400">vs last week</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-gray-400 mb-0.5">Topics reviewed</p>
-          <p className="text-lg font-bold text-gray-900">{topicsReviewedThisWeek}</p>
-          <p className="text-[10px] text-gray-400">this week</p>
-        </div>
+    <div data-testid="progress-allocation" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+      <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-3">Where your time went</p>
+      <div data-testid="progress-distribution" className="flex h-3 rounded-full overflow-hidden mb-3">
+        {distEntries.map((e) => (
+          <div key={e.subject.id} style={{ width: `${(e.value / total) * 100}%`, backgroundColor: e.subject.color }} />
+        ))}
       </div>
-
-      {showDistribution && (
-        <div className="mt-4 pt-3 border-t border-gray-50">
-          <div data-testid="progress-distribution" className="flex h-3 rounded-full overflow-hidden mb-3">
-            {distEntries.map((e) => (
-              <div key={e.subject.id} style={{ width: `${(e.value / total) * 100}%`, backgroundColor: e.subject.color }} />
-            ))}
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {distEntries.map((e) => (
+          <div key={e.subject.id} className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rotate-45 rounded-[1px]" style={{ backgroundColor: e.subject.color }} />
+            <span className="text-xs text-gray-500">
+              {e.subject.name} {useDuration ? formatDuration(e.value) : `${e.value} sessions`}
+            </span>
           </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            {distEntries.map((e) => (
-              <div key={e.subject.id} className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rotate-45 rounded-[1px]" style={{ backgroundColor: e.subject.color }} />
-                <span className="text-xs text-gray-500">
-                  {e.subject.name} {useDuration ? formatDuration(e.value) : `${e.value} sessions`}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   )
 }
 
-// Block 3
+// Block 3: SubjectRow
 function SubjectRow({
   subject,
   offering,
@@ -479,13 +467,13 @@ function SubjectRow({
   const recentSubj = allSessions.filter((s) => topicIds.has(s.topicId) && s.date > d7ISO && s.date <= todayISO)
   const avgScore7d = recentSubj.length > 0 ? Math.round((recentSubj.reduce((a, s) => a + s.score, 0) / recentSubj.length) * 100) : null
 
-  // Notes: collect all notes for this offering, flatten, sort by date desc
+  // Notes
   const allOfferingNotes: (Note & { topicName: string })[] = []
   const topicMap = new Map(offeringTopics.map((t) => [t.id, t]))
-  for (const [topicId, notes] of offeringNotes) {
+  for (const [topicId, notesList] of offeringNotes) {
     const topic = topicMap.get(topicId)
     if (!topic) continue
-    for (const note of notes) {
+    for (const note of notesList) {
       allOfferingNotes.push({ ...note, topicName: topic.name })
     }
   }
@@ -548,7 +536,7 @@ function SubjectRow({
         style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden">
-          <div className="px-4 pb-4 border-t border-gray-50">
+          <div className="px-4 pb-4 border-t border-gray-100">
             {avgScore7d !== null && (
               <div className="mt-3 mb-3">
                 <p className="text-xs text-gray-500">Average result this week: <span className={`font-semibold ${outcomeChip(avgScore7d / 100).color} px-1.5 py-0.5 rounded-full`}>{outcomeChip(avgScore7d / 100).label}</span> <span className="text-gray-400">&middot; {avgScore7d}%</span></p>
@@ -585,14 +573,17 @@ function SubjectRow({
               ) : weak.length === 0 ? (
                 <p className="text-xs text-green-400">Nice work — nothing needs attention right now.</p>
               ) : (
-                <div className="space-y-1.5">
-                  {weak.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-700 truncate flex-1 mr-2">{t.name}</span>
-                      <ConfidenceDots level={t.confidence} color={subject.color} />
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <p className="text-[10px] text-gray-400 mb-1.5">Confidence shown by dots</p>
+                  <div className="space-y-1.5">
+                    {weak.map((t) => (
+                      <div key={t.id} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700 truncate flex-1 mr-2">{t.name}</span>
+                        <ConfidenceDots level={t.confidence} color={subject.color} />
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
@@ -679,7 +670,7 @@ function SessionsList({
   )
 }
 
-// Block 5
+// Block 5: BestNextFocus
 function BestNextFocus({
   suggestion,
   hasFutureExamTopics,
@@ -687,20 +678,18 @@ function BestNextFocus({
   suggestion: { topicName: string; subjectName: string; subjectColor: string } | null
   hasFutureExamTopics: boolean
 }) {
-  // No future-exam topics → hide entirely
   if (!hasFutureExamTopics) return null
 
-  // Future topics exist but none are weak
   if (!suggestion) {
     return (
-      <div data-testid="progress-best-next-focus" className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
+      <div data-testid="progress-best-next-focus" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center">
         <p className="text-sm text-green-500">Nice work — no weak spots right now.</p>
       </div>
     )
   }
 
   return (
-    <div data-testid="progress-best-next-focus" className="bg-gray-50 rounded-xl px-4 py-3 text-center">
+    <div data-testid="progress-best-next-focus" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center">
       <p className="text-sm text-gray-600">
         Next best focus:{' '}
         <span className="font-semibold" style={{ color: suggestion.subjectColor }}>
@@ -759,6 +748,48 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
     return topicIds.size
   }, [last7Sessions])
 
+  // New data: daily study minutes for MomentumChart
+  const dailyStudyMinutes = useMemo(() => {
+    const result: { day: string; minutes: number }[] = []
+    const todayDay = today.getDay()
+    const mondayOffset = todayDay === 0 ? 6 : todayDay - 1
+    const monday = new Date(today)
+    monday.setDate(monday.getDate() - mondayOffset)
+    const dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday)
+      d.setDate(d.getDate() + i)
+      const iso = getLocalDayKey(d)
+      const daySeconds = filteredSessions
+        .filter((s) => s.date === iso)
+        .reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0)
+      result.push({ day: dayNames[i], minutes: Math.round(daySeconds / 60) })
+    }
+    return result
+  }, [filteredSessions, today])
+
+  // Nearest exam for hero
+  const nearestExam = useMemo(() => {
+    const exam = earliestExamDate(selPapers, today)
+    if (!exam) return null
+    return { date: exam, days: daysRemaining(exam, today) }
+  }, [selPapers, today])
+
+  // Subjects active this week
+  const subjectsActiveThisWeek = useMemo(() => {
+    const sids = new Set<string>()
+    for (const s of last7Sessions) {
+      const sid = topicToSubjectId(s.topicId, topicMapAll, offeringMapAll)
+      if (sid) sids.add(sid)
+    }
+    return sids.size
+  }, [last7Sessions, topicMapAll, offeringMapAll])
+
+  // Week-over-week duration delta percentage
+  const weekDurationDeltaPct = prevWeekDuration > 0
+    ? Math.round(((weekDuration - prevWeekDuration) / prevWeekDuration) * 100)
+    : weekDuration > 0 ? 100 : 0
+
   // Build offering groups
   const offeringGroups = useMemo(() => {
     const subjectMap = new Map(subjects.map((s) => [s.id, s]))
@@ -799,7 +830,7 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
     return result
   }, [notes, topicMapAll])
 
-  // Active offering groups: future exams only, sorted by status chip priority then exam date
+  // Active offering groups
   const activeOfferingGroups = useMemo(() => {
     const now = toMidnightUTC(today)
     return [...offeringGroups.values()]
@@ -813,11 +844,8 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
       })
   }, [offeringGroups, today, filteredSessions])
 
-  // Check if selected offerings exist but all have past exams
   const hasSelectedOfferings = offeringGroups.size > 0
   const allExamsPast = hasSelectedOfferings && activeOfferingGroups.length === 0
-
-  const weekDots = useMemo(() => getWeekDots(filteredSessions, today), [filteredSessions, today])
 
   const suggestion = useMemo(
     () => focusSuggestion(selTopics, selPapers, topicMapAll, offeringMapAll, subjects, todayISO, today),
@@ -832,27 +860,52 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
 
   const hasSessions = filteredSessions.length > 0
 
+  // SubjectAllocationCard show guard
+  const showDistribution = useMemo(() => {
+    const sids = new Set<string>()
+    for (const s of last7Sessions) {
+      const sid = topicToSubjectId(s.topicId, topicMapAll, offeringMapAll)
+      if (sid) sids.add(sid)
+    }
+    return sids.size >= 2
+  }, [last7Sessions, topicMapAll, offeringMapAll])
+
   return (
     <div className="px-4 pt-6 pb-24">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Progress</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Progress</h1>
 
       {/* Block 1: Hero */}
-      <WeeklySnapshotHero
+      <OverviewHero
         streak={streak}
         weekDuration={weekDuration}
         weekSessionCount={weekSessionCount}
-        weekDots={weekDots}
+        nearestExam={nearestExam}
         hasSessions={hasSessions}
         onGoToToday={onGoToToday}
       />
 
-      {/* Block 2: Consistency (hidden if no sessions) */}
+      {/* KPI Metric Tiles */}
       {hasSessions && (
-        <ConsistencySection
-          weekDuration={weekDuration}
-          prevWeekDuration={prevWeekDuration}
-          momentum={momentum}
-          topicsReviewedThisWeek={topicsReviewedThisWeek}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <MetricTile label="Topics reviewed" value={String(topicsReviewedThisWeek)} />
+          <MetricTile
+            label="Avg score"
+            value={momentum.thisWeek > 0 ? `${momentum.thisWeek}%` : '\u2014'}
+            delta={momentum.delta !== 0 ? { value: `${momentum.delta > 0 ? '+' : ''}${momentum.delta}%`, positive: momentum.delta > 0 } : undefined}
+          />
+          <MetricTile label="Subjects active" value={String(subjectsActiveThisWeek)} />
+          <MetricTile label="Days to exam" value={nearestExam ? String(nearestExam.days) : '\u2014'} />
+        </div>
+      )}
+
+      {/* MomentumChart */}
+      {hasSessions && (
+        <MomentumChart dailyStudyMinutes={dailyStudyMinutes} weekDurationDeltaPct={weekDurationDeltaPct} />
+      )}
+
+      {/* SubjectAllocationCard */}
+      {hasSessions && showDistribution && (
+        <SubjectAllocationCard
           last7Sessions={last7Sessions}
           subjects={subjects}
           topicMap={topicMapAll}
@@ -860,14 +913,14 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
         />
       )}
 
-      {/* Block 3: Priority Subjects */}
+      {/* Subjects at a glance */}
       {allExamsPast ? (
         <div data-testid="progress-no-upcoming" className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-5 text-center">
           <p className="text-sm text-gray-500">No upcoming exams in your selected subjects.</p>
         </div>
       ) : activeOfferingGroups.length > 0 && (
         <>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Priority subjects</h2>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.14em] mb-4">Subjects at a glance</h2>
           <div className="flex flex-col gap-3 mb-5">
             {activeOfferingGroups.map((group) => (
               <SubjectRow
@@ -888,19 +941,19 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
         </>
       )}
 
-      {/* Block 4: Sessions (today) — hidden if no sessions */}
+      {/* Sessions (today) */}
       {hasSessions && (
         <SessionsList sessions={filteredSessions} topicMap={topicMapAll} offeringMap={offeringMapAll} subjects={subjects} />
       )}
 
-      {/* Block 5: Best Next Focus — hidden if no sessions or no future-exam topics */}
+      {/* Best Next Focus */}
       {hasSessions && (
         <BestNextFocus suggestion={suggestion} hasFutureExamTopics={hasFutureExamTopics} />
       )}
 
-      {/* Empty state calm message */}
+      {/* Empty state */}
       {!hasSessions && (
-        <div data-testid="progress-empty-message" className="bg-gray-50 rounded-xl px-4 py-4 text-center mt-2">
+        <div data-testid="progress-empty-message" className="bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-6 text-center mt-2">
           <p className="text-sm text-gray-400">Your progress will start to build after your first study session.</p>
         </div>
       )}
