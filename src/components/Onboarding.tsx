@@ -14,6 +14,7 @@ interface OnboardingProps {
   mode?: 'initial' | 'edit'
   onComplete: () => void
   onCancel?: () => void
+  onBackToHome?: () => void
 }
 
 const EMOJIS = ['\u{1F630}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F60E}'] as const
@@ -286,7 +287,7 @@ function SummaryTray({
   )
 }
 
-export default function Onboarding({ mode = 'initial', onComplete, onCancel }: OnboardingProps) {
+export default function Onboarding({ mode = 'initial', onComplete, onCancel, onBackToHome }: OnboardingProps) {
   const subjects = useAppStore((s) => s.subjects)
   const offerings = useAppStore((s) => s.offerings)
   const papers = useAppStore((s) => s.papers)
@@ -457,6 +458,17 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel }: O
       <div className="flex flex-col sm:flex-row sm:gap-6 max-w-4xl mx-auto">
         {/* Main column */}
         <div className="flex-1 min-w-0 px-4 pt-12 pb-8 sm:pb-10">
+          {!isEdit && onBackToHome && (
+            <button
+              onClick={onBackToHome}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white text-gray-500 text-sm font-medium px-3 py-1.5 hover:bg-gray-50 active:scale-[0.98] transition-all duration-150 mb-4"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+              </svg>
+              Back to home
+            </button>
+          )}
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
             {isEdit ? 'Update your exam setup' : 'Build your exam setup'}
           </h1>
