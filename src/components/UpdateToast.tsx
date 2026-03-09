@@ -1,4 +1,5 @@
 import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from 'react'
+import { useTimerStore } from '../stores/timer.store'
 
 interface UpdateToastProps {
   needRefresh: [boolean, Dispatch<SetStateAction<boolean>>]
@@ -16,6 +17,9 @@ export default function UpdateToast({
   const [needRefreshValue, setNeedRefresh] = needRefresh
   const [offlineReadyValue, setOfflineReady] = offlineReady
 
+  const timerMode = useTimerStore((s) => s.session?.mode ?? null)
+  const hasActiveSession = timerMode === 'running' || timerMode === 'paused'
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -32,34 +36,66 @@ export default function UpdateToast({
     if (refreshing) return
     setRefreshing(true)
 
-    try {
-      await Promise.race([
-        updateServiceWorker(true),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
-      ])
-    } catch {
-      // SW update failed or timed out — fall through to hard reload
+    let reloaded = false
+    const triggerReload = () => {
+      if (reloaded) return
+      reloaded = true
+      location.reload()
     }
 
-    // If the SW reload already navigated away, this won't run.
-    // Otherwise, force a hard reload as fallback.
-    location.reload()
+    const fallback = setTimeout(triggerReload, 3000)
+
+    try {
+      await updateServiceWorker(true)
+    } catch {
+      // SW update failed — fallback timer will fire
+    }
+
+    clearTimeout(fallback)
+    triggerReload()
   }
 
   if (forceRefresh) {
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/95 backdrop-blur-sm">
-        <div className="text-center px-6 max-w-sm">
-          <p className="text-lg font-semibold text-gray-900">Update required</p>
-          <p className="text-sm text-gray-600 mt-2">
-            Your version of Exam Scheduler is no longer supported. Please refresh to continue.
+    const refreshButton = (
+      <button
+        onClick={handleForceRefresh}
+        disabled={refreshing}
+        className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+          refreshing
+            ? 'opacity-60 cursor-not-allowed'
+            : ''
+        } ${
+          hasActiveSession
+            ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+            : 'text-white bg-blue-500 hover:bg-blue-600'
+        }`}
+      >
+        {refreshing ? 'Refreshing...' : 'Refresh now'}
+      </button>
+    )
+
+    if (hasActiveSession) {
+      return (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-xl px-5 py-4 shadow-lg max-w-sm w-[calc(100%-2rem)]">
+          <p className="text-sm font-semibold text-gray-900">Refresh required</p>
+          <p className="text-sm text-gray-600 mt-1">
+            Finish this session first if needed, then refresh to continue.
           </p>
-          <button
-            onClick={handleForceRefresh}
-            className="mt-5 px-6 py-2.5 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Refresh now
-          </button>
+          <div className="mt-3">
+            {refreshButton}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-xl px-6 py-5 shadow-xl max-w-md w-[calc(100%-2rem)]">
+        <p className="text-lg font-semibold text-gray-900">Update required</p>
+        <p className="text-sm text-gray-600 mt-2">
+          Your version of Exam Scheduler is no longer supported. Please refresh to continue.
+        </p>
+        <div className="mt-4">
+          {refreshButton}
         </div>
       </div>
     )
