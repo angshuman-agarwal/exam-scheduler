@@ -43,16 +43,28 @@ export default function UpdateToast({
       location.reload()
     }
 
-    const fallback = setTimeout(triggerReload, 3000)
+    const sw = 'serviceWorker' in navigator ? navigator.serviceWorker : null
 
-    try {
-      await updateServiceWorker(true)
-    } catch {
-      // SW update failed — fallback timer will fire
+    let fallback: ReturnType<typeof setTimeout> | null = null
+
+    const cleanup = () => {
+      if (fallback) clearTimeout(fallback)
+      if (sw) sw.removeEventListener('controllerchange', onControllerChange)
     }
 
-    clearTimeout(fallback)
-    triggerReload()
+    const onControllerChange = () => { cleanup(); triggerReload() }
+
+    if (sw) sw.addEventListener('controllerchange', onControllerChange)
+
+    fallback = setTimeout(() => { cleanup(); triggerReload() }, 3000)
+
+    try {
+      const reg = await sw?.getRegistration()
+      await reg?.update()
+      await updateServiceWorker(true)
+    } catch {
+      // fallback timer will fire
+    }
   }
 
   if (forceRefresh) {
