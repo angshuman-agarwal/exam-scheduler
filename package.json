@@ -1,7 +1,7 @@
 {
   "name": "exam-scheduler",
   "private": true,
-  "version": "1.0.11",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "predev": "node scripts/generate-version.js",

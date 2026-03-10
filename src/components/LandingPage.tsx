@@ -14,64 +14,64 @@ interface LandingPageProps {
   selectedSubjectDetails?: { name: string; board: string }[]
 }
 
+/** Build a set of offering IDs that belong to GCSE qualifications. */
+const gcseOfferingIds = new Set(
+  seedData.offerings
+    .filter((o) => o.qualificationId === 'gcse')
+    .map((o) => o.id),
+)
+
 function getCountdown() {
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  let earliest: { days: number; name: string; subject: string } | null = null
+  let earliestDays: number | null = null
 
   for (const paper of seedData.papers) {
+    if (!gcseOfferingIds.has(paper.offeringId)) continue
     const exam = new Date(paper.examDate + 'T00:00:00')
     const diff = Math.ceil((exam.getTime() - today.getTime()) / 86_400_000)
-    if (diff > 0 && (!earliest || diff < earliest.days)) {
-      const offering = seedData.offerings.find((o) => o.id === paper.offeringId)
-      const subject = offering
-        ? seedData.subjects.find((s) => s.id === offering.subjectId)
-        : null
-      earliest = {
-        days: diff,
-        name: `${subject?.name ?? ''} ${paper.name}`,
-        subject: subject?.name ?? '',
-      }
+    if (diff > 0 && (earliestDays === null || diff < earliestDays)) {
+      earliestDays = diff
     }
   }
-  return earliest
+  return earliestDays
 }
 
 const STORY_STEPS = [
   {
     step: 1,
-    title: 'Choose your subjects',
-    description: 'Pick the subjects you\'re sitting. The app maps every paper and topic automatically.',
+    title: 'Pick your subjects',
+    description: 'Select what you\'re sitting. Every paper, topic, and exam date is mapped automatically.',
   },
   {
     step: 2,
-    title: 'Get today\'s plan',
-    description: 'A ranked revision list that shifts with exam dates, confidence, and what you\'ve already covered.',
+    title: 'See what matters today',
+    description: 'A prioritised revision list that shifts daily based on exam dates, confidence, and coverage.',
   },
   {
     step: 3,
-    title: 'Focus and study',
-    description: 'Start a timed session on the topic that matters most. Rate your confidence when you finish.',
+    title: 'Study with focus',
+    description: 'Start a timed session on the right topic. Rate your confidence when you finish.',
   },
 ]
 
 const SCENARIOS = [
   {
     number: 1,
-    situation: 'Not sure what to study today',
-    response: 'Get one clear recommendation based on exams, confidence, and what you\'ve already covered',
+    situation: '"I don\'t know where to start"',
+    response: 'The app looks at every exam date, your confidence scores, and what you\'ve already covered \u2014 then gives you one clear recommendation.',
     variant: 'recommend' as const,
   },
   {
     number: 2,
-    situation: 'Easy to keep picking favourite subjects',
-    response: 'See what needs attention before it becomes last-minute panic',
+    situation: '"I keep revising the same subjects"',
+    response: 'Weak topics surface automatically so you can tackle them now, not the night before the exam.',
     variant: 'attention' as const,
   },
   {
     number: 3,
-    situation: 'Hard to tell if revision is actually building',
-    response: 'Track sessions, confidence, and momentum across your subjects',
+    situation: '"I can\'t tell if revision is working"',
+    response: 'Track sessions, confidence, and momentum across every subject \u2014 so you can see progress building over time.',
     variant: 'progress' as const,
   },
 ]
@@ -138,7 +138,7 @@ function ScenarioPanel({ compact }: { compact?: boolean }) {
     return (
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
-          Built for real revision moments
+          Real problems, solved
         </p>
         <div className="space-y-3">
           {SCENARIOS.map((s) => (
@@ -155,7 +155,7 @@ function ScenarioPanel({ compact }: { compact?: boolean }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5">
       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
-        Built for real revision moments
+        Real problems, solved
       </p>
       <div className="space-y-3">
         {SCENARIOS.map((s, i) => (
@@ -167,9 +167,6 @@ function ScenarioPanel({ compact }: { compact?: boolean }) {
                 : 'border-gray-100 bg-white'
             }`}
           >
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
-              Scenario {s.number}
-            </p>
             <p className="text-sm font-semibold text-gray-900 mb-0.5">{s.situation}</p>
             <p className="text-xs text-gray-400 leading-relaxed mb-3">{s.response}</p>
             <ScenarioPreview variant={s.variant} />
@@ -267,8 +264,11 @@ function StoryStepCard({ step, title, description, children }: { step: number; t
 function ProductShowcase() {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 sm:p-8">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-1">
         Your revision journey
+      </p>
+      <p className="text-sm text-gray-500 mb-5 max-w-lg">
+        What the app feels like over days and weeks of use.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Setup card */}
@@ -286,42 +286,52 @@ function ProductShowcase() {
 
         {/* Today card */}
         <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
-          <span className="inline-block rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 mb-3">Recommended</span>
+          <span className="inline-block rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 mb-3">Today's plan</span>
           <div className="space-y-1.5">
             <div className="rounded-lg bg-white border border-blue-100 px-2.5 py-1.5">
               <p className="text-xs font-medium text-blue-800">Algebra & Functions</p>
-              <p className="text-[10px] text-blue-500">Maths P1 &mdash; 12 days</p>
+              <p className="text-[10px] text-blue-500">Low confidence &middot; exam soon</p>
             </div>
             <div className="rounded-lg bg-white/70 border border-gray-100 px-2.5 py-1.5">
               <p className="text-xs font-medium text-gray-700">Organic Chemistry</p>
-              <p className="text-[10px] text-gray-400">Chem P2 &mdash; 18 days</p>
+              <p className="text-[10px] text-gray-400">Not covered recently</p>
             </div>
           </div>
         </div>
 
-        {/* Study session card */}
+        {/* Progress card */}
         <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
-          <span className="inline-block rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 mb-3">Focus</span>
+          <span className="inline-block rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 mb-3">Progress</span>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-lg font-bold tabular-nums text-gray-900">24:00</span>
-              <span className="inline-flex items-center gap-1 text-[10px] text-gray-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                Active
-              </span>
+              <span className="text-xs font-medium text-gray-700">Maths</span>
+              <span className="text-[10px] text-emerald-600 font-medium">8 sessions</span>
             </div>
-            <div className="rounded-lg bg-white border border-gray-100 px-2.5 py-1.5">
-              <p className="text-xs font-medium text-gray-800">Algebra &amp; Functions</p>
-              <p className="text-[10px] text-gray-400">Maths P1</p>
+            <div className="flex gap-0.5">
+              {[70, 45, 85, 35, 60].map((w, i) => (
+                <div key={i} className="h-1.5 rounded-full bg-gray-200 flex-1">
+                  <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${w}%` }} />
+                </div>
+              ))}
             </div>
-            <p className="text-[10px] text-gray-400 text-center">Confidence check after session</p>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-700">Chemistry</span>
+              <span className="text-[10px] text-amber-600 font-medium">3 sessions</span>
+            </div>
+            <div className="flex gap-0.5">
+              {[30, 20, 50, 15, 25].map((w, i) => (
+                <div key={i} className="h-1.5 rounded-full bg-gray-200 flex-1">
+                  <div className="h-1.5 rounded-full bg-amber-400" style={{ width: `${w}%` }} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Workflow strip */}
       <div className="flex items-center justify-center gap-2 mt-6 flex-wrap">
-        {['Setup', "Today's plan", 'Study session', 'Progress'].map((label, i, arr) => (
+        {['Setup', "Today's plan", 'Focus session', 'Progress'].map((label, i, arr) => (
           <span key={label} className="flex items-center gap-2">
             <span className="text-xs font-medium text-gray-500">{label}</span>
             {i < arr.length - 1 && (
@@ -333,6 +343,74 @@ function ProductShowcase() {
         ))}
       </div>
     </div>
+  )
+}
+
+function TrustSection() {
+  const features = [
+    {
+      icon: (
+        <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
+        </svg>
+      ),
+      title: 'GCSE coverage built in, A-Level via custom setup',
+      description: 'GCSE subjects, papers, and topics are pre-mapped to current exam boards. A-Level and other qualifications are supported through custom subject creation.',
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      ),
+      title: 'Custom subjects',
+      description: 'Add any subject not in the default list. Useful for less common courses or school-specific content.',
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25h-13.5A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25h-13.5A2.25 2.25 0 0 1 3 12V5.25" />
+        </svg>
+      ),
+      title: 'Works offline',
+      description: 'All data stays on your device. No account required. Use it anywhere, with or without internet.',
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+        </svg>
+      ),
+      title: 'Suitable for classrooms',
+      description: 'No sign-up, no tracking, no ads. Teachers and schools can recommend it with confidence.',
+    },
+  ]
+
+  return (
+    <section className="px-5 py-12 sm:py-16 max-w-5xl mx-auto">
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 sm:p-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-600 mb-2">
+          Built for trust
+        </p>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
+          Coverage you can rely on
+        </h2>
+        <p className="text-sm text-gray-500 mb-8 max-w-lg">
+          Whether you're a student getting started or a teacher evaluating revision tools.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {features.map((f) => (
+            <div key={f.title} className="flex gap-4">
+              <div className="shrink-0 mt-0.5">{f.icon}</div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900 mb-1">{f.title}</p>
+                <p className="text-sm text-gray-500 leading-relaxed">{f.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -468,30 +546,30 @@ export default function LandingPage({
           /* New user marketing hero */
           <div className="sm:grid sm:grid-cols-2 sm:gap-12 sm:items-center">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
-                Exam planning that adapts to what matters next
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-600 mb-3">
+                Revision, prioritised
               </p>
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-4">
-                Know what to revise next, before exams pile up
+                Your exams are coming. Your schedule starts now.
               </h1>
               <p className="text-base text-gray-500 leading-relaxed mb-6 max-w-md">
-                A revision planner that watches your exam dates, tracks your confidence, and tells you exactly where to focus &mdash; so nothing gets missed.
+                Build a revision plan that adapts to your confidence, your exam dates, and what you haven't covered yet.
               </p>
 
               {/* Countdown card */}
-              {countdown && (
+              {countdown !== null && (
                 <div className="inline-flex items-center gap-3 rounded-xl border border-gray-100 bg-white shadow-sm px-4 py-3 mb-8">
                   <span
                     className="text-2xl font-bold tabular-nums"
-                    style={{ color: countdown.days <= 30 ? '#F59E0B' : '#3B82F6' }}
+                    style={{ color: countdown <= 30 ? '#F59E0B' : '#3B82F6' }}
                   >
-                    {countdown.days}
+                    {countdown}
                   </span>
                   <div className="leading-tight">
                     <p className="text-sm font-medium text-gray-900">
-                      days until first exam
+                      Days until GCSE exams
                     </p>
-                    <p className="text-xs text-gray-400">{countdown.name}</p>
+                    <p className="text-xs text-gray-400">Summer exam season starts soon</p>
                   </div>
                 </div>
               )}
@@ -503,7 +581,7 @@ export default function LandingPage({
                   className="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm
                              hover:bg-blue-700 active:scale-[0.98] transition-all duration-150 shadow-sm"
                 >
-                  Build your exam setup
+                  Start your revision schedule
                 </button>
                 <button
                   onClick={scrollToDemo}
@@ -513,6 +591,7 @@ export default function LandingPage({
                   See how it works
                 </button>
               </div>
+              <p className="text-xs text-gray-400 mt-3 pl-1">No account needed &middot; Works offline</p>
             </div>
 
             {/* Scenario panel — desktop inline */}
@@ -591,10 +670,10 @@ export default function LandingPage({
                 How it works
               </p>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
-                From exam setup to focused study
+                Three steps to a smarter revision plan
               </h2>
               <p className="text-base text-gray-500 max-w-lg">
-                Three steps to a revision plan that adapts as your exams approach.
+                Set up once. The app handles the prioritisation from there.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
@@ -608,21 +687,26 @@ export default function LandingPage({
             </div>
           </section>
 
-          {/* Product showcase */}
+          {/* Product showcase — revision journey */}
           <section className="px-5 pb-12 sm:pb-16 max-w-5xl mx-auto">
             <ProductShowcase />
           </section>
 
-          {/* Trust strip */}
-          <section className="px-5 py-6 pb-10 max-w-5xl mx-auto text-center">
-            <p className="text-xs text-gray-400">
-              Works offline-first &middot; Built for GCSE, A-level, and beyond
-            </p>
+          {/* Trust / coverage section */}
+          <TrustSection />
+
+          {/* Final CTA */}
+          <section className="px-5 pb-16 max-w-5xl mx-auto text-center">
+            <button
+              onClick={onGetStarted}
+              className="px-8 py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm
+                         hover:bg-blue-700 active:scale-[0.98] transition-all duration-150 shadow-sm"
+            >
+              Start your revision schedule
+            </button>
           </section>
         </>
       )}
     </div>
   )
 }
-
-
