@@ -53,6 +53,131 @@ const STORY_STEPS = [
   },
 ]
 
+const SCENARIOS = [
+  {
+    number: 1,
+    situation: 'Not sure what to study today',
+    response: 'Get one clear recommendation based on exams, confidence, and what you\'ve already covered',
+    variant: 'recommend' as const,
+  },
+  {
+    number: 2,
+    situation: 'Easy to keep picking favourite subjects',
+    response: 'See what needs attention before it becomes last-minute panic',
+    variant: 'attention' as const,
+  },
+  {
+    number: 3,
+    situation: 'Hard to tell if revision is actually building',
+    response: 'Track sessions, confidence, and momentum across your subjects',
+    variant: 'progress' as const,
+  },
+]
+
+function ScenarioPreview({ variant }: { variant: 'recommend' | 'attention' | 'progress' }) {
+  if (variant === 'recommend') {
+    return (
+      <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-blue-800">Algebra & Functions</span>
+          <span className="text-[10px] font-semibold text-blue-500">Recommended</span>
+        </div>
+        <p className="text-[10px] text-blue-500/70 mt-0.5">Low confidence &middot; Exam in 12 days</p>
+      </div>
+    )
+  }
+
+  if (variant === 'attention') {
+    return (
+      <div className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium text-gray-800">Organic Chemistry</span>
+          <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 rounded px-1.5 py-0.5">Needs attention</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-gray-400">Weak: Alkenes</span>
+          <div className="flex gap-0.5">
+            {[true, false, false, false, false].map((on, i) => (
+              <span key={i} className={`w-1.5 h-1.5 rounded-full ${on ? 'bg-amber-400' : 'bg-gray-200'}`} />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div className="rounded-lg bg-emerald-50 border border-emerald-100 px-3 py-1.5 flex items-center justify-between">
+        <span className="text-[10px] font-medium text-emerald-700">25 min session</span>
+        <span className="text-[10px] text-emerald-500">Confidence: 4/5</span>
+      </div>
+      <div className="flex gap-0.5">
+        {[60, 40, 80, 30, 55].map((w, i) => (
+          <div key={i} className="h-1 rounded-full bg-blue-200 flex-1">
+            <div className="h-1 rounded-full bg-blue-500" style={{ width: `${w}%` }} />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-gray-500">Maths &mdash; 3 sessions</span>
+        <div className="flex gap-0.5">
+          {[true, true, true, false, false].map((on, i) => (
+            <span key={i} className={`w-1.5 h-1.5 rounded-full ${on ? 'bg-blue-400' : 'bg-gray-200'}`} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ScenarioPanel({ compact }: { compact?: boolean }) {
+  if (compact) {
+    return (
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
+          Built for real revision moments
+        </p>
+        <div className="space-y-3">
+          {SCENARIOS.map((s) => (
+            <div key={s.number}>
+              <p className="text-sm font-semibold text-gray-900">{s.situation}</p>
+              <p className="text-xs text-gray-400 leading-relaxed">{s.response}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
+        Built for real revision moments
+      </p>
+      <div className="space-y-3">
+        {SCENARIOS.map((s, i) => (
+          <div
+            key={s.number}
+            className={`rounded-xl border p-4 ${
+              i === 0
+                ? 'border-blue-100 bg-blue-50/30'
+                : 'border-gray-100 bg-white'
+            }`}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+              Scenario {s.number}
+            </p>
+            <p className="text-sm font-semibold text-gray-900 mb-0.5">{s.situation}</p>
+            <p className="text-xs text-gray-400 leading-relaxed mb-3">{s.response}</p>
+            <ScenarioPreview variant={s.variant} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function SetupPreview() {
   return (
     <div className="space-y-2">
@@ -148,7 +273,7 @@ function ProductShowcase() {
         <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
           <span className="inline-block rounded-md bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 mb-3">Setup</span>
           <div className="space-y-1.5">
-            {['Maths — AQA', 'Chemistry — OCR', 'English Lit — AQA'].map((s) => (
+            {['Maths \u2014 AQA', 'Chemistry \u2014 OCR', 'English Lit \u2014 AQA'].map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
                 <span className="text-xs text-gray-700">{s}</span>
@@ -163,11 +288,11 @@ function ProductShowcase() {
           <div className="space-y-1.5">
             <div className="rounded-lg bg-white border border-blue-100 px-2.5 py-1.5">
               <p className="text-xs font-medium text-blue-800">Algebra & Functions</p>
-              <p className="text-[10px] text-blue-500">Maths P1 — 12 days</p>
+              <p className="text-[10px] text-blue-500">Maths P1 &mdash; 12 days</p>
             </div>
             <div className="rounded-lg bg-white/70 border border-gray-100 px-2.5 py-1.5">
               <p className="text-xs font-medium text-gray-700">Organic Chemistry</p>
-              <p className="text-[10px] text-gray-400">Chem P2 — 18 days</p>
+              <p className="text-[10px] text-gray-400">Chem P2 &mdash; 18 days</p>
             </div>
           </div>
         </div>
@@ -345,7 +470,7 @@ export default function LandingPage({
                 Know what to revise next, before exams pile up
               </h1>
               <p className="text-base text-gray-500 leading-relaxed mb-6 max-w-md">
-                A revision planner that watches your exam dates, tracks your confidence, and tells you exactly where to focus — so nothing gets missed.
+                A revision planner that watches your exam dates, tracks your confidence, and tells you exactly where to focus &mdash; so nothing gets missed.
               </p>
 
               {/* Countdown card */}
@@ -385,9 +510,9 @@ export default function LandingPage({
               </div>
             </div>
 
-            {/* Demo video — desktop inline */}
+            {/* Scenario panel — desktop inline */}
             <div className="hidden sm:block mt-0">
-              <DemoMedia />
+              <ScenarioPanel />
             </div>
           </div>
         )}
@@ -449,9 +574,9 @@ export default function LandingPage({
 
       {!onboarded && (
         <>
-          {/* Demo video — mobile below hero */}
+          {/* Scenario panel — mobile below hero */}
           <section className="px-5 pb-10 sm:hidden max-w-5xl mx-auto">
-            <DemoMedia />
+            <ScenarioPanel compact />
           </section>
 
           {/* How it works — story steps */}
@@ -495,44 +620,4 @@ export default function LandingPage({
   )
 }
 
-/* Demo media */
-
-function DemoMedia() {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-      <video
-        className="w-full"
-        autoPlay
-        loop
-        muted
-        playsInline
-        poster="/demo-poster.png"
-        onError={(e) => {
-          const el = e.currentTarget
-          if (el.parentElement) {
-            el.style.display = 'none'
-            el.parentElement.classList.add('demo-fallback')
-          }
-        }}
-      >
-        <source src="/demo.mp4" type="video/mp4" />
-        <source src="/demo.webm" type="video/webm" />
-      </video>
-      <style>{`
-        .demo-fallback {
-          aspect-ratio: 16/9;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        }
-        .demo-fallback::after {
-          content: 'Product demo coming soon';
-          color: #94a3b8;
-          font-size: 0.875rem;
-        }
-      `}</style>
-    </div>
-  )
-}
 
