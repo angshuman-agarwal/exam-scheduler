@@ -3,6 +3,16 @@ import seedData from '../data/subjects.json'
 import { useAppStore } from '../stores/app.store'
 import QualificationChip from './QualificationChip'
 
+const X_URL = 'https://x.com/studyhourlabs'
+
+function XIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
+      <path d="M21.742 21.75l-7.563-11.179 7.056-8.321h-2.456l-5.691 6.714-4.54-6.714H2.359l7.29 10.776L2.25 21.75h2.456l6.035-7.118 4.818 7.118h6.191-.008zM7.739 3.818L18.81 20.182h-2.447L5.29 3.818h2.447z" />
+    </svg>
+  )
+}
+
 interface LandingPageProps {
   onboarded: boolean
   onGetStarted: () => void
@@ -544,6 +554,19 @@ export default function LandingPage({
           </div>
         ) : (
           /* New user marketing hero */
+          <>
+          <div className="flex justify-end mb-3">
+            <a
+              href={X_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open Study Hour on X"
+              className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition"
+            >
+              <XIcon className="w-3.5 h-3.5" />
+              <span>@studyhourlabs</span>
+            </a>
+          </div>
           <div className="sm:grid sm:grid-cols-2 sm:gap-12 sm:items-center">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-600 mb-3">
@@ -599,6 +622,7 @@ export default function LandingPage({
               <ScenarioPanel />
             </div>
           </div>
+          </>
         )}
       </section>
 
@@ -653,6 +677,19 @@ export default function LandingPage({
               </div>
             </button>
           </div>
+          <a
+            href={X_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open Study Hour on X"
+            className="mt-3 flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 text-left w-full hover:border-gray-200 transition"
+          >
+            <XIcon className="w-4 h-4 text-gray-400 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-gray-700">@studyhourlabs</p>
+              <p className="text-xs text-gray-400">Questions or feedback? Reach us on X</p>
+            </div>
+          </a>
         </section>
       )}
 
