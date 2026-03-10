@@ -16,8 +16,8 @@ export default defineConfig({
     registerType: 'prompt',
     includeAssets: ['icon.svg', 'favicon.ico', 'apple-touch-icon-180x180.png'],
     manifest: {
-      name: 'Exam Scheduler',
-      short_name: 'ExamSched',
+      name: 'Study Hour',
+      short_name: 'StudyHour',
       description: 'Smart GCSE revision planner that prioritises what to study based on exam dates, confidence, and performance.',
       theme_color: '#3B82F6',
       background_color: '#F9FAFB',

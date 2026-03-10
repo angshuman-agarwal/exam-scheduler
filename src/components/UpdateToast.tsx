@@ -103,7 +103,7 @@ export default function UpdateToast({
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-xl px-6 py-5 shadow-xl max-w-md w-[calc(100%-2rem)]">
         <p className="text-lg font-semibold text-gray-900">Update required</p>
         <p className="text-sm text-gray-600 mt-2">
-          Your version of Exam Scheduler is no longer supported. Please refresh to continue.
+          Your version of Study Hour is no longer supported. Please refresh to continue.
         </p>
         <div className="mt-4">
           {refreshButton}
@@ -117,7 +117,7 @@ export default function UpdateToast({
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-xl px-5 py-4 shadow-lg max-w-sm w-[calc(100%-2rem)]">
         <p className="text-sm font-semibold text-gray-900">Update available</p>
         <p className="text-sm text-gray-600 mt-1">
-          A new version of Exam Scheduler is ready.
+          A new version of Study Hour is ready.
         </p>
         <div className="flex gap-3 mt-3">
           <button
