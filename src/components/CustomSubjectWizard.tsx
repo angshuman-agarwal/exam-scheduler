@@ -32,6 +32,8 @@ interface WizardProps {
   draftMode?: boolean
   onDraftCreated?: (data: CustomSubjectDraftData) => void
   studyMode: 'gcse' | 'alevel'
+  /** Pre-fill subject name (e.g. from search query) */
+  initialSubjectName?: string
 }
 
 type PaperMode = 'one' | 'multiple' | 'coursework'
@@ -44,7 +46,7 @@ interface PaperEntry {
   suggested?: boolean
 }
 
-export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onDraftCreated, studyMode }: WizardProps) {
+export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onDraftCreated, studyMode, initialSubjectName = '' }: WizardProps) {
   const boards = useAppStore(s => s.boards)
   const subjects = useAppStore(s => s.subjects)
   const offerings = useAppStore(s => s.offerings)
@@ -53,7 +55,7 @@ export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onD
   const [step, setStep] = useState(1)
 
   // Step 1 state
-  const [subjectName, setSubjectName] = useState('')
+  const [subjectName, setSubjectName] = useState(initialSubjectName)
   const [boardId, setBoardId] = useState<BoardId | null>(null)
   const [customBoardName, setCustomBoardName] = useState('')
   const [spec, setSpec] = useState('')
