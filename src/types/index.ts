@@ -25,6 +25,7 @@ export interface Offering {
   boardId: string
   spec: string             // e.g. "8525", "1MA1"
   label: string            // display: "AQA 8525"
+  qualificationId: 'gcse' | 'alevel'
 }
 
 export interface Paper {

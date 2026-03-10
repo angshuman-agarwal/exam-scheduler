@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, toMidnightUTC } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
+import QualificationChip from './QualificationChip'
 import type { Topic, Paper, Session, Subject, Offering, Note } from '../types'
 
 // -- Helpers (kept) --
@@ -738,6 +739,7 @@ function BestNextFocus({
 // -- Main --
 
 export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
+  const studyMode = useAppStore((s) => s.studyMode)
   const topics = useAppStore((s) => s.topics)
   const sessions = useAppStore((s) => s.sessions)
   const subjects = useAppStore((s) => s.subjects)
@@ -906,7 +908,10 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
 
   return (
     <div className="px-4 pt-6 pb-24">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Progress</h1>
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Progress</h1>
+        {studyMode && <QualificationChip mode={studyMode} />}
+      </div>
 
       {/* Block 1: Hero */}
       <OverviewHero

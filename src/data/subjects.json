@@ -20,19 +20,19 @@
     { "id": "add-maths", "name": "Additional Maths", "color": "#64748B" }
   ],
   "offerings": [
-    { "id": "cs-aqa", "subjectId": "cs", "boardId": "aqa", "spec": "8525", "label": "AQA 8525" },
-    { "id": "eng-lit-aqa", "subjectId": "eng-lit", "boardId": "aqa", "spec": "8702", "label": "AQA 8702" },
-    { "id": "bio-aqa", "subjectId": "bio", "boardId": "aqa", "spec": "8461", "label": "AQA 8461" },
-    { "id": "rs-aqa", "subjectId": "rs", "boardId": "aqa", "spec": "8062", "label": "AQA 8062" },
-    { "id": "geo-aqa", "subjectId": "geo", "boardId": "aqa", "spec": "8035", "label": "AQA 8035" },
-    { "id": "maths-edexcel", "subjectId": "maths", "boardId": "edexcel", "spec": "1MA1", "label": "Edexcel 1MA1" },
-    { "id": "maths-aqa", "subjectId": "maths", "boardId": "aqa", "spec": "8300", "label": "AQA 8300" },
-    { "id": "chem-aqa", "subjectId": "chem", "boardId": "aqa", "spec": "8462", "label": "AQA 8462" },
-    { "id": "eng-lang-aqa", "subjectId": "eng-lang", "boardId": "aqa", "spec": "8700", "label": "AQA 8700" },
-    { "id": "phys-aqa", "subjectId": "phys", "boardId": "aqa", "spec": "8463", "label": "AQA 8463" },
-    { "id": "music-edexcel", "subjectId": "music", "boardId": "edexcel", "spec": "1MU0", "label": "Edexcel 1MU0" },
-    { "id": "spanish-aqa", "subjectId": "spanish", "boardId": "aqa", "spec": "8698", "label": "AQA 8698" },
-    { "id": "add-maths-ocr", "subjectId": "add-maths", "boardId": "ocr", "spec": "6993", "label": "OCR 6993" }
+    { "id": "cs-aqa", "subjectId": "cs", "boardId": "aqa", "spec": "8525", "label": "AQA 8525", "qualificationId": "gcse" },
+    { "id": "eng-lit-aqa", "subjectId": "eng-lit", "boardId": "aqa", "spec": "8702", "label": "AQA 8702", "qualificationId": "gcse" },
+    { "id": "bio-aqa", "subjectId": "bio", "boardId": "aqa", "spec": "8461", "label": "AQA 8461", "qualificationId": "gcse" },
+    { "id": "rs-aqa", "subjectId": "rs", "boardId": "aqa", "spec": "8062", "label": "AQA 8062", "qualificationId": "gcse" },
+    { "id": "geo-aqa", "subjectId": "geo", "boardId": "aqa", "spec": "8035", "label": "AQA 8035", "qualificationId": "gcse" },
+    { "id": "maths-edexcel", "subjectId": "maths", "boardId": "edexcel", "spec": "1MA1", "label": "Edexcel 1MA1", "qualificationId": "gcse" },
+    { "id": "maths-aqa", "subjectId": "maths", "boardId": "aqa", "spec": "8300", "label": "AQA 8300", "qualificationId": "gcse" },
+    { "id": "chem-aqa", "subjectId": "chem", "boardId": "aqa", "spec": "8462", "label": "AQA 8462", "qualificationId": "gcse" },
+    { "id": "eng-lang-aqa", "subjectId": "eng-lang", "boardId": "aqa", "spec": "8700", "label": "AQA 8700", "qualificationId": "gcse" },
+    { "id": "phys-aqa", "subjectId": "phys", "boardId": "aqa", "spec": "8463", "label": "AQA 8463", "qualificationId": "gcse" },
+    { "id": "music-edexcel", "subjectId": "music", "boardId": "edexcel", "spec": "1MU0", "label": "Edexcel 1MU0", "qualificationId": "gcse" },
+    { "id": "spanish-aqa", "subjectId": "spanish", "boardId": "aqa", "spec": "8698", "label": "AQA 8698", "qualificationId": "gcse" },
+    { "id": "add-maths-ocr", "subjectId": "add-maths", "boardId": "ocr", "spec": "6993", "label": "OCR 6993", "qualificationId": "gcse" }
   ],
   "papers": [
     { "id": "cs-p1", "offeringId": "cs-aqa", "name": "Paper 1", "examDate": "2026-05-13" , "examTime": "13:30" },

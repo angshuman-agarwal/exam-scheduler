@@ -1,5 +1,7 @@
 import { useMemo, useRef } from 'react'
 import seedData from '../data/subjects.json'
+import { useAppStore } from '../stores/app.store'
+import QualificationChip from './QualificationChip'
 
 interface LandingPageProps {
   onboarded: boolean
@@ -344,6 +346,7 @@ export default function LandingPage({
   nearestUserExam,
   selectedSubjectDetails,
 }: LandingPageProps) {
+  const studyMode = useAppStore(s => s.studyMode)
   const countdown = useMemo(() => getCountdown(), [])
   const demoRef = useRef<HTMLDivElement>(null)
 
@@ -381,9 +384,11 @@ export default function LandingPage({
         {onboarded ? (
           /* Returning user hero */
           <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 sm:p-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
-              Home
-            </p>
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
+              <span>Home</span>
+              {studyMode && <span>&middot;</span>}
+              {studyMode && <QualificationChip mode={studyMode} />}
+            </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-5">
               Ready for today's revision?
             </h1>

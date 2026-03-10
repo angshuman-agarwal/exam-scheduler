@@ -1,1 +1,1 @@
-export const SEED_REVISION = 2
+export const SEED_REVISION = 3

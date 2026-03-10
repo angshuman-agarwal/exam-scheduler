@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { useTimerStore } from '../stores/timer.store'
 import { useWakeLock } from '../lib/useWakeLock'
+import QualificationChip from './QualificationChip'
 import type { ScoredTopic, ScheduleSource } from '../types'
 
 interface SessionLoggerProps {
@@ -222,6 +223,7 @@ function ConfidenceDots({ value }: { value: number }) {
 
 export default function SessionLogger({ scored, source, scheduleItemId, onBack, onGoToProgress }: SessionLoggerProps) {
   const { topic, subject, offering } = scored
+  const studyMode = useAppStore((s) => s.studyMode)
   const logSession = useAppStore((s) => s.logSession)
   const addNote = useAppStore((s) => s.addNote)
   const removeFromPlan = useAppStore((s) => s.removeFromPlan)
@@ -391,7 +393,13 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
           <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: subject.color }} />
           <div>
             <h2 className="text-xl font-bold text-gray-900">{topic.name}</h2>
-            <p className="text-sm text-gray-500">{subject.name} <span className="text-gray-300">&middot;</span> {offering.label}</p>
+            <div className="flex flex-wrap items-center gap-1.5 text-sm text-gray-400">
+              {studyMode && <QualificationChip mode={studyMode} />}
+              {studyMode && <span>&middot;</span>}
+              <span>{subject.name}</span>
+              <span>&middot;</span>
+              <span>{offering.label}</span>
+            </div>
           </div>
         </div>
       </div>

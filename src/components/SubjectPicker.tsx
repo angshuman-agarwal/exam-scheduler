@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, daysSince } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
+import QualificationChip from './QualificationChip'
 import type { ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../types'
 
 interface SubjectPickerProps {
@@ -156,6 +157,7 @@ function CompactRow({
 }
 
 export default function SubjectPicker({ offering, subject, paper, onBack, onStartSession }: SubjectPickerProps) {
+  const studyMode = useAppStore((s) => s.studyMode)
   const getTopicsForOffering = useAppStore((s) => s.getTopicsForOffering)
   const dailyPlan = useAppStore((s) => s.dailyPlan)
   const planDay = useAppStore((s) => s.planDay)
@@ -235,7 +237,11 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
           {subject.name}{paper ? ` \u2014 ${paper.name}` : ''}
         </h1>
       </div>
-      <p className="text-sm text-gray-400 ml-4 mb-8">{offering.label}</p>
+      <div className="flex flex-wrap items-center gap-1.5 text-sm text-gray-400 ml-4 mb-8">
+        {studyMode && <QualificationChip mode={studyMode} />}
+        {studyMode && <span>&middot;</span>}
+        <span>{offering.label}</span>
+      </div>
 
       {/* Plan Tray */}
       <div className="mb-8">

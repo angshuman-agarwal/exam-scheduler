@@ -11,6 +11,14 @@ const seed = seedData as SeedDataV2
 
 import { SEED_REVISION } from '../lib/constants'
 
+// Color palette for custom subjects
+const CUSTOM_COLORS = ['#E11D48','#7C3AED','#0891B2','#CA8A04','#059669',
+                        '#DC2626','#4F46E5','#0D9488','#C026D3','#EA580C']
+function pickUnusedColor(subjects: Subject[]): string {
+  const used = new Set(subjects.map(s => s.color))
+  return CUSTOM_COLORS.find(c => !used.has(c)) ?? CUSTOM_COLORS[0]
+}
+
 interface PersistedState {
   version: 2
   seedRevision?: number
@@ -26,6 +34,12 @@ interface PersistedState {
   selectedOfferingIds: string[]
   dailyPlan: ScheduleItem[]
   planDay: string
+  studyMode: 'gcse' | 'alevel' | null
+  customBoards: Board[]
+  customSubjects: Subject[]
+  customOfferings: Offering[]
+  customPapers: Paper[]
+  customTopics: Topic[]
 }
 
 interface AppState extends PersistedState {
@@ -46,6 +60,18 @@ interface AppState extends PersistedState {
   clearPlan: () => void
   autoFillPlan: (today: Date) => void
   getPlanItems: (today: Date) => ScheduleItem[]
+  setStudyMode: (mode: 'gcse' | 'alevel') => void
+  addCustomSubject: (data: {
+    subjectName: string
+    boardId: 'aqa' | 'ccea' | 'eduqas' | 'edexcel' | 'ocr' | 'wjec' | 'other'
+    customBoardName?: string
+    spec?: string
+    papers: { name: string; examDate: string; examTime?: string }[]
+    topicNames: string[]
+    confidence: number
+    qualificationId: 'gcse' | 'alevel'
+  }) => { subjectId: string; offeringId: string }
+  removeCustomSubject: (subjectId: string) => void
 }
 
 function deepCloneSeed(): PersistedState {
@@ -64,6 +90,12 @@ function deepCloneSeed(): PersistedState {
     selectedOfferingIds: [],
     dailyPlan: [],
     planDay: '',
+    studyMode: null,
+    customBoards: [],
+    customSubjects: [],
+    customOfferings: [],
+    customPapers: [],
+    customTopics: [],
   }
 }
 
@@ -78,11 +110,9 @@ function isSeedCurrent(data: PersistedState): boolean {
 }
 
 function mergeWithFreshSeed(saved: PersistedState, fresh: PersistedState): PersistedState {
-  // Build map of old topics for preserving user-owned fields
+  // 1. Existing seed topic merge (preserve user-owned fields)
   const oldTopicMap = new Map(saved.topics.map((t) => [t.id, t]))
-
-  // Merge topics: seed-owned fields from fresh, user-owned fields from saved
-  const mergedTopics = fresh.topics.map((t) => {
+  const mergedSeedTopics = fresh.topics.map((t) => {
     const old = oldTopicMap.get(t.id)
     if (!old) return t
     return {
@@ -93,24 +123,40 @@ function mergeWithFreshSeed(saved: PersistedState, fresh: PersistedState): Persi
     }
   })
 
-  const validTopicIds = new Set(mergedTopics.map((t) => t.id))
-  const validOfferingIds = new Set(fresh.offerings.map((o) => o.id))
+  // 2. Extract custom entities from saved state
+  const customBoards = saved.customBoards ?? []
+  const customSubjects = saved.customSubjects ?? []
+  const customOfferings = saved.customOfferings ?? []
+  const customPapers = saved.customPapers ?? []
+  const customTopics = saved.customTopics ?? []
 
-  // Filter user data to only valid IDs
+  // 3. Build merged arrays: fresh seed base + custom entities (appended once)
+  const boards = [...fresh.boards, ...customBoards]
+  const subjects = [...fresh.subjects, ...customSubjects]
+  const offerings = [...fresh.offerings, ...customOfferings]
+  const papers = [...fresh.papers, ...customPapers]
+  const topics = [...mergedSeedTopics, ...customTopics]
+
+  // 4. Build valid ID sets from merged arrays (seed + custom)
+  const validOfferingIds = new Set(offerings.map((o) => o.id))
+  const validTopicIds = new Set(topics.map((t) => t.id))
+
+  // 5. Filter user selections/data — preserve exactly, only remove invalid
   const selectedOfferingIds = saved.selectedOfferingIds.filter((id) => validOfferingIds.has(id))
   const onboarded = selectedOfferingIds.length > 0 ? saved.onboarded : false
   const sessions = saved.sessions.filter((s) => validTopicIds.has(s.topicId))
   const notes = saved.notes.filter((n) => validTopicIds.has(n.topicId))
   const dailyPlan = saved.dailyPlan.filter((i) => validTopicIds.has(i.topicId))
 
+  // 6. Carry forward studyMode and custom arrays
   return {
     version: 2,
     seedRevision: SEED_REVISION,
-    boards: fresh.boards,
-    subjects: fresh.subjects,
-    offerings: fresh.offerings,
-    papers: fresh.papers,
-    topics: mergedTopics,
+    boards,
+    subjects,
+    offerings,
+    papers,
+    topics,
     sessions,
     notes,
     userState: saved.userState,
@@ -118,6 +164,12 @@ function mergeWithFreshSeed(saved: PersistedState, fresh: PersistedState): Persi
     selectedOfferingIds,
     dailyPlan,
     planDay: saved.planDay,
+    studyMode: saved.studyMode ?? null,
+    customBoards,
+    customSubjects,
+    customOfferings,
+    customPapers,
+    customTopics,
   }
 }
 
@@ -147,6 +199,12 @@ function extractPersisted(state: AppState): PersistedState {
     selectedOfferingIds: state.selectedOfferingIds,
     dailyPlan: state.dailyPlan,
     planDay: state.planDay,
+    studyMode: state.studyMode,
+    customBoards: state.boards.filter(b => b.id.startsWith('custom-board-')),
+    customSubjects: state.subjects.filter(s => s.id.startsWith('custom-subject-')),
+    customOfferings: state.offerings.filter(o => o.id.startsWith('custom-offering-')),
+    customPapers: state.papers.filter(p => p.id.startsWith('custom-paper-')),
+    customTopics: state.topics.filter(t => t.id.startsWith('custom-topic-')),
   }
 }
 
@@ -181,26 +239,78 @@ export const useAppStore = create<AppState>()((set, get) => ({
   selectedOfferingIds: [],
   dailyPlan: [],
   planDay: '',
+  studyMode: null,
+  customBoards: [],
+  customSubjects: [],
+  customOfferings: [],
+  customPapers: [],
+  customTopics: [],
 
   init: async () => {
     const loaded = await loadFromIdb()
 
     let state: PersistedState
     if (!loaded) {
-      // No saved state or invalid schema — fresh seed
       state = deepCloneSeed()
     } else if (loaded.needsMerge) {
-      // Valid schema but stale seed revision — merge user data into fresh catalog
       state = mergeWithFreshSeed(loaded.state, deepCloneSeed())
     } else {
-      // Current seed revision — use as-is
       state = loaded.state
     }
+
+    // Backfill qualificationId on offerings from fresh seed (handles stale IDB at current revision)
+    const freshSeed = deepCloneSeed()
+    const freshOfferingMap = new Map(freshSeed.offerings.map(o => [o.id, o]))
+    for (const o of state.offerings) {
+      if (!o.qualificationId) {
+        const fresh = freshOfferingMap.get(o.id)
+        if (fresh) o.qualificationId = fresh.qualificationId
+      }
+    }
+
+    // Validate studyMode
+    if (state.studyMode !== 'gcse' && state.studyMode !== 'alevel') {
+      state.studyMode = null
+    }
+
+    // Backfill custom arrays
+    if (!state.customBoards) state.customBoards = []
+    if (!state.customSubjects) state.customSubjects = []
+    if (!state.customOfferings) state.customOfferings = []
+    if (!state.customPapers) state.customPapers = []
+    if (!state.customTopics) state.customTopics = []
 
     // Backfill optional fields from older persisted states
     if (!state.dailyPlan) state.dailyPlan = []
     if (!state.planDay) state.planDay = ''
     if (!state.selectedOfferingIds) state.selectedOfferingIds = []
+
+    // Auto-detect studyMode for existing onboarded users
+    if (state.studyMode === null && state.onboarded && state.selectedOfferingIds.length > 0) {
+      const offeringQuals = state.selectedOfferingIds.map(id => {
+        const o = state.offerings.find(o => o.id === id)
+        return o?.qualificationId
+      })
+      const allGcse = offeringQuals.length > 0 && offeringQuals.every(q => q === 'gcse')
+      const allAlevel = offeringQuals.length > 0 && offeringQuals.every(q => q === 'alevel')
+      if (allGcse) {
+        state.studyMode = 'gcse'
+      } else if (allAlevel) {
+        state.studyMode = 'alevel'
+      } else {
+        // Mixed or unknown — cannot auto-resolve. Drop selections, force re-setup.
+        state.selectedOfferingIds = []
+        state.dailyPlan = []
+        state.planDay = ''
+        state.onboarded = false
+      }
+    }
+
+    // Corrupted state guard: onboarded but no selections — full reset to qualification picker
+    if (state.onboarded && state.selectedOfferingIds.length === 0) {
+      state.onboarded = false
+      state.studyMode = null
+    }
 
     // Plan-day cleanup
     const today = getLocalDayKey(new Date())
@@ -287,7 +397,6 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const state = get()
     const kept = new Set(offeringIds)
 
-    // Update confidence on topics belonging to selected offerings
     const topics = state.topics.map((t) => {
       if (!kept.has(t.offeringId)) return t
       const conf = confidences.get(t.offeringId)
@@ -302,12 +411,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const state = get()
     const previouslySelected = new Set(state.selectedOfferingIds)
 
-    // Only set confidence on topics for newly added offerings
     const topics = state.topics.map((t) => {
       if (!offeringIds.includes(t.offeringId)) return t
-      // Already selected before — preserve existing confidence/performance
       if (previouslySelected.has(t.offeringId)) return t
-      // Newly added — initialize from form
       const conf = confidences.get(t.offeringId)
       return conf !== undefined ? { ...t, confidence: conf } : t
     })
@@ -383,6 +489,135 @@ export const useAppStore = create<AppState>()((set, get) => ({
   getPlanItems: (today: Date): ScheduleItem[] => {
     const state = get()
     return state.planDay === getLocalDayKey(today) ? state.dailyPlan : []
+  },
+
+  setStudyMode: (mode: 'gcse' | 'alevel') => {
+    set({ studyMode: mode })
+    saveToIdb(extractPersisted(get()))
+  },
+
+  addCustomSubject: (data) => {
+    const state = get()
+
+    // Resolve board
+    let boardId = data.boardId as string
+    let boardName: string
+
+    if (data.boardId !== 'other') {
+      const existingBoard = state.boards.find(b => b.id === data.boardId)
+      boardName = existingBoard?.name ?? data.boardId.toUpperCase()
+    } else {
+      const trimmedName = (data.customBoardName ?? '').trim()
+      const matchedBoard = state.boards.find(
+        b => b.name.toLowerCase() === trimmedName.toLowerCase()
+      )
+      if (matchedBoard) {
+        boardId = matchedBoard.id
+        boardName = matchedBoard.name
+      } else {
+        boardId = `custom-board-${crypto.randomUUID()}`
+        boardName = trimmedName
+      }
+    }
+
+    const subjectId = `custom-subject-${crypto.randomUUID()}`
+    const offeringId = `custom-offering-${crypto.randomUUID()}`
+
+    const newSubject: Subject = {
+      id: subjectId,
+      name: data.subjectName.trim(),
+      color: pickUnusedColor(state.subjects),
+    }
+
+    const specLabel = data.spec?.trim() ?? ''
+    const newOffering: Offering = {
+      id: offeringId,
+      subjectId,
+      boardId,
+      spec: specLabel,
+      label: `${boardName} ${specLabel}`.trim(),
+      qualificationId: data.qualificationId,
+    }
+
+    const newPapers: Paper[] = data.papers.map(p => ({
+      id: `custom-paper-${crypto.randomUUID()}`,
+      offeringId,
+      name: p.name,
+      examDate: p.examDate,
+      ...(p.examTime ? { examTime: p.examTime } : {}),
+    }))
+
+    const firstPaperId = newPapers[0]?.id ?? offeringId
+    const newTopics: Topic[] = data.topicNames.map(name => ({
+      id: `custom-topic-${crypto.randomUUID()}`,
+      paperId: firstPaperId,
+      offeringId,
+      name,
+      confidence: data.confidence,
+      performanceScore: 0.5,
+      lastReviewed: null,
+    }))
+
+    // Build new state arrays
+    const boards = boardId.startsWith('custom-board-') && !state.boards.some(b => b.id === boardId)
+      ? [...state.boards, { id: boardId, name: boardName }]
+      : state.boards
+    const subjects = [...state.subjects, newSubject]
+    const offerings = [...state.offerings, newOffering]
+    const papers = [...state.papers, ...newPapers]
+    const topics = [...state.topics, ...newTopics]
+
+    set({ boards, subjects, offerings, papers, topics })
+    saveToIdb(extractPersisted(get()))
+
+    return { subjectId, offeringId }
+  },
+
+  removeCustomSubject: (subjectId: string) => {
+    const state = get()
+
+    // Find offerings for this subject
+    const offeringIds = new Set(
+      state.offerings.filter(o => o.subjectId === subjectId).map(o => o.id)
+    )
+
+    // Find papers for those offerings
+    const paperIds = new Set(
+      state.papers.filter(p => offeringIds.has(p.offeringId)).map(p => p.id)
+    )
+
+    // Find topics for those papers
+    const topicIds = new Set(
+      state.topics.filter(t => paperIds.has(t.paperId)).map(t => t.id)
+    )
+
+    // Check if custom board is orphaned
+    const removedOfferings = state.offerings.filter(o => o.subjectId === subjectId)
+    const customBoardIds = new Set(
+      removedOfferings
+        .filter(o => o.boardId.startsWith('custom-board-'))
+        .map(o => o.boardId)
+    )
+    const remainingOfferings = state.offerings.filter(o => !offeringIds.has(o.id))
+    const orphanedBoardIds = new Set<string>()
+    for (const bid of customBoardIds) {
+      if (!remainingOfferings.some(o => o.boardId === bid)) {
+        orphanedBoardIds.add(bid)
+      }
+    }
+
+    set({
+      boards: state.boards.filter(b => !orphanedBoardIds.has(b.id)),
+      subjects: state.subjects.filter(s => s.id !== subjectId),
+      offerings: remainingOfferings,
+      papers: state.papers.filter(p => !paperIds.has(p.id)),
+      topics: state.topics.filter(t => !topicIds.has(t.id)),
+      selectedOfferingIds: state.selectedOfferingIds.filter(id => !offeringIds.has(id)),
+      sessions: state.sessions.filter(s => !topicIds.has(s.topicId)),
+      notes: state.notes.filter(n => !topicIds.has(n.topicId)),
+      dailyPlan: state.dailyPlan.filter(i => !topicIds.has(i.topicId)),
+    })
+    saveToIdb(extractPersisted(get()))
   },
 
   resetAll: async () => {

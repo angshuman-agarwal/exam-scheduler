@@ -29,7 +29,7 @@ const TODAY = new Date('2026-05-01T00:00:00Z')
 
 // Helper to build test fixtures with v2 shape
 function mkOffering(id: string, subjectId: string): Offering {
-  return { id, subjectId, boardId: 'aqa', spec: '0000', label: 'AQA 0000' }
+  return { id, subjectId, boardId: 'aqa', spec: '0000', label: 'AQA 0000', qualificationId: 'gcse' }
 }
 
 // -- Core Formula Components --

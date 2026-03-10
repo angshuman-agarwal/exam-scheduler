@@ -4,6 +4,7 @@ import { daysRemaining, scoreAllTopics, autoFillPlanItems, getPlanningMode, near
 import { getLocalDayKey } from '../lib/date'
 import NudgeBanner from './NudgeBanner'
 import ExamCalendar from './ExamCalendar'
+import QualificationChip from './QualificationChip'
 import type { ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../types'
 
 interface TodayPlanProps {
@@ -44,6 +45,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
   const autoFillPlan = useAppStore((s) => s.autoFillPlan)
   const clearPlan = useAppStore((s) => s.clearPlan)
 
+  const studyMode = useAppStore((s) => s.studyMode)
   const [expanded, setExpanded] = useState<string | null>(null)
 
   const today = new Date()
@@ -149,7 +151,10 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
     <div className="px-4 pt-6 pb-8 min-h-screen bg-[#faf9f7]">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Study Planner</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Study Planner</h1>
+            {studyMode && <QualificationChip mode={studyMode} />}
+          </div>
           {planningMode === 'crunch' && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 border border-amber-200/60">
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
