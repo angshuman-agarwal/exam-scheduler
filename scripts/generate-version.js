@@ -6,6 +6,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf-8'))
 const versionJsonPath = resolve(__dirname, '../public/version.json')
 
+let appVersionConfig = {}
+try {
+  appVersionConfig = JSON.parse(readFileSync(resolve(__dirname, '../config/app-version.json'), 'utf-8'))
+} catch {
+  // config/app-version.json missing or invalid — fall through to defaults
+}
+
 const version = pkg.version
 console.log(`version: ${version} (from package.json)`)
 
@@ -15,20 +22,12 @@ let minSource
 if (process.env.MINIMUM_SUPPORTED_VERSION) {
   minimumSupportedVersion = process.env.MINIMUM_SUPPORTED_VERSION
   minSource = 'env MINIMUM_SUPPORTED_VERSION'
+} else if (appVersionConfig.minimumSupportedVersion) {
+  minimumSupportedVersion = appVersionConfig.minimumSupportedVersion
+  minSource = 'config/app-version.json'
 } else {
-  try {
-    const existing = JSON.parse(readFileSync(versionJsonPath, 'utf-8'))
-    if (existing.minimumSupportedVersion) {
-      minimumSupportedVersion = existing.minimumSupportedVersion
-      minSource = 'existing version.json'
-    }
-  } catch {
-    // file doesn't exist or invalid JSON — first-ever generation
-  }
-  if (!minimumSupportedVersion) {
-    minimumSupportedVersion = version
-    minSource = 'package.json (first generation)'
-  }
+  minimumSupportedVersion = version
+  minSource = 'package.json (fallback)'
 }
 
 console.log(`minimumSupportedVersion: ${minimumSupportedVersion} (from ${minSource})`)
