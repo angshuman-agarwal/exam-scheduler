@@ -89,6 +89,9 @@ export default function MobileSubjectConfig({ ctrl }: MobileSubjectConfigProps) 
             onRemove={handleRemove}
             showRemoveAction={true}
             offeringMeta={ctrl.offeringMeta}
+            onAddBoard={() => ctrl.openAddBoard(subjectId)}
+            onEditBoard={(oid) => ctrl.openEditBoard(oid)}
+            onRemoveOffering={(oid) => ctrl.handleRemoveOffering(oid)}
           />
         </div>
       </div>

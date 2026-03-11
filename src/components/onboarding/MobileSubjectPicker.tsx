@@ -53,10 +53,9 @@ export default function MobileSubjectPicker({ ctrl, onBack }: MobileSubjectPicke
     ctrl.openWizard(ctrl.searchQuery.trim())
   }
 
-  const hasSeeded = ctrl.filteredSeededSubjects.length > 0
-  const hasCustom = ctrl.filteredCustomSubjects.length > 0
-  const hasResults = hasSeeded || hasCustom
-  const showCreateAction = !hasResults && ctrl.searchQuery.trim().length >= 3
+  const hasResults = ctrl.filteredSubjects.length > 0
+  const { authoritative: authoritativeMatches, suggestions: fuzzyMatches } = ctrl.searchNormalizedMatches
+  const showCreateAction = !hasResults && ctrl.searchQuery.trim().length >= 3 && authoritativeMatches.length === 0
 
   return (
     <div className="flex flex-col min-h-screen bg-[#faf9f7]">
@@ -87,13 +86,10 @@ export default function MobileSubjectPicker({ ctrl, onBack }: MobileSubjectPicke
 
       {/* Subject lists */}
       <div className="flex-1 px-4 pt-3 pb-32">
-        {/* Seeded section */}
-        {hasSeeded && (
+        {/* Unified subject list */}
+        {hasResults && (
           <div className="flex flex-col gap-2">
-            {ctrl.searchQuery.trim() && (
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mt-1 mb-1">Subjects</p>
-            )}
-            {ctrl.filteredSeededSubjects.map(s => (
+            {ctrl.filteredSubjects.map(s => (
               <SubjectListItem
                 key={s.id}
                 subject={s}
@@ -105,25 +101,8 @@ export default function MobileSubjectPicker({ ctrl, onBack }: MobileSubjectPicke
           </div>
         )}
 
-        {/* Custom section */}
-        {hasCustom && (
-          <div className="flex flex-col gap-2 mt-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mt-1 mb-1">Your custom subjects</p>
-            {ctrl.filteredCustomSubjects.map(s => (
-              <SubjectListItem
-                key={s.id}
-                subject={s}
-                isSelected={ctrl.selectedSubjectIds.has(s.id)}
-                summaryLabel={getSummaryLabel(s, ctrl)}
-                onTap={() => ctrl.openSubjectConfig(s.id)}
-                isCustom
-              />
-            ))}
-          </div>
-        )}
-
-        {/* A-Level empty state (no seeded subjects at all) */}
-        {ctrl.studyMode === 'alevel' && ctrl.seededSubjects.length === 0 && !hasCustom && !ctrl.searchQuery.trim() && (
+        {/* A-Level empty state */}
+        {ctrl.studyMode === 'alevel' && ctrl.seededSubjects.length === 0 && ctrl.customSubjects.length === 0 && !ctrl.searchQuery.trim() && (
           <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center mt-2">
             <p className="text-sm font-medium text-gray-600">We don't have built-in A-Level subjects yet.</p>
             <p className="text-xs text-gray-400 mt-1">Add your own above to get started.</p>
@@ -133,14 +112,47 @@ export default function MobileSubjectPicker({ ctrl, onBack }: MobileSubjectPicke
         {/* Search empty state */}
         {!hasResults && ctrl.searchQuery.trim() && (
           <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center mt-2">
-            <p className="text-sm text-gray-500">No subjects match "{ctrl.searchQuery.trim()}"</p>
-            {showCreateAction && (
-              <button
-                onClick={handleCreateFromSearch}
-                className="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700"
-              >
-                Create "{ctrl.searchQuery.trim()}"
-              </button>
+            {authoritativeMatches.length > 0 ? (
+              <>
+                <p className="text-sm text-gray-500 mb-2">This subject already exists</p>
+                {authoritativeMatches.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => ctrl.openAddBoard(m.id)}
+                    className="block mx-auto mt-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                  >
+                    Add board to {m.name}
+                  </button>
+                ))}
+              </>
+            ) : (
+              <>
+                {fuzzyMatches.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-500 mb-2">Did you mean one of these?</p>
+                    {fuzzyMatches.map(m => (
+                      <button
+                        key={m.id}
+                        onClick={() => ctrl.openAddBoard(m.id)}
+                        className="block mx-auto mt-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                      >
+                        Add board to {m.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {fuzzyMatches.length === 0 && (
+                  <p className="text-sm text-gray-500">No subjects match &ldquo;{ctrl.searchQuery.trim()}&rdquo;</p>
+                )}
+                {showCreateAction && (
+                  <button
+                    onClick={handleCreateFromSearch}
+                    className="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                  >
+                    Create &ldquo;{ctrl.searchQuery.trim()}&rdquo;
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}

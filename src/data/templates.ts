@@ -1,3 +1,13 @@
+import {
+  sanitizeSubjectInput,
+  matchSubject,
+  findSubjectCandidates,
+} from './subject-matcher'
+import type { SubjectMatchResult, SubjectCandidate } from './subject-matcher'
+
+export { sanitizeSubjectInput, matchSubject, findSubjectCandidates }
+export type { SubjectMatchResult, SubjectCandidate }
+
 export interface SubjectTemplate {
   qualificationId: 'gcse' | 'alevel'
   subject: string
@@ -7,36 +17,105 @@ export interface SubjectTemplate {
   topics?: string[]
 }
 
-const ALIAS_MAP: Record<string, string> = {
-  'psychology': 'psychology',
-  'psych': 'psychology',
-  'art': 'art and design',
-  'art & design': 'art and design',
-  'art and design': 'art and design',
-  'maths': 'mathematics',
-  'math': 'mathematics',
-  'mathematics': 'mathematics',
-  'rs': 'religious studies',
-  're': 'religious studies',
-  'religious education': 'religious studies',
-  'religious studies': 'religious studies',
-  'dt': 'design and technology',
-  'd&t': 'design and technology',
-  'd and t': 'design and technology',
-  'design and technology': 'design and technology',
-  'comp sci': 'computer science',
-  'cs': 'computer science',
-  'computing': 'computer science',
-  'computer science': 'computer science',
-  'pe': 'physical education',
-  'phys ed': 'physical education',
-  'physical education': 'physical education',
-  'history': 'history',
+export function normalizeSubject(name: string): string {
+  const result = matchSubject(name, 'strict')
+  if (result.kind === 'exact' || result.kind === 'alias') return result.canonicalKey
+  return sanitizeSubjectInput(name)
 }
 
-export function normalizeSubject(name: string): string {
-  const key = name.toLowerCase().trim()
-  return ALIAS_MAP[key] ?? key
+export function normalizeSpec(spec: string | undefined | null): string {
+  return (spec ?? '').trim().toLowerCase()
+}
+
+/** Normalize a topic name for dedup matching. Locked behavior: lowercase + trim. */
+export function normalizeTopic(name: string): string {
+  return name.toLowerCase().trim()
+}
+
+export type NormalizedMatch = {
+  id: string
+  name: string
+  matchKind: 'exact' | 'alias' | 'fuzzy' | 'fallback'
+}
+
+/**
+ * Structured result from findNormalizedMatches.
+ * Authoritative matches (exact/alias) are safe to auto-select.
+ * Suggestions (fuzzy/fallback) must NEVER be auto-selected — always present
+ * to the user for explicit confirmation.
+ */
+export type NormalizedMatchResult = {
+  /** Registry-confirmed matches (exact or alias). Safe to auto-redirect on single match. */
+  authoritative: NormalizedMatch[]
+  /** Fuzzy or fallback matches. Must be shown as suggestions, never auto-applied. */
+  suggestions: NormalizedMatch[]
+}
+
+export function findNormalizedMatches(
+  name: string,
+  subjects: { id: string; name: string }[],
+  offerings: { id: string; subjectId: string; qualificationId: string }[],
+  studyMode: 'gcse' | 'alevel',
+  mode: 'strict' | 'interactive' = 'strict',
+): NormalizedMatchResult {
+  const result = matchSubject(name, mode)
+
+  // Build target map: canonicalKey → matchKind
+  const targets = new Map<string, 'exact' | 'alias' | 'fuzzy' | 'fallback'>()
+
+  if (result.kind === 'exact') {
+    targets.set(result.canonicalKey, 'exact')
+  } else if (result.kind === 'alias') {
+    targets.set(result.canonicalKey, 'alias')
+  } else if (result.kind === 'fuzzy') {
+    targets.set(result.canonicalKey, 'fuzzy')
+  } else if (result.kind === 'ambiguous') {
+    for (const c of result.candidates) {
+      targets.set(c.canonicalKey, 'fuzzy')
+    }
+  } else {
+    // none → sanitized fallback
+    const sanitized = sanitizeSubjectInput(name)
+    if (!sanitized) return { authoritative: [], suggestions: [] }
+    targets.set(sanitized, 'fallback')
+  }
+
+  // Find subjects with ≥1 offering in studyMode
+  const subjectsWithOfferings = new Set<string>()
+  for (const o of offerings) {
+    if (o.qualificationId === studyMode) subjectsWithOfferings.add(o.subjectId)
+  }
+
+  const authoritative: NormalizedMatch[] = []
+  const suggestions: NormalizedMatch[] = []
+  for (const s of subjects) {
+    if (!subjectsWithOfferings.has(s.id)) continue
+    const subjectKey = normalizeSubject(s.name)
+    const matchKind = targets.get(subjectKey)
+    if (matchKind) {
+      const match = { id: s.id, name: s.name, matchKind }
+      if (matchKind === 'exact' || matchKind === 'alias') {
+        authoritative.push(match)
+      } else {
+        suggestions.push(match)
+      }
+    }
+  }
+
+  // Deterministic order: exact display-name match first, seeded before custom
+  const exactLower = name.toLowerCase().trim()
+  const sortFn = (a: NormalizedMatch, b: NormalizedMatch) => {
+    const aExact = a.name.toLowerCase() === exactLower ? 0 : 1
+    const bExact = b.name.toLowerCase() === exactLower ? 0 : 1
+    if (aExact !== bExact) return aExact - bExact
+    const aCustom = a.id.startsWith('custom-subject-') || a.id.startsWith('draft-') ? 1 : 0
+    const bCustom = b.id.startsWith('custom-subject-') || b.id.startsWith('draft-') ? 1 : 0
+    return aCustom - bCustom
+  }
+  authoritative.sort(sortFn)
+  suggestions.sort(sortFn)
+
+  return { authoritative, suggestions }
 }
 
 const TEMPLATES: SubjectTemplate[] = [
@@ -50,8 +129,8 @@ const TEMPLATES: SubjectTemplate[] = [
       { name: 'Paper 2', examDate: '2026-06-05' },
     ],
     topics: [
-      'Germany 1890–1945',
-      'Conflict and tension 1894–1918',
+      'Germany 1890\u20131945',
+      'Conflict and tension 1894\u20131918',
       'Elizabethan England',
       'Norman England',
     ],

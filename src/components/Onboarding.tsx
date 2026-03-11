@@ -96,14 +96,17 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel, onB
       </div>
 
       {/* Wizard overlay */}
-      {ctrl.showWizard && ctrl.studyMode && (
+      {ctrl.wizardMode && ctrl.studyMode && (
         <CustomSubjectWizard
           studyMode={ctrl.studyMode}
-          onClose={() => ctrl.setShowWizard(false)}
+          mode={ctrl.wizardMode}
+          onClose={() => ctrl.setWizardMode(null)}
           draftMode={!ctrl.isEdit}
           onDraftCreated={ctrl.handleDraftCreated}
           onCreated={ctrl.handleWizardCreated}
-          initialSubjectName={ctrl.wizardInitialName}
+          allSubjects={ctrl.subjects}
+          allOfferings={ctrl.offerings}
+          onExistingOffering={ctrl.handleExistingOffering}
         />
       )}
     </div>

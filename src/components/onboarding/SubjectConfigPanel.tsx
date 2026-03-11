@@ -15,6 +15,9 @@ interface SubjectConfigPanelProps {
   onRemove: () => void
   showRemoveAction: boolean
   offeringMeta: Map<string, { paperCount: number; nearestDate: string | null; nearestDays: number | null }>
+  onAddBoard?: () => void
+  onEditBoard?: (offeringId: string) => void
+  onRemoveOffering?: (offeringId: string) => void
 }
 
 export default function SubjectConfigPanel({
@@ -29,6 +32,9 @@ export default function SubjectConfigPanel({
   onRemove,
   showRemoveAction,
   offeringMeta,
+  onAddBoard,
+  onEditBoard,
+  onRemoveOffering,
 }: SubjectConfigPanelProps) {
   const hasMultipleOfferings = subjectOfferings.length > 1
   const chosenOff = chosenOfferingId ? subjectOfferings.find(o => o.id === chosenOfferingId) : undefined
@@ -75,6 +81,50 @@ export default function SubjectConfigPanel({
           </div>
         </div>
       ) : null}
+
+      {/* Offering action row (custom offerings only) */}
+      {chosenOfferingId && chosenOff && (onEditBoard || onRemoveOffering) && (
+        (() => {
+          const isCustomPersisted = chosenOfferingId.startsWith('custom-offering-')
+          const isDraft = chosenOfferingId.startsWith('draft-offering-')
+          if (!isCustomPersisted && !isDraft) return null
+          return (
+            <div className="flex items-center gap-3 px-1 pt-1 pb-1">
+              {isCustomPersisted && onEditBoard && (
+                <button
+                  onClick={() => onEditBoard(chosenOfferingId)}
+                  className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                >
+                  Edit
+                </button>
+              )}
+              {(isCustomPersisted || isDraft) && onRemoveOffering && (
+                <button
+                  onClick={() => onRemoveOffering(chosenOfferingId)}
+                  className="text-xs font-medium text-red-500 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              )}
+              {isCustomPersisted && (
+                <span className="text-[10px] text-gray-400">Added by you</span>
+              )}
+            </div>
+          )
+        })()
+      )}
+
+      {/* + Add board */}
+      {onAddBoard && (
+        <div className="pt-2">
+          <button
+            onClick={onAddBoard}
+            className="text-sm font-semibold text-blue-600 hover:text-blue-700 px-1"
+          >
+            + Add board
+          </button>
+        </div>
+      )}
 
       {/* Paper schedule */}
       {chosenOfferingId && (

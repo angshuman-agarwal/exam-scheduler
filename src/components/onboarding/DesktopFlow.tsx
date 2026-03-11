@@ -15,9 +15,10 @@ interface DesktopFlowProps {
 }
 
 export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, onCancel }: DesktopFlowProps) {
-  const renderSubjectCard = (s: Subject, isCustom: boolean) => {
+  const renderSubjectCard = (s: Subject) => {
     const isSelected = ctrl.selectedSubjectIds.has(s.id)
     const isExpanded = ctrl.expandedCards.has(s.id)
+    const isCustom = s.id.startsWith('custom-subject-') || s.id.startsWith('draft-')
     const subjectOfferings = (ctrl.offeringsBySubject.get(s.id) || []).filter(o => o.qualificationId === ctrl.studyMode)
     const chosenOid = ctrl.chosenOffering.get(s.id)
     const chosenOff = chosenOid ? subjectOfferings.find(o => o.id === chosenOid) : undefined
@@ -33,6 +34,7 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
     return (
       <div
         key={s.id}
+        data-subject-id={s.id}
         className={`rounded-2xl border border-l-[3px] overflow-hidden transition-all duration-200 ${
           isSelected
             ? 'border-gray-200 shadow-md ring-1 ring-gray-200/60 bg-white'
@@ -54,9 +56,6 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
             </span>
             {singleOfferingLabel && (
               <span className="text-gray-400 text-xs ml-1.5 shrink-0">{singleOfferingLabel}</span>
-            )}
-            {isCustom && (
-              <span className="bg-gray-100 text-gray-500 text-[10px] font-semibold rounded px-1.5 py-0.5 shrink-0">Custom</span>
             )}
           </div>
           <StatusBadge
@@ -134,6 +133,9 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
                   onRemove={() => ctrl.handleDeleteCustom(s.id)}
                   showRemoveAction={false}
                   offeringMeta={ctrl.offeringMeta}
+                  onAddBoard={() => ctrl.openAddBoard(s.id)}
+                  onEditBoard={(oid) => ctrl.openEditBoard(oid)}
+                  onRemoveOffering={(oid) => ctrl.handleRemoveOffering(oid)}
                 />
               )}
             </div>
@@ -143,10 +145,9 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
     )
   }
 
-  const hasSeeded = ctrl.filteredSeededSubjects.length > 0
-  const hasCustom = ctrl.filteredCustomSubjects.length > 0
-  const hasResults = hasSeeded || hasCustom
-  const showCreateAction = !hasResults && ctrl.searchQuery.trim().length >= 3
+  const hasResults = ctrl.filteredSubjects.length > 0
+  const { authoritative: authoritativeMatches, suggestions: fuzzyMatches } = ctrl.searchNormalizedMatches
+  const showCreateAction = !hasResults && ctrl.searchQuery.trim().length >= 3 && authoritativeMatches.length === 0
 
   return (
     <div className="flex flex-col md:flex-row md:gap-6 max-w-4xl mx-auto">
@@ -192,38 +193,61 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
         </div>
 
         <div className="flex flex-col gap-3">
-          {/* Seeded subjects */}
-          {hasSeeded && ctrl.filteredSeededSubjects.map(s => renderSubjectCard(s, false))}
+          {/* Unified subject list */}
+          {ctrl.filteredSubjects.map(s => renderSubjectCard(s))}
 
           {/* A-Level empty state */}
-          {ctrl.studyMode === 'alevel' && ctrl.seededSubjects.length === 0 && !hasCustom && !ctrl.searchQuery.trim() && (
+          {ctrl.studyMode === 'alevel' && ctrl.seededSubjects.length === 0 && ctrl.customSubjects.length === 0 && !ctrl.searchQuery.trim() && (
             <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center">
               <p className="text-sm font-medium text-gray-600">We don't have built-in A-Level subjects yet.</p>
               <p className="text-xs text-gray-400 mt-1">Add your own below to get started.</p>
             </div>
           )}
 
-          {/* Custom subjects section */}
-          {hasCustom && (
-            <>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mt-4 mb-1">
-                Your custom subjects
-              </p>
-              {ctrl.filteredCustomSubjects.map(s => renderSubjectCard(s, true))}
-            </>
-          )}
-
           {/* Search empty state */}
           {!hasResults && ctrl.searchQuery.trim() && (
             <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center">
-              <p className="text-sm text-gray-500">No subjects match "{ctrl.searchQuery.trim()}"</p>
-              {showCreateAction && (
-                <button
-                  onClick={() => ctrl.openWizard(ctrl.searchQuery.trim())}
-                  className="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700"
-                >
-                  Create "{ctrl.searchQuery.trim()}"
-                </button>
+              {authoritativeMatches.length > 0 ? (
+                <>
+                  <p className="text-sm text-gray-500 mb-2">This subject already exists</p>
+                  {authoritativeMatches.map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => ctrl.openAddBoard(m.id)}
+                      className="block mx-auto mt-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                    >
+                      Add board to {m.name}
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {fuzzyMatches.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-sm text-gray-500 mb-2">Did you mean one of these?</p>
+                      {fuzzyMatches.map(m => (
+                        <button
+                          key={m.id}
+                          onClick={() => ctrl.openAddBoard(m.id)}
+                          className="block mx-auto mt-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                        >
+                          Add board to {m.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {fuzzyMatches.length === 0 && (
+                    <p className="text-sm text-gray-500">No subjects match &ldquo;{ctrl.searchQuery.trim()}&rdquo;</p>
+                  )}
+                  {showCreateAction && (
+                    <button
+                      onClick={() => ctrl.openWizard(ctrl.searchQuery.trim())}
+                      className="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                    >
+                      Create &ldquo;{ctrl.searchQuery.trim()}&rdquo;
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )}

@@ -5,10 +5,9 @@ interface SubjectListItemProps {
   isSelected: boolean
   summaryLabel: string | null
   onTap: () => void
-  isCustom?: boolean
 }
 
-export default function SubjectListItem({ subject, isSelected, summaryLabel, onTap, isCustom }: SubjectListItemProps) {
+export default function SubjectListItem({ subject, isSelected, summaryLabel, onTap }: SubjectListItemProps) {
   return (
     <button
       onClick={onTap}
@@ -26,9 +25,6 @@ export default function SubjectListItem({ subject, isSelected, summaryLabel, onT
           <span className={`text-sm font-semibold truncate ${isSelected ? 'text-gray-900' : 'text-gray-600'}`}>
             {subject.name}
           </span>
-          {isCustom && (
-            <span className="bg-gray-100 text-gray-500 text-[10px] font-semibold rounded px-1.5 py-0.5 shrink-0">Custom</span>
-          )}
         </div>
         {isSelected && summaryLabel && (
           <p className="text-xs text-gray-400 mt-0.5 truncate">{summaryLabel}</p>

@@ -92,3 +92,24 @@ export interface SeedDataV2 {
   papers: Paper[]
   topics: Topic[]
 }
+
+export interface AddOfferingData {
+  boardId: 'aqa' | 'ccea' | 'eduqas' | 'edexcel' | 'ocr' | 'wjec' | 'other'
+  customBoardName?: string
+  spec?: string
+  paper: { name: string; examDate: string; examTime?: string }
+  topicNames: string[]
+  qualificationId: 'gcse' | 'alevel'
+}
+
+export interface UpdateOfferingBundleData {
+  paper: { name: string; examDate: string; examTime?: string }
+  topics: string[]
+}
+
+export interface OfferingCascadeCounts {
+  topicCount: number
+  sessionCount: number
+  noteCount: number
+  planCount: number
+}

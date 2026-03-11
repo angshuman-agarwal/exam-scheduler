@@ -1,8 +1,9 @@
 import { create } from 'zustand'
-import type { Topic, Paper, Subject, Board, Offering, Session, ScoredTopic, DayPlan, UserState, Note, ScheduleItem, ScheduleSource, SeedDataV2 } from '../types'
+import type { Topic, Paper, Subject, Board, Offering, Session, ScoredTopic, DayPlan, UserState, Note, ScheduleItem, ScheduleSource, SeedDataV2, AddOfferingData, UpdateOfferingBundleData, OfferingCascadeCounts } from '../types'
 import { scoreAllTopics, buildDayPlan, updatePerformance, adjustConfidence, autoFillPlanItems, TOTAL_BLOCKS, getPlanningMode } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
 import { loadFromIdbRaw, saveToIdbRaw } from '../lib/idb'
+import { normalizeSubject, normalizeSpec, normalizeTopic } from '../data/templates'
 import seedData from '../data/subjects.json'
 
 const STATE_KEY = 'app'
@@ -66,12 +67,16 @@ interface AppState extends PersistedState {
     boardId: 'aqa' | 'ccea' | 'eduqas' | 'edexcel' | 'ocr' | 'wjec' | 'other'
     customBoardName?: string
     spec?: string
-    papers: { name: string; examDate: string; examTime?: string }[]
+    paper: { name: string; examDate: string; examTime?: string }
     topicNames: string[]
     confidence: number
     qualificationId: 'gcse' | 'alevel'
   }) => { subjectId: string; offeringId: string }
   removeCustomSubject: (subjectId: string) => void
+  addOfferingToSubject: (subjectId: string, data: AddOfferingData) => { offeringId: string } | null
+  updateOfferingBundle: (offeringId: string, data: UpdateOfferingBundleData) => { removedTopicCount: number; removedSessionCount: number; removedNoteCount: number; removedPlanCount: number }
+  getOfferingCascadeCounts: (offeringId: string, proposedTopics?: string[]) => OfferingCascadeCounts
+  removeOffering: (offeringId: string) => void
 }
 
 function deepCloneSeed(): PersistedState {
@@ -129,6 +134,19 @@ function mergeWithFreshSeed(saved: PersistedState, fresh: PersistedState): Persi
   const customOfferings = saved.customOfferings ?? []
   const customPapers = saved.customPapers ?? []
   const customTopics = saved.customTopics ?? []
+
+  // 2b. Orphan rescue: custom subjects referenced by custom offerings but missing
+  const customSubjectIds = new Set(customSubjects.map(s => s.id))
+  const referencedSubjectIds = new Set(
+    customOfferings
+      .filter(o => o.subjectId.startsWith('custom-subject-'))
+      .map(o => o.subjectId)
+  )
+  for (const sid of referencedSubjectIds) {
+    if (!customSubjectIds.has(sid) && !fresh.subjects.some(s => s.id === sid)) {
+      customSubjects.push({ id: sid, name: 'Recovered subject', color: '#6B7280' })
+    }
+  }
 
   // 3. Build merged arrays: fresh seed base + custom entities (appended once)
   const boards = [...fresh.boards, ...customBoards]
@@ -208,6 +226,236 @@ function extractPersisted(state: AppState): PersistedState {
   }
 }
 
+function resolveBoard(
+  boards: Board[],
+  boardId: string,
+  customBoardName?: string,
+): { boardId: string; boardName: string; newBoard: Board | null } {
+  if (boardId !== 'other') {
+    const existing = boards.find(b => b.id === boardId)
+    return { boardId, boardName: existing?.name ?? boardId.toUpperCase(), newBoard: null }
+  }
+  const trimmed = (customBoardName ?? '').trim()
+  const matched = boards.find(b => b.name.toLowerCase() === trimmed.toLowerCase())
+  if (matched) {
+    return { boardId: matched.id, boardName: matched.name, newBoard: null }
+  }
+  const newId = `custom-board-${crypto.randomUUID()}`
+  return { boardId: newId, boardName: trimmed, newBoard: { id: newId, name: trimmed } }
+}
+
+function deduplicateSubjects(state: PersistedState): PersistedState {
+  // Group subjects by normalized name
+  const groups = new Map<string, Subject[]>()
+  for (const s of state.subjects) {
+    const norm = normalizeSubject(s.name)
+    const arr = groups.get(norm) || []
+    arr.push(s)
+    groups.set(norm, arr)
+  }
+
+  const subjectIdRemap = new Map<string, string>() // old → canonical
+  const removedSubjectIds = new Set<string>()
+
+  for (const [, group] of groups) {
+    if (group.length <= 1) continue
+
+    // Pick canonical: first seeded from original order, else first custom from original order
+    // Explicit pick — does not rely on sort stability
+    const seeded = group.find(s => !s.id.startsWith('custom-subject-'))
+    const canonical = seeded ?? group[0]
+
+    for (const s of group) {
+      if (s.id === canonical.id) continue
+      subjectIdRemap.set(s.id, canonical.id)
+      removedSubjectIds.add(s.id)
+    }
+  }
+
+  if (removedSubjectIds.size === 0) return state
+
+  // Re-parent offerings
+  let offerings = state.offerings.map(o => {
+    const newSubjectId = subjectIdRemap.get(o.subjectId)
+    return newSubjectId ? { ...o, subjectId: newSubjectId } : o
+  })
+
+  // Check for duplicate offerings under canonical (same board + normalizeSpec)
+  // Group by subjectId + boardId + normalizedSpec
+  const offeringGroups = new Map<string, Offering[]>()
+  for (const o of offerings) {
+    const key = `${o.subjectId}|${o.boardId}|${normalizeSpec(o.spec)}`
+    const arr = offeringGroups.get(key) || []
+    arr.push(o)
+    offeringGroups.set(key, arr)
+  }
+
+  const removedOfferingIds = new Set<string>()
+  const offeringIdRemap = new Map<string, string>() // loser offering → winner offering
+  const topicIdRemap = new Map<string, string>() // old topic → winner topic
+  const disambiguatedOfferingIds = new Set<string>() // offerings that need label disambiguation
+
+  for (const [, oGroup] of offeringGroups) {
+    if (oGroup.length <= 1) continue
+
+    // Winner selection rule (data-repair policy):
+    // Most recent lastReviewed date across all topics wins.
+    // Tie-break: most recent session timestamp. Final tie-break: first in original array order.
+    // This is opinionated and irreversible when the merge is safe — it prioritizes the offering
+    // the user interacted with most recently, on the assumption that is the "live" one.
+    const withSignal = oGroup.map((o, originalIndex) => {
+      const oTopics = state.topics.filter(t => t.offeringId === o.id)
+      const lastReviewed = oTopics.reduce((max, t) => {
+        if (!t.lastReviewed) return max
+        return t.lastReviewed > max ? t.lastReviewed : max
+      }, '')
+      const lastSession = state.sessions
+        .filter(s => oTopics.some(t => t.id === s.topicId))
+        .reduce((max, s) => s.timestamp && s.timestamp > max ? s.timestamp : max, 0)
+      return { offering: o, lastReviewed, lastSession, originalIndex }
+    })
+
+    withSignal.sort((a, b) => {
+      if (a.lastReviewed !== b.lastReviewed) return b.lastReviewed.localeCompare(a.lastReviewed)
+      if (a.lastSession !== b.lastSession) return b.lastSession - a.lastSession
+      return a.originalIndex - b.originalIndex // explicit stable tie-break
+    })
+
+    const winner = withSignal[0].offering
+    for (let i = 1; i < withSignal.length; i++) {
+      const loser = withSignal[i].offering
+      const winnerTopics = state.topics.filter(t => t.offeringId === winner.id)
+      const loserTopics = state.topics.filter(t => t.offeringId === loser.id)
+
+      // Check one-to-one mapping safety using normalizeTopic
+      const normWinner = new Map<string, string>() // normalizedName → topicId
+      let winnerSafe = true
+      for (const t of winnerTopics) {
+        const norm = normalizeTopic(t.name)
+        if (normWinner.has(norm)) { winnerSafe = false; break }
+        normWinner.set(norm, t.id)
+      }
+
+      const normLoser = new Map<string, string>()
+      let loserSafe = true
+      for (const t of loserTopics) {
+        const norm = normalizeTopic(t.name)
+        if (normLoser.has(norm)) { loserSafe = false; break }
+        normLoser.set(norm, t.id)
+      }
+
+      let mappingSafe = winnerSafe && loserSafe
+      if (mappingSafe) {
+        for (const [norm] of normLoser) {
+          if (!normWinner.has(norm)) { mappingSafe = false; break }
+        }
+      }
+
+      if (mappingSafe) {
+        // Build remap and mark loser for removal
+        for (const [norm, loserId] of normLoser) {
+          const winnerId = normWinner.get(norm)!
+          topicIdRemap.set(loserId, winnerId)
+        }
+        removedOfferingIds.add(loser.id)
+        offeringIdRemap.set(loser.id, winner.id)
+      } else {
+        // Unsafe: both offerings survive under canonical, but disambiguate labels
+        // so the UI can distinguish them visually
+        disambiguatedOfferingIds.add(winner.id)
+        disambiguatedOfferingIds.add(loser.id)
+      }
+    }
+  }
+
+  // Disambiguate labels for unsafe duplicate offerings
+  if (disambiguatedOfferingIds.size > 0) {
+    // Group disambiguated offerings by subjectId + boardId + normalizedSpec
+    // Append topic count to label to differentiate
+    const disambigGroups = new Map<string, Offering[]>()
+    for (const o of offerings) {
+      if (!disambiguatedOfferingIds.has(o.id)) continue
+      const key = `${o.subjectId}|${o.boardId}|${normalizeSpec(o.spec)}`
+      const arr = disambigGroups.get(key) || []
+      arr.push(o)
+      disambigGroups.set(key, arr)
+    }
+
+    offerings = offerings.map(o => {
+      if (!disambiguatedOfferingIds.has(o.id)) return o
+      const key = `${o.subjectId}|${o.boardId}|${normalizeSpec(o.spec)}`
+      const group = disambigGroups.get(key)
+      if (!group || group.length <= 1) return o
+      const idx = group.indexOf(o) + 1
+      const topicCount = state.topics.filter(t => t.offeringId === o.id).length
+      return { ...o, label: `${o.label} (#${idx}, ${topicCount} topics)` }
+    })
+  }
+
+  // Apply removals
+  const subjects = state.subjects.filter(s => !removedSubjectIds.has(s.id))
+  const finalOfferings = offerings.filter(o => !removedOfferingIds.has(o.id))
+
+  // Remove loser offering papers and topics
+  const removedPaperIds = new Set(
+    state.papers.filter(p => removedOfferingIds.has(p.offeringId)).map(p => p.id)
+  )
+  const removedTopicIds = new Set(topicIdRemap.keys())
+  const papers = state.papers.filter(p => !removedPaperIds.has(p.id))
+  const topics = state.topics.filter(t => !removedTopicIds.has(t.id))
+
+  // Remap sessions/notes/dailyPlan references
+  const sessions = state.sessions
+    .map(s => {
+      const newId = topicIdRemap.get(s.topicId)
+      return newId ? { ...s, topicId: newId } : s
+    })
+    .filter(s => !removedTopicIds.has(s.topicId) || topicIdRemap.has(s.topicId))
+
+  const notes = state.notes
+    .map(n => {
+      const newId = topicIdRemap.get(n.topicId)
+      return newId ? { ...n, topicId: newId } : n
+    })
+    .filter(n => !removedTopicIds.has(n.topicId) || topicIdRemap.has(n.topicId))
+
+  const dailyPlan = state.dailyPlan
+    .map(i => {
+      const newId = topicIdRemap.get(i.topicId)
+      return newId ? { ...i, topicId: newId } : i
+    })
+    .filter(i => !removedTopicIds.has(i.topicId) || topicIdRemap.has(i.topicId))
+
+  // Remap selectedOfferingIds: loser → winner, then deduplicate
+  const selectedOfferingIds = [...new Set(
+    state.selectedOfferingIds
+      .map(id => offeringIdRemap.get(id) ?? id)
+      .filter(id => !removedOfferingIds.has(id))
+  )]
+
+  // Update custom arrays
+  const customSubjects = subjects.filter(s => s.id.startsWith('custom-subject-'))
+  const customOfferings = finalOfferings.filter(o => o.id.startsWith('custom-offering-'))
+  const customPapers = papers.filter(p => p.id.startsWith('custom-paper-'))
+  const customTopics = topics.filter(t => t.id.startsWith('custom-topic-'))
+
+  return {
+    ...state,
+    subjects,
+    offerings: finalOfferings,
+    papers,
+    topics,
+    sessions,
+    notes,
+    dailyPlan,
+    selectedOfferingIds,
+    customSubjects,
+    customOfferings,
+    customPapers,
+    customTopics,
+  }
+}
+
 // Filter topics/papers to only selected offerings
 function selectedTopics(state: { topics: Topic[]; selectedOfferingIds: string[] }): Topic[] {
   const ids = new Set(state.selectedOfferingIds)
@@ -257,6 +505,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
     } else {
       state = loaded.state
     }
+
+    // Dedup migration: collapse duplicate subjects
+    state = deduplicateSubjects(state)
 
     // Backfill qualificationId on offerings from fresh seed (handles stale IDB at current revision)
     const freshSeed = deepCloneSeed()
@@ -498,30 +749,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   addCustomSubject: (data) => {
     const state = get()
-
-    // Resolve board
-    let boardId = data.boardId as string
-    let boardName: string
-
-    if (data.boardId !== 'other') {
-      const existingBoard = state.boards.find(b => b.id === data.boardId)
-      boardName = existingBoard?.name ?? data.boardId.toUpperCase()
-    } else {
-      const trimmedName = (data.customBoardName ?? '').trim()
-      const matchedBoard = state.boards.find(
-        b => b.name.toLowerCase() === trimmedName.toLowerCase()
-      )
-      if (matchedBoard) {
-        boardId = matchedBoard.id
-        boardName = matchedBoard.name
-      } else {
-        boardId = `custom-board-${crypto.randomUUID()}`
-        boardName = trimmedName
-      }
-    }
+    const resolved = resolveBoard(state.boards, data.boardId, data.customBoardName)
 
     const subjectId = `custom-subject-${crypto.randomUUID()}`
     const offeringId = `custom-offering-${crypto.randomUUID()}`
+    const paperId = `custom-paper-${crypto.randomUUID()}`
 
     const newSubject: Subject = {
       id: subjectId,
@@ -533,24 +765,23 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const newOffering: Offering = {
       id: offeringId,
       subjectId,
-      boardId,
+      boardId: resolved.boardId,
       spec: specLabel,
-      label: `${boardName} ${specLabel}`.trim(),
+      label: `${resolved.boardName} ${specLabel}`.trim(),
       qualificationId: data.qualificationId,
     }
 
-    const newPapers: Paper[] = data.papers.map(p => ({
-      id: `custom-paper-${crypto.randomUUID()}`,
+    const newPaper: Paper = {
+      id: paperId,
       offeringId,
-      name: p.name,
-      examDate: p.examDate,
-      ...(p.examTime ? { examTime: p.examTime } : {}),
-    }))
+      name: data.paper.name,
+      examDate: data.paper.examDate,
+      ...(data.paper.examTime ? { examTime: data.paper.examTime } : {}),
+    }
 
-    const firstPaperId = newPapers[0]?.id ?? offeringId
     const newTopics: Topic[] = data.topicNames.map(name => ({
       id: `custom-topic-${crypto.randomUUID()}`,
-      paperId: firstPaperId,
+      paperId,
       offeringId,
       name,
       confidence: data.confidence,
@@ -558,13 +789,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
       lastReviewed: null,
     }))
 
-    // Build new state arrays
-    const boards = boardId.startsWith('custom-board-') && !state.boards.some(b => b.id === boardId)
-      ? [...state.boards, { id: boardId, name: boardName }]
+    const boards = resolved.newBoard && !state.boards.some(b => b.id === resolved.boardId)
+      ? [...state.boards, resolved.newBoard]
       : state.boards
     const subjects = [...state.subjects, newSubject]
     const offerings = [...state.offerings, newOffering]
-    const papers = [...state.papers, ...newPapers]
+    const papers = [...state.papers, newPaper]
     const topics = [...state.topics, ...newTopics]
 
     set({ boards, subjects, offerings, papers, topics })
@@ -613,6 +843,197 @@ export const useAppStore = create<AppState>()((set, get) => ({
       papers: state.papers.filter(p => !paperIds.has(p.id)),
       topics: state.topics.filter(t => !topicIds.has(t.id)),
       selectedOfferingIds: state.selectedOfferingIds.filter(id => !offeringIds.has(id)),
+      sessions: state.sessions.filter(s => !topicIds.has(s.topicId)),
+      notes: state.notes.filter(n => !topicIds.has(n.topicId)),
+      dailyPlan: state.dailyPlan.filter(i => !topicIds.has(i.topicId)),
+    })
+    saveToIdb(extractPersisted(get()))
+  },
+
+  addOfferingToSubject: (subjectId, data) => {
+    const state = get()
+    if (!state.subjects.some(s => s.id === subjectId)) return null
+
+    const resolved = resolveBoard(state.boards, data.boardId, data.customBoardName)
+
+    // Block duplicates: same subject + same board + same normalizeSpec
+    const existingOfferings = state.offerings.filter(o => o.subjectId === subjectId)
+    const normSpec = normalizeSpec(data.spec)
+    if (existingOfferings.some(o => o.boardId === resolved.boardId && normalizeSpec(o.spec) === normSpec)) {
+      return null
+    }
+
+    const offeringId = `custom-offering-${crypto.randomUUID()}`
+    const paperId = `custom-paper-${crypto.randomUUID()}`
+    const specLabel = data.spec?.trim() ?? ''
+
+    const newOffering: Offering = {
+      id: offeringId,
+      subjectId,
+      boardId: resolved.boardId,
+      spec: specLabel,
+      label: `${resolved.boardName} ${specLabel}`.trim(),
+      qualificationId: data.qualificationId,
+    }
+
+    const newPaper: Paper = {
+      id: paperId,
+      offeringId,
+      name: data.paper.name,
+      examDate: data.paper.examDate,
+      ...(data.paper.examTime ? { examTime: data.paper.examTime } : {}),
+    }
+
+    const newTopics: Topic[] = data.topicNames.map(name => ({
+      id: `custom-topic-${crypto.randomUUID()}`,
+      paperId,
+      offeringId,
+      name,
+      confidence: 3, // bootstrap
+      performanceScore: 0.5,
+      lastReviewed: null,
+    }))
+
+    const boards = resolved.newBoard && !state.boards.some(b => b.id === resolved.boardId)
+      ? [...state.boards, resolved.newBoard]
+      : state.boards
+
+    set({
+      boards,
+      offerings: [...state.offerings, newOffering],
+      papers: [...state.papers, newPaper],
+      topics: [...state.topics, ...newTopics],
+    })
+    saveToIdb(extractPersisted(get()))
+    return { offeringId }
+  },
+
+  updateOfferingBundle: (offeringId, data) => {
+    const state = get()
+    if (!offeringId.startsWith('custom-offering-')) {
+      return { removedTopicCount: 0, removedSessionCount: 0, removedNoteCount: 0, removedPlanCount: 0 }
+    }
+
+    // Find existing paper and topics
+    const existingPaper = state.papers.find(p => p.offeringId === offeringId)
+    const existingTopics = state.topics.filter(t => t.offeringId === offeringId)
+
+    // Update paper in place (keep ID)
+    const paperId = existingPaper?.id ?? `custom-paper-${crypto.randomUUID()}`
+    const updatedPaper: Paper = {
+      id: paperId,
+      offeringId,
+      name: data.paper.name,
+      examDate: data.paper.examDate,
+      ...(data.paper.examTime ? { examTime: data.paper.examTime } : {}),
+    }
+
+    // Diff topics: match by normalized name to preserve IDs and linked data
+    const existingByNorm = new Map<string, Topic>()
+    for (const t of existingTopics) {
+      existingByNorm.set(normalizeTopic(t.name), t)
+    }
+
+    const keptTopicIds = new Set<string>()
+    const finalTopics: Topic[] = []
+    for (const name of data.topics) {
+      const norm = normalizeTopic(name)
+      const existing = existingByNorm.get(norm)
+      if (existing) {
+        keptTopicIds.add(existing.id)
+        // Preserve existing topic, update display name if casing changed
+        finalTopics.push(existing.name !== name ? { ...existing, name } : existing)
+      } else {
+        finalTopics.push({
+          id: `custom-topic-${crypto.randomUUID()}`,
+          paperId,
+          offeringId,
+          name,
+          confidence: 3,
+          performanceScore: 0.5,
+          lastReviewed: null,
+        })
+      }
+    }
+
+    const removedTopicIds = new Set(
+      existingTopics.filter(t => !keptTopicIds.has(t.id)).map(t => t.id)
+    )
+
+    // Count cascaded deletions (only for removed topics)
+    const removedSessionCount = state.sessions.filter(s => removedTopicIds.has(s.topicId)).length
+    const removedNoteCount = state.notes.filter(n => removedTopicIds.has(n.topicId)).length
+    const removedPlanCount = state.dailyPlan.filter(i => removedTopicIds.has(i.topicId)).length
+
+    const papers = existingPaper
+      ? state.papers.map(p => p.id === paperId ? updatedPaper : p)
+      : [...state.papers, updatedPaper]
+    const topics = [...state.topics.filter(t => t.offeringId !== offeringId), ...finalTopics]
+    const sessions = state.sessions.filter(s => !removedTopicIds.has(s.topicId))
+    const notes = state.notes.filter(n => !removedTopicIds.has(n.topicId))
+    const dailyPlan = state.dailyPlan.filter(i => !removedTopicIds.has(i.topicId))
+
+    set({ papers, topics, sessions, notes, dailyPlan })
+    saveToIdb(extractPersisted(get()))
+
+    return {
+      removedTopicCount: removedTopicIds.size,
+      removedSessionCount,
+      removedNoteCount,
+      removedPlanCount,
+    }
+  },
+
+  getOfferingCascadeCounts: (offeringId, proposedTopics) => {
+    const state = get()
+    const existingTopics = state.topics.filter(t => t.offeringId === offeringId)
+
+    // If proposed topics provided, only count removals (topics not in proposed list)
+    let removedTopics = existingTopics
+    if (proposedTopics) {
+      const proposedNorms = new Set(proposedTopics.map(normalizeTopic))
+      removedTopics = existingTopics.filter(t => !proposedNorms.has(normalizeTopic(t.name)))
+    }
+
+    const topicIds = new Set(removedTopics.map(t => t.id))
+    return {
+      topicCount: removedTopics.length,
+      sessionCount: state.sessions.filter(s => topicIds.has(s.topicId)).length,
+      noteCount: state.notes.filter(n => topicIds.has(n.topicId)).length,
+      planCount: state.dailyPlan.filter(i => topicIds.has(i.topicId)).length,
+    }
+  },
+
+  removeOffering: (offeringId) => {
+    if (!offeringId.startsWith('custom-offering-')) return
+    const state = get()
+
+    const offering = state.offerings.find(o => o.id === offeringId)
+    if (!offering) return
+
+    const paperIds = new Set(state.papers.filter(p => p.offeringId === offeringId).map(p => p.id))
+    const topicIds = new Set(state.topics.filter(t => t.offeringId === offeringId).map(t => t.id))
+
+    // Check if custom board is orphaned
+    const remainingOfferings = state.offerings.filter(o => o.id !== offeringId)
+    const orphanedBoardIds = new Set<string>()
+    if (offering.boardId.startsWith('custom-board-')) {
+      if (!remainingOfferings.some(o => o.boardId === offering.boardId)) {
+        orphanedBoardIds.add(offering.boardId)
+      }
+    }
+
+    // Check if subject should be removed (custom with zero remaining offerings)
+    const subjectOfferingsLeft = remainingOfferings.filter(o => o.subjectId === offering.subjectId)
+    const removeSubject = offering.subjectId.startsWith('custom-subject-') && subjectOfferingsLeft.length === 0
+
+    set({
+      boards: state.boards.filter(b => !orphanedBoardIds.has(b.id)),
+      subjects: removeSubject ? state.subjects.filter(s => s.id !== offering.subjectId) : state.subjects,
+      offerings: remainingOfferings,
+      papers: state.papers.filter(p => !paperIds.has(p.id)),
+      topics: state.topics.filter(t => !topicIds.has(t.id)),
+      selectedOfferingIds: state.selectedOfferingIds.filter(id => id !== offeringId),
       sessions: state.sessions.filter(s => !topicIds.has(s.topicId)),
       notes: state.notes.filter(n => !topicIds.has(n.topicId)),
       dailyPlan: state.dailyPlan.filter(i => !topicIds.has(i.topicId)),

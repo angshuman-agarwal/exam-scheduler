@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { useAppStore } from '../../stores/app.store'
 import { daysRemaining } from '../../lib/engine'
-import { normalizeSubject } from '../../data/templates'
+import { matchSubject, sanitizeSubjectInput } from '../../data/subject-matcher'
+import { normalizeSubject, findNormalizedMatches } from '../../data/templates'
 import type { Board, Offering, Paper, Subject } from '../../types'
-import type { CustomSubjectDraftData } from '../CustomSubjectWizard'
+import type { CustomSubjectDraftData, WizardMode } from '../CustomSubjectWizard'
 
 // Color palette for draft custom subjects (matches store's CUSTOM_COLORS)
 const DRAFT_COLORS = ['#E11D48','#7C3AED','#0891B2','#CA8A04','#059669',
@@ -12,7 +13,7 @@ const DRAFT_COLORS = ['#E11D48','#7C3AED','#0891B2','#CA8A04','#059669',
 export interface CustomSubjectDraft {
   key: string
   data: CustomSubjectDraftData
-  subject: Subject
+  subject: Subject | null
   offering: Offering
   papers: Paper[]
   board: Board | null
@@ -46,9 +47,11 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
   const [localStudyMode, setLocalStudyMode] = useState<'gcse' | 'alevel' | null>(persistedStudyMode)
   const studyMode = isEdit ? persistedStudyMode : localStudyMode
 
-  const [showWizard, setShowWizard] = useState(false)
-  const [wizardInitialName, setWizardInitialName] = useState('')
+  const [wizardMode, setWizardMode] = useState<WizardMode | null>(null)
   const [drafts, setDrafts] = useState<CustomSubjectDraft[]>([])
+
+  const addOfferingToSubject = useAppStore((s) => s.addOfferingToSubject)
+  const removeOfferingFromStore = useAppStore((s) => s.removeOffering)
 
   // Mobile state
   const [searchQuery, setSearchQuery] = useState('')
@@ -67,7 +70,7 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
 
   const subjects = useMemo(() => [
     ...storeSubjects,
-    ...draftSynthetics.map(d => d.subject),
+    ...draftSynthetics.filter(d => d.subject !== null).map(d => d.subject!),
   ], [storeSubjects, draftSynthetics])
 
   const offerings = useMemo(() => [
@@ -161,14 +164,22 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
   const matchesSearch = useCallback((subject: Subject): boolean => {
     if (!searchQuery.trim()) return true
     const q = searchQuery.toLowerCase().trim()
-    const normalizedQ = normalizeSubject(q)
+    const subjectKey = normalizeSubject(subject.name)
 
-    // Match subject name
+    // Match subject name (raw)
     if (subject.name.toLowerCase().includes(q)) return true
-    // Match normalized alias
-    const normalizedName = normalizeSubject(subject.name)
-    if (normalizedName.includes(normalizedQ)) return true
-    if (normalizedQ.includes(normalizedName)) return true
+
+    // Canonical key match via matcher (handles aliases, fuzzy, ambiguous)
+    const queryResult = matchSubject(q, 'interactive')
+    if (queryResult.kind === 'exact' || queryResult.kind === 'alias' || queryResult.kind === 'fuzzy') {
+      if (queryResult.canonicalKey === subjectKey) return true
+    } else if (queryResult.kind === 'ambiguous') {
+      if (queryResult.candidates.some(c => c.canonicalKey === subjectKey)) return true
+    }
+
+    // One-way substring match on sanitized input (handles partial typing)
+    const sanitizedQ = sanitizeSubjectInput(q)
+    if (subjectKey.includes(sanitizedQ)) return true
 
     // Match board name or offering label
     const subjectOffs = offeringsBySubject.get(subject.id) || []
@@ -191,6 +202,19 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
     () => customSubjects.filter(matchesSearch),
     [customSubjects, matchesSearch],
   )
+
+  // Unified subject list: seeded first, then custom
+  const filteredSubjects = useMemo(
+    () => [...filteredSeededSubjects, ...filteredCustomSubjects],
+    [filteredSeededSubjects, filteredCustomSubjects],
+  )
+
+  // Normalized matches for search empty state — structurally split
+  const searchNormalizedMatches = useMemo(() => {
+    const q = searchQuery.trim()
+    if (!q || !studyMode) return { authoritative: [], suggestions: [] }
+    return findNormalizedMatches(q, subjects, offerings, studyMode, 'interactive')
+  }, [searchQuery, subjects, offerings, studyMode])
 
   // Configuration completeness
   const configuredSubjectIds = useMemo(() => {
@@ -313,7 +337,7 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
     setConfidences(prev => { const next = new Map(prev); offeringIds.forEach(id => next.delete(id)); return next })
     setExpandedCards(prev => { const next = new Set(prev); next.delete(subjectId); return next })
     if (subjectId.startsWith('draft-')) {
-      setDrafts(prev => prev.filter(d => d.subject.id !== subjectId))
+      setDrafts(prev => prev.filter(d => d.subject?.id !== subjectId))
     } else {
       removeCustomSubject(subjectId)
     }
@@ -341,7 +365,7 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
       setSelectedSubjectIds(prev => { const next = new Set(prev); next.delete(subjectId); return next })
       setChosenOffering(prev => { const next = new Map(prev); next.delete(subjectId); return next })
       setConfidences(prev => { const next = new Map(prev); offeringIds.forEach(id => next.delete(id)); return next })
-      setDrafts(prev => prev.filter(d => d.subject.id !== subjectId))
+      setDrafts(prev => prev.filter(d => d.subject?.id !== subjectId))
     } else {
       // Seeded/persisted: deselect
       setSelectedSubjectIds(prev => { const next = new Set(prev); next.delete(subjectId); return next })
@@ -371,29 +395,53 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
     })
 
   const handleFinish = () => {
+    // Persist drafts
     const draftIdMap = new Map<string, { subjectId: string; offeringId: string }>()
+    const subjectIdRemap = new Map<string, string>() // draft subject ID → real subject ID
     for (const draft of drafts) {
-      if (!selectedSubjectIds.has(draft.subject.id)) continue
-      const result = addCustomSubject({
-        ...draft.data,
-        qualificationId: localStudyMode!,
-      })
-      draftIdMap.set(draft.subject.id, result)
+      const draftSubjectId = draft.subject?.id ?? draft.data.existingSubjectId
+      if (!draftSubjectId || !selectedSubjectIds.has(draftSubjectId)) continue
+
+      if (draft.data.existingSubjectId) {
+        // Resolve draft-* subject IDs to their persisted counterparts
+        const resolvedSubjectId = subjectIdRemap.get(draft.data.existingSubjectId) ?? draft.data.existingSubjectId
+        const result = addOfferingToSubject(resolvedSubjectId, {
+          ...draft.data,
+          qualificationId: localStudyMode!,
+        })
+        if (result) {
+          draftIdMap.set(draft.offering.id, { subjectId: resolvedSubjectId, offeringId: result.offeringId })
+        }
+      } else {
+        const result = addCustomSubject({
+          ...draft.data,
+          confidence: draft.data.confidence ?? 3,
+          qualificationId: localStudyMode!,
+        })
+        draftIdMap.set(draft.offering.id, result)
+        // Record remap: draft subject ID → real subject ID
+        if (draft.subject?.id) {
+          subjectIdRemap.set(draft.subject.id, result.subjectId)
+        }
+      }
     }
 
     const offeringIds = [...selectedSubjectIds]
       .map((sid) => {
-        const mapped = draftIdMap.get(sid)
-        if (mapped) return mapped.offeringId
-        return chosenOffering.get(sid)
+        const chosenOid = chosenOffering.get(sid)
+        if (!chosenOid) return undefined
+        // Remap draft offering IDs to persisted IDs
+        const mapped = draftIdMap.get(chosenOid)
+        return mapped ? mapped.offeringId : chosenOid
       })
       .filter((id): id is string => id !== undefined)
 
     const finalConf = new Map<string, number>()
     for (const oid of offeringIds) {
-      const draftEntry = drafts.find(d => draftIdMap.get(d.subject.id)?.offeringId === oid)
-      if (draftEntry) {
-        finalConf.set(oid, confidences.get(draftEntry.offering.id) ?? draftEntry.data.confidence)
+      // Find confidence: check if this was a remapped draft
+      const draftOid = [...draftIdMap.entries()].find(([, v]) => v.offeringId === oid)?.[0]
+      if (draftOid) {
+        finalConf.set(oid, confidences.get(draftOid) ?? 3)
       } else {
         finalConf.set(oid, confidences.get(oid) ?? 3)
       }
@@ -419,13 +467,120 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
   }
 
   const openWizard = (initialName = '') => {
-    setWizardInitialName(initialName)
-    setShowWizard(true)
+    setWizardMode({ kind: 'create-subject', initialSubjectName: initialName })
+  }
+
+  const openAddBoard = (subjectId: string) => {
+    const subject = subjects.find(s => s.id === subjectId)
+    if (!subject) return
+    setWizardMode({ kind: 'add-offering', subjectId, subjectName: subject.name })
+  }
+
+  const openEditBoard = (offeringId: string) => {
+    if (!offeringId.startsWith('custom-offering-')) return
+    const offering = offerings.find(o => o.id === offeringId)
+    if (!offering) return
+    const subject = subjects.find(s => s.id === offering.subjectId)
+    if (!subject) return
+    const paper = papers.find(p => p.offeringId === offeringId)
+    const offeringTopics = useAppStore.getState().topics.filter(t => t.offeringId === offeringId)
+    setWizardMode({
+      kind: 'edit-offering',
+      offeringId,
+      subjectId: offering.subjectId,
+      subjectName: subject.name,
+      prefill: {
+        boardLabel: offering.label,
+        paper: paper ? { name: paper.name, examDate: paper.examDate, examTime: paper.examTime } : { name: 'Paper 1', examDate: '' },
+        topicNames: offeringTopics.map(t => t.name),
+      },
+    })
+  }
+
+  const handleRemoveOffering = (offeringId: string) => {
+    const offering = offerings.find(o => o.id === offeringId)
+    if (!offering) return
+
+    if (offeringId.startsWith('draft-offering-')) {
+      // Remove draft
+      setDrafts(prev => prev.filter(d => d.offering.id !== offeringId))
+    } else if (offeringId.startsWith('custom-offering-')) {
+      if (!window.confirm('Remove this board and all its topics?')) return
+      removeOfferingFromStore(offeringId)
+    } else {
+      return // seeded: no remove
+    }
+
+    // Local cleanup
+    const subjectId = offering.subjectId
+    setChosenOffering(prev => { const n = new Map(prev); n.delete(subjectId); return n })
+    setConfidences(prev => { const n = new Map(prev); n.delete(offeringId); return n })
+    // Keep in selectedSubjectIds → "Needs setup"
+
+    // If wizard targets this offering, close it
+    if (wizardMode?.kind === 'edit-offering' && wizardMode.offeringId === offeringId) {
+      setWizardMode(null)
+    }
   }
 
   const handleDraftCreated = (data: CustomSubjectDraftData) => {
-    setShowWizard(false)
+    setWizardMode(null)
     const key = crypto.randomUUID()
+
+    // If adding offering to existing subject
+    if (data.existingSubjectId) {
+      const offeringId = `draft-offering-${key}`
+      let boardId = data.boardId as string
+      let boardName: string
+      let newBoard: Board | null = null
+      if (data.boardId !== 'other') {
+        const existing = boards.find(b => b.id === data.boardId)
+        boardName = existing?.name ?? data.boardId.toUpperCase()
+      } else {
+        const trimmed = (data.customBoardName ?? '').trim()
+        const matched = boards.find(b => b.name.toLowerCase() === trimmed.toLowerCase())
+        if (matched) {
+          boardId = matched.id
+          boardName = matched.name
+        } else {
+          boardId = `draft-board-${key}`
+          boardName = trimmed
+          newBoard = { id: boardId, name: boardName }
+        }
+      }
+
+      const specLabel = data.spec?.trim() ?? ''
+      const draft: CustomSubjectDraft = {
+        key,
+        data,
+        subject: null, // no synthetic subject needed
+        offering: {
+          id: offeringId,
+          subjectId: data.existingSubjectId,
+          boardId,
+          spec: specLabel,
+          label: `${boardName} ${specLabel}`.trim(),
+          qualificationId: studyMode!,
+        },
+        papers: [{
+          id: `draft-paper-${key}-0`,
+          offeringId,
+          name: data.paper.name,
+          examDate: data.paper.examDate,
+          ...(data.paper.examTime ? { examTime: data.paper.examTime } : {}),
+        }],
+        board: newBoard,
+      }
+
+      setDrafts(prev => [...prev, draft])
+      setSelectedSubjectIds(prev => new Set(prev).add(data.existingSubjectId!))
+      setChosenOffering(prev => new Map(prev).set(data.existingSubjectId!, offeringId))
+      // No confidence auto-fill — subject shows "Needs setup"
+      setExpandedCards(prev => new Set(prev).add(data.existingSubjectId!))
+      return
+    }
+
+    // Create new subject draft
     const subjectId = `draft-${key}`
     const offeringId = `draft-offering-${key}`
 
@@ -464,28 +619,51 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
         label: `${boardName} ${specLabel}`.trim(),
         qualificationId: studyMode!,
       },
-      papers: data.papers.map((p, i) => ({
-        id: `draft-paper-${key}-${i}`,
+      papers: [{
+        id: `draft-paper-${key}-0`,
         offeringId,
-        name: p.name,
-        examDate: p.examDate,
-        ...(p.examTime ? { examTime: p.examTime } : {}),
-      })),
+        name: data.paper.name,
+        examDate: data.paper.examDate,
+        ...(data.paper.examTime ? { examTime: data.paper.examTime } : {}),
+      }],
       board: newBoard,
     }
 
     setDrafts(prev => [...prev, draft])
     setSelectedSubjectIds(prev => new Set(prev).add(subjectId))
     setChosenOffering(prev => new Map(prev).set(subjectId, offeringId))
-    setConfidences(prev => new Map(prev).set(offeringId, data.confidence))
+    if (data.confidence !== undefined) {
+      setConfidences(prev => new Map(prev).set(offeringId, data.confidence!))
+    }
     setExpandedCards(prev => new Set(prev).add(subjectId))
   }
 
-  const handleWizardCreated = ({ subjectId, offeringId, confidence }: { subjectId: string; offeringId: string; confidence: number }) => {
-    setShowWizard(false)
+  const handleExistingOffering = (subjectId: string, offeringId: string) => {
+    setWizardMode(null)
+    setSelectedSubjectIds(prev => new Set(prev).add(subjectId))
+    // Mirror selectOffering: clear stale confidence when switching boards
+    const oldOid = chosenOffering.get(subjectId)
+    if (oldOid && oldOid !== offeringId) {
+      setConfidences(prev => { const n = new Map(prev); n.delete(oldOid); return n })
+    }
+    setChosenOffering(prev => new Map(prev).set(subjectId, offeringId))
+    setExpandedCards(prev => new Set(prev).add(subjectId))
+    setActiveSubjectId(subjectId)
+    setMobileStep('configure')
+    // Scroll to the card after React flushes the state updates
+    requestAnimationFrame(() => {
+      document.querySelector(`[data-subject-id="${subjectId}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }
+
+  const handleWizardCreated = ({ subjectId, offeringId, confidence }: { subjectId: string; offeringId: string; confidence?: number }) => {
+    setWizardMode(null)
     setSelectedSubjectIds(prev => new Set(prev).add(subjectId))
     setChosenOffering(prev => new Map(prev).set(subjectId, offeringId))
-    setConfidences(prev => new Map(prev).set(offeringId, confidence))
+    if (confidence !== undefined) {
+      setConfidences(prev => new Map(prev).set(offeringId, confidence))
+    }
     setExpandedCards(prev => new Set(prev).add(subjectId))
   }
 
@@ -495,9 +673,8 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
     studyMode,
     localStudyMode,
     setLocalStudyMode,
-    showWizard,
-    setShowWizard,
-    wizardInitialName,
+    wizardMode,
+    setWizardMode,
     drafts,
     subjects,
     offerings,
@@ -523,8 +700,10 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
     visibleSubjectIds,
     seededSubjects,
     customSubjects,
+    filteredSubjects,
     filteredSeededSubjects,
     filteredCustomSubjects,
+    searchNormalizedMatches,
     offeringMeta,
     papersByOffering,
     nearestExamByOffering,
@@ -544,8 +723,12 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
     getBoardDisplayName,
     resetForQualificationChange,
     openWizard,
+    openAddBoard,
+    openEditBoard,
+    handleRemoveOffering,
     handleDraftCreated,
     handleWizardCreated,
+    handleExistingOffering,
   }
 }
 
