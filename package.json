@@ -1,13 +1,13 @@
 {
   "name": "exam-scheduler",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "scripts": {
     "predev": "node scripts/generate-version.js",
     "dev": "vite",
     "prebuild": "node scripts/generate-version.js",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/inject-seo-html.js",
     "lint": "eslint .",
     "preview": "npm run build && wrangler dev",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",

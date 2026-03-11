@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react'
 import seedData from '../data/subjects.json'
+import landingCopy from '../data/landing-copy.json'
 import { useAppStore } from '../stores/app.store'
 import QualificationChip from './QualificationChip'
 
@@ -47,44 +48,15 @@ function getCountdown() {
   return earliestDays
 }
 
-const STORY_STEPS = [
-  {
-    step: 1,
-    title: 'Pick your subjects',
-    description: 'Select what you\'re sitting. Every paper, topic, and exam date is mapped automatically.',
-  },
-  {
-    step: 2,
-    title: 'See what matters today',
-    description: 'A prioritised revision list that shifts daily based on exam dates, confidence, and coverage.',
-  },
-  {
-    step: 3,
-    title: 'Study with focus',
-    description: 'Start a timed session on the right topic. Rate your confidence when you finish.',
-  },
-]
+const STORY_STEPS = landingCopy.steps
 
-const SCENARIOS = [
-  {
-    number: 1,
-    situation: '"I don\'t know where to start"',
-    response: 'The app looks at every exam date, your confidence scores, and what you\'ve already covered \u2014 then gives you one clear recommendation.',
-    variant: 'recommend' as const,
-  },
-  {
-    number: 2,
-    situation: '"I keep revising the same subjects"',
-    response: 'Weak topics surface automatically so you can tackle them now, not the night before the exam.',
-    variant: 'attention' as const,
-  },
-  {
-    number: 3,
-    situation: '"I can\'t tell if revision is working"',
-    response: 'Track sessions, confidence, and momentum across every subject \u2014 so you can see progress building over time.',
-    variant: 'progress' as const,
-  },
-]
+const SCENARIO_VARIANTS: Array<'recommend' | 'attention' | 'progress'> = ['recommend', 'attention', 'progress']
+const SCENARIOS = landingCopy.scenarios.map((s, i) => ({
+  number: i + 1,
+  situation: `"${s.situation}"`,
+  response: s.response,
+  variant: SCENARIO_VARIANTS[i % SCENARIO_VARIANTS.length],
+}))
 
 function ScenarioPreview({ variant }: { variant: 'recommend' | 'attention' | 'progress' }) {
   if (variant === 'recommend') {
@@ -148,7 +120,7 @@ function ScenarioPanel({ compact }: { compact?: boolean }) {
     return (
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
-          Real problems, solved
+          {landingCopy.sectionHeadings.scenarios}
         </p>
         <div className="space-y-3">
           {SCENARIOS.map((s) => (
@@ -165,7 +137,7 @@ function ScenarioPanel({ compact }: { compact?: boolean }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5">
       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
-        Real problems, solved
+        {landingCopy.sectionHeadings.scenarios}
       </p>
       <div className="space-y-3">
         {SCENARIOS.map((s, i) => (
@@ -357,44 +329,18 @@ function ProductShowcase() {
 }
 
 function TrustSection() {
-  const features = [
-    {
-      icon: (
-        <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
-        </svg>
-      ),
-      title: 'GCSE coverage built in, A-Level via custom setup',
-      description: 'GCSE subjects, papers, and topics are pre-mapped to current exam boards. A-Level and other qualifications are supported through custom subject creation.',
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-      ),
-      title: 'Custom subjects',
-      description: 'Add any subject not in the default list. Useful for less common courses or school-specific content.',
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25h-13.5A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25h-13.5A2.25 2.25 0 0 1 3 12V5.25" />
-        </svg>
-      ),
-      title: 'Works offline',
-      description: 'All data stays on your device. No account required. Use it anywhere, with or without internet.',
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-        </svg>
-      ),
-      title: 'Suitable for classrooms',
-      description: 'No sign-up, no tracking, no ads. Teachers and schools can recommend it with confidence.',
-    },
+  const DEFAULT_ICON = <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>
+  const TRUST_ICONS: React.ReactNode[] = [
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" /></svg>,
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>,
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25h-13.5A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25h-13.5A2.25 2.25 0 0 1 3 12V5.25" /></svg>,
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>,
   ]
+  const features = landingCopy.trustFeatures.map((f, i) => ({
+    icon: TRUST_ICONS[i] ?? DEFAULT_ICON,
+    title: f.title,
+    description: f.description,
+  }))
 
   return (
     <section className="px-5 py-12 sm:py-16 max-w-5xl mx-auto">
@@ -403,7 +349,7 @@ function TrustSection() {
           Built for trust
         </p>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
-          Coverage you can rely on
+          {landingCopy.sectionHeadings.trust}
         </h2>
         <p className="text-sm text-gray-500 mb-8 max-w-lg">
           Whether you're a student getting started or a teacher evaluating revision tools.
@@ -570,13 +516,13 @@ export default function LandingPage({
           <div className="sm:grid sm:grid-cols-2 sm:gap-12 sm:items-center">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-600 mb-3">
-                Revision, prioritised
+                {landingCopy.hero.tagline}
               </p>
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-4">
-                Your exams are coming. Your schedule starts now.
+                {landingCopy.hero.headline}
               </h1>
               <p className="text-base text-gray-500 leading-relaxed mb-6 max-w-md">
-                Build a revision plan that adapts to your confidence, your exam dates, and what you haven't covered yet.
+                {landingCopy.hero.subheadline}
               </p>
 
               {/* Countdown card */}
@@ -704,10 +650,10 @@ export default function LandingPage({
           <section ref={demoRef} className="px-5 py-14 sm:py-20 max-w-5xl mx-auto">
             <div className="mb-8 sm:mb-10">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-600 mb-2">
-                How it works
+                {landingCopy.sectionHeadings.howItWorks}
               </p>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
-                Three steps to a smarter revision plan
+                {landingCopy.sectionHeadings.howItWorksSubtitle}
               </h2>
               <p className="text-base text-gray-500 max-w-lg">
                 Set up once. The app handles the prioritisation from there.
