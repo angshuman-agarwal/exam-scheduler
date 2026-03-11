@@ -54,6 +54,11 @@ export default defineConfig({
       clientsClaim: true,
       globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
       globIgnores: ['**/version.json'],
+      navigateFallbackDenylist: [
+        /\/sitemap\.xml(\?|$)/,
+        /\/robots\.txt(\?|$)/,
+        /\/version\.json(\?|$)/,
+      ],
       runtimeCaching: [
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
