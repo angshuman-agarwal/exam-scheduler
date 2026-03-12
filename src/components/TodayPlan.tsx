@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useAppStore } from '../stores/app.store'
+import { useAppStore, useLogicalSelectedOfferingIds } from '../stores/app.store'
 import { daysRemaining, scoreAllTopics, autoFillPlanItems, getPlanningMode, nearestExamDays as calcNearestExamDays } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
 import NudgeBanner from './NudgeBanner'
@@ -35,7 +35,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
   const papers = useAppStore((s) => s.papers)
   const subjects = useAppStore((s) => s.subjects)
   const allOfferings = useAppStore((s) => s.offerings)
-  const selectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
+  const selectedOfferingIds = useLogicalSelectedOfferingIds()
   const initialized = useAppStore((s) => s.initialized)
   const resetAll = useAppStore((s) => s.resetAll)
   const dailyPlan = useAppStore((s) => s.dailyPlan)

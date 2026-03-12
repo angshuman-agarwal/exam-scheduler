@@ -1,7 +1,7 @@
 {
   "name": "exam-scheduler",
   "private": true,
-  "version": "1.6.1",
+  "version": "1.6.2",
   "type": "module",
   "scripts": {
     "predev": "node scripts/generate-version.js",
@@ -15,7 +15,8 @@
     "test:e2e": "npx playwright test",
     "test:e2e:update": "npx playwright test --update-snapshots",
     "test:e2e:ui": "npx playwright test --ui",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "generate:subjects": "node scripts/gen-subjects.mjs"
   },
   "dependencies": {
     "idb": "^8.0.3",

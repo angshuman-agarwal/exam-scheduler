@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
-import { useAppStore } from '../../stores/app.store'
+import { useAppStore, useEffectiveSelectedOfferingIds } from '../../stores/app.store'
 import { daysRemaining } from '../../lib/engine'
 import { matchSubject, sanitizeSubjectInput } from '../../data/subject-matcher'
 import { normalizeSubject, findNormalizedMatches } from '../../data/templates'
@@ -34,9 +34,13 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
   const storePapers = useAppStore((s) => s.papers)
   const storeBoards = useAppStore((s) => s.boards)
   const topics = useAppStore((s) => s.topics)
-  const selectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
+  const rawSelectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
+  const effectiveOfferingIds = useEffectiveSelectedOfferingIds()
   const completeOnboarding = useAppStore((s) => s.completeOnboarding)
   const updateSelectedOfferings = useAppStore((s) => s.updateSelectedOfferings)
+  const pendingTierConfirmations = useAppStore((s) => s.pendingTierConfirmations)
+  const confirmTierSelection = useAppStore((s) => s.confirmTierSelection)
+  const dismissPendingSubject = useAppStore((s) => s.dismissPendingSubject)
   const persistedStudyMode = useAppStore((s) => s.studyMode)
   const setStudyModeInStore = useAppStore((s) => s.setStudyMode)
   const addCustomSubject = useAppStore((s) => s.addCustomSubject)
@@ -95,8 +99,9 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
 
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<Set<string>>(() => {
     if (!isEdit) return new Set()
+    // Use effective IDs so pending-tier subjects are included as "taken"
     const subjectIds = new Set<string>()
-    for (const oid of selectedOfferingIds) {
+    for (const oid of effectiveOfferingIds) {
       const off = storeOfferings.find((o) => o.id === oid)
       if (off) subjectIds.add(off.subjectId)
     }
@@ -106,9 +111,14 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
   const [chosenOffering, setChosenOffering] = useState<Map<string, string>>(() => {
     if (!isEdit) return new Map()
     const map = new Map<string, string>()
-    for (const oid of selectedOfferingIds) {
+    // Only preselect from persisted raw IDs — NOT effective IDs
+    // Pending-tier subjects must have chosenOffering = null (no tier preselected)
+    for (const oid of rawSelectedOfferingIds) {
       const off = storeOfferings.find((o) => o.id === oid)
-      if (off) map.set(off.subjectId, oid)
+      if (!off) continue
+      // Skip if this subject is pending tier confirmation — neither F nor H should be preselected
+      if (pendingTierConfirmations.has(off.subjectId)) continue
+      map.set(off.subjectId, oid)
     }
     return map
   })
@@ -116,7 +126,11 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
   const [confidences, setConfidences] = useState<Map<string, number>>(() => {
     if (!isEdit) return new Map()
     const map = new Map<string, number>()
-    for (const oid of selectedOfferingIds) {
+    // Use effective IDs for confidence (so pending subjects get their bootstrapped confidences)
+    for (const oid of effectiveOfferingIds) {
+      // Skip offerings whose subject is pending (they show as "needs setup")
+      const off = storeOfferings.find((o) => o.id === oid)
+      if (off && pendingTierConfirmations.has(off.subjectId)) continue
       const offeringTopics = topics.filter((t) => t.offeringId === oid)
       if (offeringTopics.length > 0) {
         const avg = Math.round(offeringTopics.reduce((sum, t) => sum + t.confidence, 0) / offeringTopics.length)
@@ -323,6 +337,15 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
       setConfidences((prev) => { const n = new Map(prev); n.delete(oldOid); return n })
     }
     setChosenOffering((m) => new Map(m).set(subjectId, offeringId))
+    // Auto-set confidence from existing topic data (for pending tier subjects that have no confidence yet)
+    const offeringTopics = topics.filter((t) => t.offeringId === offeringId)
+    if (offeringTopics.length > 0) {
+      const avg = Math.round(offeringTopics.reduce((sum, t) => sum + t.confidence, 0) / offeringTopics.length)
+      setConfidences((prev) => {
+        if (prev.has(offeringId)) return prev
+        return new Map(prev).set(offeringId, Math.max(1, Math.min(5, avg)))
+      })
+    }
   }
 
   const setConfidence = (offeringId: string, level: number) => {
@@ -388,13 +411,28 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
     return board?.name ?? off.boardId
   }, [offerings, boardMap])
 
-  const canFinish = selectedSubjectIds.size > 0 &&
+  const canFinish = (isEdit || selectedSubjectIds.size > 0) &&
     [...selectedSubjectIds].every((sid) => {
+      // Pending tier subjects can be saved without explicit tier choice (stays pending)
+      if (pendingTierConfirmations.has(sid) && !chosenOffering.has(sid)) return true
       const oid = chosenOffering.get(sid)
       return oid !== undefined && confidences.has(oid)
     })
 
   const handleFinish = () => {
+    // Pre-process pending tier confirmations before main save
+    // This ensures tier-aware actions run with compat state intact
+    for (const subjectId of Array.from(pendingTierConfirmations)) {
+      if (selectedSubjectIds.has(subjectId)) {
+        const oid = chosenOffering.get(subjectId)
+        if (oid) {
+          confirmTierSelection(subjectId, oid)
+        }
+      } else {
+        dismissPendingSubject(subjectId)
+      }
+    }
+
     // Persist drafts
     const draftIdMap = new Map<string, { subjectId: string; offeringId: string }>()
     const subjectIdRemap = new Map<string, string>() // draft subject ID → real subject ID
@@ -426,15 +464,24 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
       }
     }
 
-    const offeringIds = [...selectedSubjectIds]
-      .map((sid) => {
-        const chosenOid = chosenOffering.get(sid)
-        if (!chosenOid) return undefined
-        // Remap draft offering IDs to persisted IDs
+    const offeringIds: string[] = []
+    const storeState = useAppStore.getState()
+    for (const sid of selectedSubjectIds) {
+      const chosenOid = chosenOffering.get(sid)
+      if (chosenOid) {
         const mapped = draftIdMap.get(chosenOid)
-        return mapped ? mapped.offeringId : chosenOid
-      })
-      .filter((id): id is string => id !== undefined)
+        offeringIds.push(mapped ? mapped.offeringId : chosenOid)
+      } else if (pendingTierConfirmations.has(sid)) {
+        // Still-pending subject with no tier choice: inject both compat offerings
+        // so updateSelectedOfferings preserves them (signals "keep pending")
+        const compat = storeState.compatSelectedOfferingIds.get(sid)
+        if (compat) {
+          for (const oid of compat) {
+            if (!offeringIds.includes(oid)) offeringIds.push(oid)
+          }
+        }
+      }
+    }
 
     const finalConf = new Map<string, number>()
     for (const oid of offeringIds) {
@@ -447,9 +494,11 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
       }
     }
     if (isEdit) {
+      // Store-level guards in updateSelectedOfferings handle any remaining tier-split offerings
       updateSelectedOfferings(offeringIds, finalConf)
     } else {
       if (localStudyMode) setStudyModeInStore(localStudyMode)
+      // Store-level guards in completeOnboarding handle any remaining tier-split offerings
       completeOnboarding(offeringIds, finalConf)
     }
     onComplete()
@@ -692,6 +741,7 @@ export function useOnboardingController({ mode, onComplete }: OnboardingControll
     setActiveSubjectId,
     scrollPositionRef,
     persistedStudyMode,
+    pendingTierConfirmations,
 
     // Derived
     boardMap,

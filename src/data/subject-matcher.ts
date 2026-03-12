@@ -125,6 +125,18 @@ const REGISTRY: RegistryEntry[] = [
     aliases: [],
     abbreviations: [],
   },
+  {
+    canonicalKey: 'french',
+    displayName: 'French',
+    aliases: [],
+    abbreviations: [],
+  },
+  {
+    canonicalKey: 'further mathematics',
+    displayName: 'Further Mathematics',
+    aliases: ['further maths'],
+    abbreviations: ['fm'],
+  },
 ]
 
 // ── Indices (built once at module load) ──

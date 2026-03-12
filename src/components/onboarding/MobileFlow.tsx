@@ -5,7 +5,7 @@ import MobileSubjectConfig from './MobileSubjectConfig'
 
 interface MobileFlowProps {
   ctrl: OnboardingController
-  onBack: () => void
+  onBack?: (() => void) | null
 }
 
 export default function MobileFlow({ ctrl, onBack }: MobileFlowProps) {

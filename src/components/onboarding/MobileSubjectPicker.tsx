@@ -7,7 +7,7 @@ import { EMOJIS } from './ConfidenceRow'
 
 interface MobileSubjectPickerProps {
   ctrl: OnboardingController
-  onBack: () => void
+  onBack?: (() => void) | null
 }
 
 function getSummaryLabel(
@@ -62,14 +62,16 @@ export default function MobileSubjectPicker({ ctrl, onBack }: MobileSubjectPicke
       {/* Sticky header */}
       <div className="sticky top-0 z-10 bg-[#faf9f7] border-b border-gray-100 px-4 pt-4 pb-3">
         <div className="flex items-center gap-3 mb-3">
-          <button
-            onClick={onBack}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 shrink-0"
-          >
-            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-            </svg>
-          </button>
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 shrink-0"
+            >
+              <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+              </svg>
+            </button>
+          )}
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <h1 className="text-lg font-bold text-gray-900 truncate">
               {ctrl.isEdit ? 'Update your subjects' : 'Pick your subjects'}
@@ -121,7 +123,7 @@ export default function MobileSubjectPicker({ ctrl, onBack }: MobileSubjectPicke
                     onClick={() => ctrl.openAddBoard(m.id)}
                     className="block mx-auto mt-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
                   >
-                    Add board to {m.name}
+                    Add option to {m.name}
                   </button>
                 ))}
               </>
@@ -136,7 +138,7 @@ export default function MobileSubjectPicker({ ctrl, onBack }: MobileSubjectPicke
                         onClick={() => ctrl.openAddBoard(m.id)}
                         className="block mx-auto mt-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
                       >
-                        Add board to {m.name}
+                        Add option to {m.name}
                       </button>
                     ))}
                   </div>

@@ -305,9 +305,9 @@ export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onD
             {isAddOffering && internalMode.kind === 'add-offering' ? (
               <>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">
-                  Add a board to <span className="text-blue-600">{internalMode.subjectName}</span>
+                  Add an option to <span className="text-blue-600">{internalMode.subjectName}</span>
                 </h2>
-                <p className="text-sm text-gray-400 mb-8">Choose the exam board and spec for this offering.</p>
+                <p className="text-sm text-gray-400 mb-8">Choose the exam option details.</p>
               </>
             ) : (
               <>
@@ -414,7 +414,7 @@ export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onD
 
             {duplicateOffering && internalMode.kind === 'add-offering' && (
               <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 mb-4">
-                <p className="text-sm text-blue-700 mb-2">This board already exists for this subject.</p>
+                <p className="text-sm text-blue-700 mb-2">This exam option already exists for this subject.</p>
                 <button
                   onClick={() => {
                     if (onExistingOffering) {
@@ -425,7 +425,7 @@ export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onD
                   }}
                   className="text-sm font-semibold text-blue-600 hover:text-blue-700"
                 >
-                  Go to existing board
+                  Go to existing option
                 </button>
               </div>
             )}
@@ -589,7 +589,7 @@ export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onD
               disabled={!canSubmit}
               className="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {isEditOffering ? 'Save changes' : isAddOffering ? 'Add board' : 'Create subject'}
+              {isEditOffering ? 'Save changes' : isAddOffering ? 'Add exam option' : 'Create subject'}
             </button>
           </div>
         )}

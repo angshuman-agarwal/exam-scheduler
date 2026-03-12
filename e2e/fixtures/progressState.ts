@@ -24,12 +24,13 @@ function requireTopic(id: string) {
 }
 
 // Validate all offerings/topics used in fixtures
-;['cs-aqa', 'bio-aqa', 'maths-edexcel', 'eng-lit-aqa', 'phys-aqa'].forEach(requireOffering)
+;['cs-aqa', 'bio-aqa-h', 'maths-edexcel-h', 'eng-lit-aqa', 'phys-aqa-h'].forEach(requireOffering)
 ;['cs-001', 'cs-002', 'cs-003', 'cs-004', 'cs-005', 'cs-006', 'cs-007', 'cs-008',
   'cs-009', 'cs-010', 'cs-011', 'cs-012', 'cs-013', 'cs-014',
-  'bio-001', 'bio-002', 'bio-003', 'bio-004', 'bio-005', 'bio-006', 'bio-007',
-  'bio-008', 'bio-009', 'bio-010',
-  'maths-001', 'maths-002', 'maths-003', 'maths-004', 'maths-005',
+  'bio-aqa-h-001', 'bio-aqa-h-002', 'bio-aqa-h-003', 'bio-aqa-h-004', 'bio-aqa-h-005',
+  'bio-aqa-h-006', 'bio-aqa-h-007', 'bio-aqa-h-008', 'bio-aqa-h-009', 'bio-aqa-h-010',
+  'maths-edexcel-h-001', 'maths-edexcel-h-002', 'maths-edexcel-h-003',
+  'maths-edexcel-h-004', 'maths-edexcel-h-005',
   'eng-lit-001', 'eng-lit-002', 'eng-lit-003', 'eng-lit-004', 'eng-lit-005',
 ].forEach(requireTopic)
 
@@ -98,19 +99,19 @@ const EXAM_PAST = '2026-03-01'  // in the past
 // 1. Empty state — no sessions, no notes
 // All exams ≤30d so all subjects show "At risk soon" (0% coverage)
 export function progressEmpty(): PersistedState {
-  const s = baseState(['cs-aqa', 'bio-aqa', 'maths-edexcel', 'eng-lit-aqa'])
+  const s = baseState(['cs-aqa', 'bio-aqa-h', 'maths-edexcel-h', 'eng-lit-aqa'])
   setOfferingExamDate(s, 'cs-aqa', EXAM_NEAR)
-  setOfferingExamDate(s, 'bio-aqa', EXAM_NEAR)
-  setOfferingExamDate(s, 'maths-edexcel', EXAM_NEAR)
+  setOfferingExamDate(s, 'bio-aqa-h', EXAM_NEAR)
+  setOfferingExamDate(s, 'maths-edexcel-h', EXAM_NEAR)
   setOfferingExamDate(s, 'eng-lit-aqa', EXAM_NEAR)
   return s
 }
 
 // 2. One session today only → streak=1
 export function progressTodayOnly(): PersistedState {
-  const s = baseState(['cs-aqa', 'bio-aqa'])
+  const s = baseState(['cs-aqa', 'bio-aqa-h'])
   setOfferingExamDate(s, 'cs-aqa', EXAM_FAR)
-  setOfferingExamDate(s, 'bio-aqa', EXAM_FAR)
+  setOfferingExamDate(s, 'bio-aqa-h', EXAM_FAR)
   s.sessions = [
     makeSession('cs-001', '2026-04-15', 0.7, 1200),
   ]
@@ -120,29 +121,29 @@ export function progressTodayOnly(): PersistedState {
 
 // 3. Sessions on 3 consecutive days → streak=3
 export function progressStreak(): PersistedState {
-  const s = baseState(['cs-aqa', 'bio-aqa'])
+  const s = baseState(['cs-aqa', 'bio-aqa-h'])
   setOfferingExamDate(s, 'cs-aqa', EXAM_FAR)
-  setOfferingExamDate(s, 'bio-aqa', EXAM_FAR)
+  setOfferingExamDate(s, 'bio-aqa-h', EXAM_FAR)
   s.sessions = [
     makeSession('cs-001', '2026-04-13', 0.6, 900),
-    makeSession('bio-001', '2026-04-14', 0.65, 1000),
+    makeSession('bio-aqa-h-001', '2026-04-14', 0.65, 1000),
     makeSession('cs-002', '2026-04-15', 0.7, 1200),
   ]
   setTopicFields(s, 'cs-001', { lastReviewed: '2026-04-13', performanceScore: 0.4, confidence: 2 })
-  setTopicFields(s, 'bio-001', { lastReviewed: '2026-04-14', performanceScore: 0.65 })
+  setTopicFields(s, 'bio-aqa-h-001', { lastReviewed: '2026-04-14', performanceScore: 0.65 })
   setTopicFields(s, 'cs-002', { lastReviewed: '2026-04-15', performanceScore: 0.7 })
   return s
 }
 
 // 4. Mixed statuses: At risk, Needs attention, Improving, On track
 export function progressMixedStatuses(): PersistedState {
-  const s = baseState(['cs-aqa', 'bio-aqa', 'maths-edexcel', 'eng-lit-aqa', 'phys-aqa'])
+  const s = baseState(['cs-aqa', 'bio-aqa-h', 'maths-edexcel-h', 'eng-lit-aqa', 'phys-aqa-h'])
   // Pin exam dates: cs near (At risk), others far (won't trigger At risk)
   setOfferingExamDate(s, 'cs-aqa', EXAM_NEAR)
-  setOfferingExamDate(s, 'bio-aqa', EXAM_FAR)
-  setOfferingExamDate(s, 'maths-edexcel', EXAM_FAR)
+  setOfferingExamDate(s, 'bio-aqa-h', EXAM_FAR)
+  setOfferingExamDate(s, 'maths-edexcel-h', EXAM_FAR)
   setOfferingExamDate(s, 'eng-lit-aqa', EXAM_FAR)
-  setOfferingExamDate(s, 'phys-aqa', EXAM_FAR)
+  setOfferingExamDate(s, 'phys-aqa-h', EXAM_FAR)
 
   // cs-aqa: exam 20 days away, coverage <60% of 14 topics → "At risk soon"
   // Only review 4 of 14 cs topics (28% coverage, well below 60%)
@@ -156,36 +157,38 @@ export function progressMixedStatuses(): PersistedState {
     makeSession('cs-004', '2026-04-14', 0.5, 600),
   )
 
-  // bio-aqa: coverage >60%, has weak topics → "Needs attention"
+  // bio-aqa-h: coverage >60%, has weak topics → "Needs attention"
   // Review 7 of 10 bio topics (70% coverage)
-  for (const tid of ['bio-001', 'bio-002', 'bio-003', 'bio-004', 'bio-005', 'bio-006', 'bio-007']) {
+  for (const tid of ['bio-aqa-h-001', 'bio-aqa-h-002', 'bio-aqa-h-003', 'bio-aqa-h-004',
+    'bio-aqa-h-005', 'bio-aqa-h-006', 'bio-aqa-h-007']) {
     setTopicFields(s, tid, { lastReviewed: '2026-04-13', performanceScore: 0.4, confidence: 2 })
   }
   s.sessions.push(
-    ...['bio-001', 'bio-002', 'bio-003', 'bio-004', 'bio-005', 'bio-006', 'bio-007'].map(
+    ...['bio-aqa-h-001', 'bio-aqa-h-002', 'bio-aqa-h-003', 'bio-aqa-h-004',
+      'bio-aqa-h-005', 'bio-aqa-h-006', 'bio-aqa-h-007'].map(
       tid => makeSession(tid, '2026-04-13', 0.4, 600),
     ),
   )
 
-  // maths-edexcel: recent scores > prev week → "Improving"
+  // maths-edexcel-h: recent scores > prev week → "Improving"
   // Need coverage >= 60% to avoid "At risk soon" (maths has 60 topics, need 36+ reviewed)
   // Also need no weak topics to avoid "Needs attention"
   // And need sessions in both last 7d and prev 7d with improvement
-  const mathsTopicIds = seed.topics.filter(t => t.offeringId === 'maths-edexcel').map(t => t.id)
+  const mathsTopicIds = seed.topics.filter(t => t.offeringId === 'maths-edexcel-h').map(t => t.id)
   // Review all 60 maths topics with good perf
   for (const tid of mathsTopicIds) {
     setTopicFields(s, tid, { lastReviewed: '2026-04-07', performanceScore: 0.8, confidence: 4 })
   }
   // Prev week sessions (04-02 to 04-08) — lower scores
   s.sessions.push(
-    makeSession('maths-001', '2026-04-05', 0.4, 600),
-    makeSession('maths-002', '2026-04-06', 0.4, 600),
-    makeSession('maths-003', '2026-04-07', 0.4, 600),
+    makeSession('maths-edexcel-h-001', '2026-04-05', 0.4, 600),
+    makeSession('maths-edexcel-h-002', '2026-04-06', 0.4, 600),
+    makeSession('maths-edexcel-h-003', '2026-04-07', 0.4, 600),
   )
   // This week sessions (04-09 to 04-15) — higher scores
   s.sessions.push(
-    makeSession('maths-004', '2026-04-12', 0.8, 600),
-    makeSession('maths-005', '2026-04-13', 0.8, 600),
+    makeSession('maths-edexcel-h-004', '2026-04-12', 0.8, 600),
+    makeSession('maths-edexcel-h-005', '2026-04-13', 0.8, 600),
   )
 
   // eng-lit-aqa: no weak topics, no improving signal → "On track"
@@ -204,39 +207,39 @@ export function progressMixedStatuses(): PersistedState {
 
 // 5. Distribution with duration — sessions across 2 subjects with durationSeconds
 export function progressDistDuration(): PersistedState {
-  const s = baseState(['cs-aqa', 'bio-aqa'])
+  const s = baseState(['cs-aqa', 'bio-aqa-h'])
   setOfferingExamDate(s, 'cs-aqa', EXAM_FAR)
-  setOfferingExamDate(s, 'bio-aqa', EXAM_FAR)
+  setOfferingExamDate(s, 'bio-aqa-h', EXAM_FAR)
   s.sessions = [
     makeSession('cs-001', '2026-04-12', 0.7, 1800),
     makeSession('cs-002', '2026-04-13', 0.6, 1500),
-    makeSession('bio-001', '2026-04-14', 0.8, 2400),
-    makeSession('bio-002', '2026-04-15', 0.75, 1200),
+    makeSession('bio-aqa-h-001', '2026-04-14', 0.8, 2400),
+    makeSession('bio-aqa-h-002', '2026-04-15', 0.75, 1200),
   ]
   setTopicFields(s, 'cs-001', { lastReviewed: '2026-04-12', performanceScore: 0.7 })
   setTopicFields(s, 'cs-002', { lastReviewed: '2026-04-13', performanceScore: 0.6 })
-  setTopicFields(s, 'bio-001', { lastReviewed: '2026-04-14', performanceScore: 0.8 })
-  setTopicFields(s, 'bio-002', { lastReviewed: '2026-04-15', performanceScore: 0.75 })
+  setTopicFields(s, 'bio-aqa-h-001', { lastReviewed: '2026-04-14', performanceScore: 0.8 })
+  setTopicFields(s, 'bio-aqa-h-002', { lastReviewed: '2026-04-15', performanceScore: 0.75 })
   return s
 }
 
 // 6. Distribution fallback to counts — sessions without durationSeconds
 export function progressDistCounts(): PersistedState {
-  const s = baseState(['cs-aqa', 'bio-aqa'])
+  const s = baseState(['cs-aqa', 'bio-aqa-h'])
   setOfferingExamDate(s, 'cs-aqa', EXAM_FAR)
-  setOfferingExamDate(s, 'bio-aqa', EXAM_FAR)
+  setOfferingExamDate(s, 'bio-aqa-h', EXAM_FAR)
   s.sessions = [
     makeSession('cs-001', '2026-04-12', 0.7),
     makeSession('cs-002', '2026-04-13', 0.6),
     makeSession('cs-003', '2026-04-14', 0.65),
-    makeSession('bio-001', '2026-04-14', 0.8),
-    makeSession('bio-002', '2026-04-15', 0.75),
+    makeSession('bio-aqa-h-001', '2026-04-14', 0.8),
+    makeSession('bio-aqa-h-002', '2026-04-15', 0.75),
   ]
   setTopicFields(s, 'cs-001', { lastReviewed: '2026-04-12', performanceScore: 0.7 })
   setTopicFields(s, 'cs-002', { lastReviewed: '2026-04-13', performanceScore: 0.6 })
   setTopicFields(s, 'cs-003', { lastReviewed: '2026-04-14', performanceScore: 0.65 })
-  setTopicFields(s, 'bio-001', { lastReviewed: '2026-04-14', performanceScore: 0.8 })
-  setTopicFields(s, 'bio-002', { lastReviewed: '2026-04-15', performanceScore: 0.75 })
+  setTopicFields(s, 'bio-aqa-h-001', { lastReviewed: '2026-04-14', performanceScore: 0.8 })
+  setTopicFields(s, 'bio-aqa-h-002', { lastReviewed: '2026-04-15', performanceScore: 0.75 })
   return s
 }
 
@@ -282,22 +285,22 @@ export function progressNoWeakSpots(): PersistedState {
 
 // 10. Not started expanded — distant exams, 0 topics studied
 export function progressNotStartedExpanded(): PersistedState {
-  const s = baseState(['phys-aqa'])
-  setOfferingExamDate(s, 'phys-aqa', EXAM_FAR)
+  const s = baseState(['phys-aqa-h'])
+  setOfferingExamDate(s, 'phys-aqa-h', EXAM_FAR)
   return s
 }
 
 // 9. No future exams — all papers overridden to past dates
 export function progressNoFutureExams(): PersistedState {
-  const s = baseState(['cs-aqa', 'bio-aqa'])
+  const s = baseState(['cs-aqa', 'bio-aqa-h'])
   setOfferingExamDate(s, 'cs-aqa', EXAM_PAST)
-  setOfferingExamDate(s, 'bio-aqa', EXAM_PAST)
+  setOfferingExamDate(s, 'bio-aqa-h', EXAM_PAST)
   // Add some sessions so the page isn't empty-state
   s.sessions = [
     makeSession('cs-001', '2026-04-14', 0.7, 900),
-    makeSession('bio-001', '2026-04-15', 0.6, 800),
+    makeSession('bio-aqa-h-001', '2026-04-15', 0.6, 800),
   ]
   setTopicFields(s, 'cs-001', { lastReviewed: '2026-04-14', performanceScore: 0.7 })
-  setTopicFields(s, 'bio-001', { lastReviewed: '2026-04-15', performanceScore: 0.6 })
+  setTopicFields(s, 'bio-aqa-h-001', { lastReviewed: '2026-04-15', performanceScore: 0.6 })
   return s
 }

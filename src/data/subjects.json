@@ -1,248 +1,4732 @@
 {
   "version": 2,
   "boards": [
-    { "id": "aqa", "name": "AQA" },
-    { "id": "edexcel", "name": "Edexcel" },
-    { "id": "ocr", "name": "OCR" }
+    {
+      "id": "aqa",
+      "name": "AQA"
+    },
+    {
+      "id": "edexcel",
+      "name": "Edexcel"
+    },
+    {
+      "id": "ocr",
+      "name": "OCR"
+    }
   ],
   "subjects": [
-    { "id": "cs", "name": "Computer Science", "color": "#3B82F6" },
-    { "id": "eng-lit", "name": "English Literature", "color": "#8B5CF6" },
-    { "id": "bio", "name": "Biology", "color": "#10B981" },
-    { "id": "rs", "name": "R.S.", "color": "#F59E0B" },
-    { "id": "geo", "name": "Geography", "color": "#6366F1" },
-    { "id": "maths", "name": "Maths", "color": "#EF4444" },
-    { "id": "chem", "name": "Chemistry", "color": "#F97316" },
-    { "id": "eng-lang", "name": "English Language", "color": "#A855F7" },
-    { "id": "phys", "name": "Physics", "color": "#06B6D4" },
-    { "id": "music", "name": "Music", "color": "#EC4899" },
-    { "id": "spanish", "name": "Spanish", "color": "#14B8A6" },
-    { "id": "add-maths", "name": "Additional Maths", "color": "#64748B" }
+    {
+      "id": "cs",
+      "name": "Computer Science",
+      "color": "#3B82F6"
+    },
+    {
+      "id": "eng-lit",
+      "name": "English Literature",
+      "color": "#8B5CF6"
+    },
+    {
+      "id": "bio",
+      "name": "Biology",
+      "color": "#10B981"
+    },
+    {
+      "id": "rs",
+      "name": "R.S.",
+      "color": "#F59E0B"
+    },
+    {
+      "id": "geo",
+      "name": "Geography",
+      "color": "#6366F1"
+    },
+    {
+      "id": "maths",
+      "name": "Maths",
+      "color": "#EF4444"
+    },
+    {
+      "id": "chem",
+      "name": "Chemistry",
+      "color": "#F97316"
+    },
+    {
+      "id": "eng-lang",
+      "name": "English Language",
+      "color": "#A855F7"
+    },
+    {
+      "id": "phys",
+      "name": "Physics",
+      "color": "#06B6D4"
+    },
+    {
+      "id": "music",
+      "name": "Music",
+      "color": "#EC4899"
+    },
+    {
+      "id": "spanish",
+      "name": "Spanish",
+      "color": "#14B8A6"
+    },
+    {
+      "id": "add-maths",
+      "name": "Additional Maths",
+      "color": "#64748B"
+    },
+    {
+      "id": "history",
+      "name": "History",
+      "color": "#D97706"
+    },
+    {
+      "id": "french",
+      "name": "French",
+      "color": "#2563EB"
+    },
+    {
+      "id": "further-maths",
+      "name": "Further Mathematics",
+      "color": "#7C3AED"
+    }
   ],
   "offerings": [
-    { "id": "cs-aqa", "subjectId": "cs", "boardId": "aqa", "spec": "8525", "label": "AQA 8525", "qualificationId": "gcse" },
-    { "id": "eng-lit-aqa", "subjectId": "eng-lit", "boardId": "aqa", "spec": "8702", "label": "AQA 8702", "qualificationId": "gcse" },
-    { "id": "bio-aqa", "subjectId": "bio", "boardId": "aqa", "spec": "8461", "label": "AQA 8461", "qualificationId": "gcse" },
-    { "id": "rs-aqa", "subjectId": "rs", "boardId": "aqa", "spec": "8062", "label": "AQA 8062", "qualificationId": "gcse" },
-    { "id": "geo-aqa", "subjectId": "geo", "boardId": "aqa", "spec": "8035", "label": "AQA 8035", "qualificationId": "gcse" },
-    { "id": "maths-edexcel", "subjectId": "maths", "boardId": "edexcel", "spec": "1MA1", "label": "Edexcel 1MA1", "qualificationId": "gcse" },
-    { "id": "maths-aqa", "subjectId": "maths", "boardId": "aqa", "spec": "8300", "label": "AQA 8300", "qualificationId": "gcse" },
-    { "id": "chem-aqa", "subjectId": "chem", "boardId": "aqa", "spec": "8462", "label": "AQA 8462", "qualificationId": "gcse" },
-    { "id": "eng-lang-aqa", "subjectId": "eng-lang", "boardId": "aqa", "spec": "8700", "label": "AQA 8700", "qualificationId": "gcse" },
-    { "id": "phys-aqa", "subjectId": "phys", "boardId": "aqa", "spec": "8463", "label": "AQA 8463", "qualificationId": "gcse" },
-    { "id": "music-edexcel", "subjectId": "music", "boardId": "edexcel", "spec": "1MU0", "label": "Edexcel 1MU0", "qualificationId": "gcse" },
-    { "id": "spanish-aqa", "subjectId": "spanish", "boardId": "aqa", "spec": "8698", "label": "AQA 8698", "qualificationId": "gcse" },
-    { "id": "add-maths-ocr", "subjectId": "add-maths", "boardId": "ocr", "spec": "6993", "label": "OCR 6993", "qualificationId": "gcse" }
+    {
+      "id": "cs-aqa",
+      "subjectId": "cs",
+      "boardId": "aqa",
+      "spec": "8525",
+      "label": "AQA 8525",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "eng-lit-aqa",
+      "subjectId": "eng-lit",
+      "boardId": "aqa",
+      "spec": "8702",
+      "label": "AQA 8702",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "rs-aqa",
+      "subjectId": "rs",
+      "boardId": "aqa",
+      "spec": "8062",
+      "label": "AQA 8062",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "geo-aqa",
+      "subjectId": "geo",
+      "boardId": "aqa",
+      "spec": "8035",
+      "label": "AQA 8035",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "eng-lang-aqa",
+      "subjectId": "eng-lang",
+      "boardId": "aqa",
+      "spec": "8700",
+      "label": "AQA 8700",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "music-edexcel",
+      "subjectId": "music",
+      "boardId": "edexcel",
+      "spec": "1MU0",
+      "label": "Edexcel 1MU0",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "spanish-aqa",
+      "subjectId": "spanish",
+      "boardId": "aqa",
+      "spec": "8698",
+      "label": "AQA 8698",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "add-maths-ocr",
+      "subjectId": "add-maths",
+      "boardId": "ocr",
+      "spec": "6993",
+      "label": "OCR 6993",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "maths-aqa-f",
+      "subjectId": "maths",
+      "boardId": "aqa",
+      "spec": "8300",
+      "label": "AQA 8300 Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "maths-aqa-h",
+      "subjectId": "maths",
+      "boardId": "aqa",
+      "spec": "8300",
+      "label": "AQA 8300 Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "maths-edexcel-f",
+      "subjectId": "maths",
+      "boardId": "edexcel",
+      "spec": "1MA1",
+      "label": "Edexcel 1MA1 Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "maths-edexcel-h",
+      "subjectId": "maths",
+      "boardId": "edexcel",
+      "spec": "1MA1",
+      "label": "Edexcel 1MA1 Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "maths-ocr-f",
+      "subjectId": "maths",
+      "boardId": "ocr",
+      "spec": "J560",
+      "label": "OCR J560 Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "maths-ocr-h",
+      "subjectId": "maths",
+      "boardId": "ocr",
+      "spec": "J560",
+      "label": "OCR J560 Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "bio-aqa-f",
+      "subjectId": "bio",
+      "boardId": "aqa",
+      "spec": "8461",
+      "label": "AQA 8461 Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "bio-aqa-h",
+      "subjectId": "bio",
+      "boardId": "aqa",
+      "spec": "8461",
+      "label": "AQA 8461 Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "bio-ocr-a-f",
+      "subjectId": "bio",
+      "boardId": "ocr",
+      "spec": "J247",
+      "label": "OCR Biology A Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "bio-ocr-a-h",
+      "subjectId": "bio",
+      "boardId": "ocr",
+      "spec": "J247",
+      "label": "OCR Biology A Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "bio-ocr-b-f",
+      "subjectId": "bio",
+      "boardId": "ocr",
+      "spec": "J257",
+      "label": "OCR Biology B Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "bio-ocr-b-h",
+      "subjectId": "bio",
+      "boardId": "ocr",
+      "spec": "J257",
+      "label": "OCR Biology B Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "chem-aqa-f",
+      "subjectId": "chem",
+      "boardId": "aqa",
+      "spec": "8462",
+      "label": "AQA 8462 Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "chem-aqa-h",
+      "subjectId": "chem",
+      "boardId": "aqa",
+      "spec": "8462",
+      "label": "AQA 8462 Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "chem-ocr-a-f",
+      "subjectId": "chem",
+      "boardId": "ocr",
+      "spec": "J248",
+      "label": "OCR Chemistry A Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "chem-ocr-a-h",
+      "subjectId": "chem",
+      "boardId": "ocr",
+      "spec": "J248",
+      "label": "OCR Chemistry A Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "chem-ocr-b-f",
+      "subjectId": "chem",
+      "boardId": "ocr",
+      "spec": "J258",
+      "label": "OCR Chemistry B Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "chem-ocr-b-h",
+      "subjectId": "chem",
+      "boardId": "ocr",
+      "spec": "J258",
+      "label": "OCR Chemistry B Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "phys-aqa-f",
+      "subjectId": "phys",
+      "boardId": "aqa",
+      "spec": "8463",
+      "label": "AQA 8463 Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "phys-aqa-h",
+      "subjectId": "phys",
+      "boardId": "aqa",
+      "spec": "8463",
+      "label": "AQA 8463 Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "phys-ocr-a-f",
+      "subjectId": "phys",
+      "boardId": "ocr",
+      "spec": "J249",
+      "label": "OCR Physics A Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "phys-ocr-a-h",
+      "subjectId": "phys",
+      "boardId": "ocr",
+      "spec": "J249",
+      "label": "OCR Physics A Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "phys-ocr-b-f",
+      "subjectId": "phys",
+      "boardId": "ocr",
+      "spec": "J259",
+      "label": "OCR Physics B Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "phys-ocr-b-h",
+      "subjectId": "phys",
+      "boardId": "ocr",
+      "spec": "J259",
+      "label": "OCR Physics B Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "french-aqa-f",
+      "subjectId": "french",
+      "boardId": "aqa",
+      "spec": "8658",
+      "label": "AQA 8658 Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "french-aqa-h",
+      "subjectId": "french",
+      "boardId": "aqa",
+      "spec": "8658",
+      "label": "AQA 8658 Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "french-edexcel-f",
+      "subjectId": "french",
+      "boardId": "edexcel",
+      "spec": "1FR1",
+      "label": "Edexcel 1FR1 Foundation",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "french-edexcel-h",
+      "subjectId": "french",
+      "boardId": "edexcel",
+      "spec": "1FR1",
+      "label": "Edexcel 1FR1 Higher",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "history-aqa",
+      "subjectId": "history",
+      "boardId": "aqa",
+      "spec": "8145",
+      "label": "AQA 8145",
+      "qualificationId": "gcse"
+    },
+    {
+      "id": "further-maths-aqa",
+      "subjectId": "further-maths",
+      "boardId": "aqa",
+      "spec": "8365",
+      "label": "AQA 8365",
+      "qualificationId": "gcse"
+    }
   ],
   "papers": [
-    { "id": "cs-p1", "offeringId": "cs-aqa", "name": "Paper 1", "examDate": "2026-05-13" , "examTime": "13:30" },
-    { "id": "cs-p2", "offeringId": "cs-aqa", "name": "Paper 2", "examDate": "2026-05-19", "examTime": "13:30" },
-    { "id": "eng-lit-p1", "offeringId": "eng-lit-aqa", "name": "Paper 1", "examDate": "2026-05-11", "examTime": "09:00" },
-    { "id": "eng-lit-p2", "offeringId": "eng-lit-aqa", "name": "Paper 2", "examDate": "2026-05-19", "examTime": "09:00" },
-    { "id": "bio-p1", "offeringId": "bio-aqa", "name": "Paper 1", "examDate": "2026-05-12", "examTime": "13:30" },
-    { "id": "bio-p2", "offeringId": "bio-aqa", "name": "Paper 2", "examDate": "2026-06-08", "examTime": "09:00" },
-    { "id": "rs-p1", "offeringId": "rs-aqa", "name": "Paper 1", "examDate": "2026-05-12" },
-    { "id": "rs-p2", "offeringId": "rs-aqa", "name": "Paper 2", "examDate": "2026-05-20", "examTime": "13:30" },
-    { "id": "geo-p1", "offeringId": "geo-aqa", "name": "Paper 1", "examDate": "2026-05-13", "examTime": "09:00" },
-    { "id": "geo-p2", "offeringId": "geo-aqa", "name": "Paper 2", "examDate": "2026-06-03", "examTime": "13:30" },
-    { "id": "geo-p3", "offeringId": "geo-aqa", "name": "Paper 3", "examDate": "2026-06-11", "examTime"  : "09:00" },
-    { "id": "maths-p1", "offeringId": "maths-edexcel", "name": "Paper 1", "examDate": "2026-05-14", "examTime": "09:00" },
-    { "id": "maths-p2", "offeringId": "maths-edexcel", "name": "Paper 2", "examDate": "2026-06-03", "examTime": "09:00" },
-    { "id": "maths-p3", "offeringId": "maths-edexcel", "name": "Paper 3", "examDate": "2026-06-10", "examTime": "09:00" },
-    { "id": "maths-aqa-p1", "offeringId": "maths-aqa", "name": "Paper 1", "examDate": "2026-05-19" },
-    { "id": "maths-aqa-p2", "offeringId": "maths-aqa", "name": "Paper 2", "examDate": "2026-06-04" },
-    { "id": "maths-aqa-p3", "offeringId": "maths-aqa", "name": "Paper 3", "examDate": "2026-06-11" },
-    { "id": "chem-p1", "offeringId": "chem-aqa", "name": "Paper 1", "examDate": "2026-05-18", "examTime": "09:00" },
-    { "id": "chem-p2", "offeringId": "chem-aqa", "name": "Paper 2", "examDate": "2026-06-12", "examTime": "09:00" },
-    { "id": "eng-lang-p1", "offeringId": "eng-lang-aqa", "name": "Paper 1", "examDate": "2026-05-21", "examTime": "09:00" },
-    { "id": "eng-lang-p2", "offeringId": "eng-lang-aqa", "name": "Paper 2", "examDate": "2026-06-05" , "examTime" : "09:00" },
-    { "id": "phys-p1", "offeringId": "phys-aqa", "name": "Paper 1", "examDate": "2026-06-02", "examTime": "09:00" },
-    { "id": "phys-p2", "offeringId": "phys-aqa", "name": "Paper 2", "examDate": "2026-06-15", "examTime"  : "09:00" },
-    { "id": "music-p1", "offeringId": "music-edexcel", "name": "Paper 1", "examDate": "2026-06-05", "examTime": "13:30" },
-    { "id": "spanish-p1", "offeringId": "spanish-aqa", "name": "Paper 1", "examDate": "2026-06-09", "examTime"  : "09:00" },
-    { "id": "spanish-p2", "offeringId": "spanish-aqa", "name": "Paper 2", "examDate": "2026-06-09", "examTime": "09:00" },
-    { "id": "spanish-p3", "offeringId": "spanish-aqa", "name": "Paper 3", "examDate": "2026-06-16", "examTime"  : "09:00" },
-    { "id": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Paper 1", "examDate": "2026-06-15", "examTime" : "13:30"}
+    {
+      "id": "cs-p1",
+      "offeringId": "cs-aqa",
+      "name": "Paper 1",
+      "examDate": "2026-05-13",
+      "examTime": "13:30"
+    },
+    {
+      "id": "cs-p2",
+      "offeringId": "cs-aqa",
+      "name": "Paper 2",
+      "examDate": "2026-05-19",
+      "examTime": "13:30"
+    },
+    {
+      "id": "eng-lit-p1",
+      "offeringId": "eng-lit-aqa",
+      "name": "Paper 1",
+      "examDate": "2026-05-11",
+      "examTime": "09:00"
+    },
+    {
+      "id": "eng-lit-p2",
+      "offeringId": "eng-lit-aqa",
+      "name": "Paper 2",
+      "examDate": "2026-05-19",
+      "examTime": "09:00"
+    },
+    {
+      "id": "rs-p1",
+      "offeringId": "rs-aqa",
+      "name": "Paper 1",
+      "examDate": "2026-05-12",
+      "examTime": "09:00"
+    },
+    {
+      "id": "rs-p2",
+      "offeringId": "rs-aqa",
+      "name": "Paper 2",
+      "examDate": "2026-05-20",
+      "examTime": "13:30"
+    },
+    {
+      "id": "geo-p1",
+      "offeringId": "geo-aqa",
+      "name": "Paper 1",
+      "examDate": "2026-05-13",
+      "examTime": "09:00"
+    },
+    {
+      "id": "geo-p2",
+      "offeringId": "geo-aqa",
+      "name": "Paper 2",
+      "examDate": "2026-06-03",
+      "examTime": "13:30"
+    },
+    {
+      "id": "geo-p3",
+      "offeringId": "geo-aqa",
+      "name": "Paper 3",
+      "examDate": "2026-06-11",
+      "examTime": "09:00"
+    },
+    {
+      "id": "eng-lang-p1",
+      "offeringId": "eng-lang-aqa",
+      "name": "Paper 1",
+      "examDate": "2026-05-21",
+      "examTime": "09:00"
+    },
+    {
+      "id": "eng-lang-p2",
+      "offeringId": "eng-lang-aqa",
+      "name": "Paper 2",
+      "examDate": "2026-06-05",
+      "examTime": "09:00"
+    },
+    {
+      "id": "music-p1",
+      "offeringId": "music-edexcel",
+      "name": "Component 3: Appraising",
+      "examDate": "2026-06-05",
+      "examTime": "13:30"
+    },
+    {
+      "id": "spanish-p1",
+      "offeringId": "spanish-aqa",
+      "name": "Paper 1",
+      "examDate": "2026-06-09",
+      "examTime": "09:00"
+    },
+    {
+      "id": "spanish-p2",
+      "offeringId": "spanish-aqa",
+      "name": "Paper 2",
+      "examDate": "2026-06-09",
+      "examTime": "09:00"
+    },
+    {
+      "id": "spanish-p3",
+      "offeringId": "spanish-aqa",
+      "name": "Paper 3",
+      "examDate": "2026-06-16",
+      "examTime": "09:00"
+    },
+    {
+      "id": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Paper 1",
+      "examDate": "2026-06-15",
+      "examTime": "13:30"
+    },
+    {
+      "id": "maths-aqa-f-paper1",
+      "offeringId": "maths-aqa-f",
+      "name": "Paper 1",
+      "examDate": "2026-05-19",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-aqa-h-paper1",
+      "offeringId": "maths-aqa-h",
+      "name": "Paper 1",
+      "examDate": "2026-05-19",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-aqa-f-paper2",
+      "offeringId": "maths-aqa-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-04",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-aqa-h-paper2",
+      "offeringId": "maths-aqa-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-04",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-aqa-f-paper3",
+      "offeringId": "maths-aqa-f",
+      "name": "Paper 3",
+      "examDate": "2026-06-11",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-aqa-h-paper3",
+      "offeringId": "maths-aqa-h",
+      "name": "Paper 3",
+      "examDate": "2026-06-11",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Paper 1",
+      "examDate": "2026-05-14",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Paper 1",
+      "examDate": "2026-05-14",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-edexcel-f-paper2",
+      "offeringId": "maths-edexcel-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-03",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-edexcel-h-paper2",
+      "offeringId": "maths-edexcel-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-03",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-edexcel-f-paper3",
+      "offeringId": "maths-edexcel-f",
+      "name": "Paper 3",
+      "examDate": "2026-06-10",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-edexcel-h-paper3",
+      "offeringId": "maths-edexcel-h",
+      "name": "Paper 3",
+      "examDate": "2026-06-10",
+      "examTime": "09:00"
+    },
+    {
+      "id": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Paper 1",
+      "examDate": "2026-05-14",
+      "examTime": "13:30"
+    },
+    {
+      "id": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Paper 1",
+      "examDate": "2026-05-14",
+      "examTime": "13:30"
+    },
+    {
+      "id": "maths-ocr-f-paper2",
+      "offeringId": "maths-ocr-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-03",
+      "examTime": "13:30"
+    },
+    {
+      "id": "maths-ocr-h-paper2",
+      "offeringId": "maths-ocr-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-03",
+      "examTime": "13:30"
+    },
+    {
+      "id": "maths-ocr-f-paper3",
+      "offeringId": "maths-ocr-f",
+      "name": "Paper 3",
+      "examDate": "2026-06-10",
+      "examTime": "13:30"
+    },
+    {
+      "id": "maths-ocr-h-paper3",
+      "offeringId": "maths-ocr-h",
+      "name": "Paper 3",
+      "examDate": "2026-06-10",
+      "examTime": "13:30"
+    },
+    {
+      "id": "bio-aqa-f-paper1",
+      "offeringId": "bio-aqa-f",
+      "name": "Paper 1",
+      "examDate": "2026-05-12",
+      "examTime": "13:30"
+    },
+    {
+      "id": "bio-aqa-h-paper1",
+      "offeringId": "bio-aqa-h",
+      "name": "Paper 1",
+      "examDate": "2026-05-12",
+      "examTime": "13:30"
+    },
+    {
+      "id": "bio-aqa-f-paper2",
+      "offeringId": "bio-aqa-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-08",
+      "examTime": "09:00"
+    },
+    {
+      "id": "bio-aqa-h-paper2",
+      "offeringId": "bio-aqa-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-08",
+      "examTime": "09:00"
+    },
+    {
+      "id": "bio-ocr-a-f-paper1",
+      "offeringId": "bio-ocr-a-f",
+      "name": "Paper 1",
+      "examDate": "2026-05-12",
+      "examTime": "09:00"
+    },
+    {
+      "id": "bio-ocr-a-h-paper1",
+      "offeringId": "bio-ocr-a-h",
+      "name": "Paper 1",
+      "examDate": "2026-05-12",
+      "examTime": "09:00"
+    },
+    {
+      "id": "bio-ocr-a-f-paper2",
+      "offeringId": "bio-ocr-a-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-08",
+      "examTime": "13:30"
+    },
+    {
+      "id": "bio-ocr-a-h-paper2",
+      "offeringId": "bio-ocr-a-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-08",
+      "examTime": "13:30"
+    },
+    {
+      "id": "bio-ocr-b-f-paper1",
+      "offeringId": "bio-ocr-b-f",
+      "name": "Paper 1",
+      "examDate": "2026-05-15",
+      "examTime": "09:00"
+    },
+    {
+      "id": "bio-ocr-b-h-paper1",
+      "offeringId": "bio-ocr-b-h",
+      "name": "Paper 1",
+      "examDate": "2026-05-15",
+      "examTime": "09:00"
+    },
+    {
+      "id": "bio-ocr-b-f-paper2",
+      "offeringId": "bio-ocr-b-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-09",
+      "examTime": "13:30"
+    },
+    {
+      "id": "bio-ocr-b-h-paper2",
+      "offeringId": "bio-ocr-b-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-09",
+      "examTime": "13:30"
+    },
+    {
+      "id": "chem-aqa-f-paper1",
+      "offeringId": "chem-aqa-f",
+      "name": "Paper 1",
+      "examDate": "2026-05-18",
+      "examTime": "09:00"
+    },
+    {
+      "id": "chem-aqa-h-paper1",
+      "offeringId": "chem-aqa-h",
+      "name": "Paper 1",
+      "examDate": "2026-05-18",
+      "examTime": "09:00"
+    },
+    {
+      "id": "chem-aqa-f-paper2",
+      "offeringId": "chem-aqa-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-12",
+      "examTime": "09:00"
+    },
+    {
+      "id": "chem-aqa-h-paper2",
+      "offeringId": "chem-aqa-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-12",
+      "examTime": "09:00"
+    },
+    {
+      "id": "chem-ocr-a-f-paper1",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Paper 1",
+      "examDate": "2026-05-18",
+      "examTime": "13:30"
+    },
+    {
+      "id": "chem-ocr-a-h-paper1",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Paper 1",
+      "examDate": "2026-05-18",
+      "examTime": "13:30"
+    },
+    {
+      "id": "chem-ocr-a-f-paper2",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-12",
+      "examTime": "13:30"
+    },
+    {
+      "id": "chem-ocr-a-h-paper2",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-12",
+      "examTime": "13:30"
+    },
+    {
+      "id": "chem-ocr-b-f-paper1",
+      "offeringId": "chem-ocr-b-f",
+      "name": "Paper 1",
+      "examDate": "2026-05-20",
+      "examTime": "09:00"
+    },
+    {
+      "id": "chem-ocr-b-h-paper1",
+      "offeringId": "chem-ocr-b-h",
+      "name": "Paper 1",
+      "examDate": "2026-05-20",
+      "examTime": "09:00"
+    },
+    {
+      "id": "chem-ocr-b-f-paper2",
+      "offeringId": "chem-ocr-b-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-15",
+      "examTime": "09:00"
+    },
+    {
+      "id": "chem-ocr-b-h-paper2",
+      "offeringId": "chem-ocr-b-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-15",
+      "examTime": "09:00"
+    },
+    {
+      "id": "phys-aqa-f-paper1",
+      "offeringId": "phys-aqa-f",
+      "name": "Paper 1",
+      "examDate": "2026-06-02",
+      "examTime": "09:00"
+    },
+    {
+      "id": "phys-aqa-h-paper1",
+      "offeringId": "phys-aqa-h",
+      "name": "Paper 1",
+      "examDate": "2026-06-02",
+      "examTime": "09:00"
+    },
+    {
+      "id": "phys-aqa-f-paper2",
+      "offeringId": "phys-aqa-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-15",
+      "examTime": "09:00"
+    },
+    {
+      "id": "phys-aqa-h-paper2",
+      "offeringId": "phys-aqa-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-15",
+      "examTime": "09:00"
+    },
+    {
+      "id": "phys-ocr-a-f-paper1",
+      "offeringId": "phys-ocr-a-f",
+      "name": "Paper 1",
+      "examDate": "2026-06-02",
+      "examTime": "13:30"
+    },
+    {
+      "id": "phys-ocr-a-h-paper1",
+      "offeringId": "phys-ocr-a-h",
+      "name": "Paper 1",
+      "examDate": "2026-06-02",
+      "examTime": "13:30"
+    },
+    {
+      "id": "phys-ocr-a-f-paper2",
+      "offeringId": "phys-ocr-a-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-16",
+      "examTime": "09:00"
+    },
+    {
+      "id": "phys-ocr-a-h-paper2",
+      "offeringId": "phys-ocr-a-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-16",
+      "examTime": "09:00"
+    },
+    {
+      "id": "phys-ocr-b-f-paper1",
+      "offeringId": "phys-ocr-b-f",
+      "name": "Paper 1",
+      "examDate": "2026-06-04",
+      "examTime": "13:30"
+    },
+    {
+      "id": "phys-ocr-b-h-paper1",
+      "offeringId": "phys-ocr-b-h",
+      "name": "Paper 1",
+      "examDate": "2026-06-04",
+      "examTime": "13:30"
+    },
+    {
+      "id": "phys-ocr-b-f-paper2",
+      "offeringId": "phys-ocr-b-f",
+      "name": "Paper 2",
+      "examDate": "2026-06-17",
+      "examTime": "09:00"
+    },
+    {
+      "id": "phys-ocr-b-h-paper2",
+      "offeringId": "phys-ocr-b-h",
+      "name": "Paper 2",
+      "examDate": "2026-06-17",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-aqa-f-paper1listening",
+      "offeringId": "french-aqa-f",
+      "name": "Paper 1: Listening",
+      "examDate": "2026-06-09",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-aqa-h-paper1listening",
+      "offeringId": "french-aqa-h",
+      "name": "Paper 1: Listening",
+      "examDate": "2026-06-09",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-aqa-f-paper3reading",
+      "offeringId": "french-aqa-f",
+      "name": "Paper 3: Reading",
+      "examDate": "2026-06-09",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-aqa-h-paper3reading",
+      "offeringId": "french-aqa-h",
+      "name": "Paper 3: Reading",
+      "examDate": "2026-06-09",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-aqa-f-paper4writing",
+      "offeringId": "french-aqa-f",
+      "name": "Paper 4: Writing",
+      "examDate": "2026-06-16",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-aqa-h-paper4writing",
+      "offeringId": "french-aqa-h",
+      "name": "Paper 4: Writing",
+      "examDate": "2026-06-16",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-edexcel-f-paper1listening",
+      "offeringId": "french-edexcel-f",
+      "name": "Paper 1: Listening",
+      "examDate": "2026-06-10",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-edexcel-h-paper1listening",
+      "offeringId": "french-edexcel-h",
+      "name": "Paper 1: Listening",
+      "examDate": "2026-06-10",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-edexcel-f-paper3reading",
+      "offeringId": "french-edexcel-f",
+      "name": "Paper 3: Reading",
+      "examDate": "2026-06-10",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-edexcel-h-paper3reading",
+      "offeringId": "french-edexcel-h",
+      "name": "Paper 3: Reading",
+      "examDate": "2026-06-10",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-edexcel-f-paper4writing",
+      "offeringId": "french-edexcel-f",
+      "name": "Paper 4: Writing",
+      "examDate": "2026-06-17",
+      "examTime": "09:00"
+    },
+    {
+      "id": "french-edexcel-h-paper4writing",
+      "offeringId": "french-edexcel-h",
+      "name": "Paper 4: Writing",
+      "examDate": "2026-06-17",
+      "examTime": "09:00"
+    },
+    {
+      "id": "history-p1",
+      "offeringId": "history-aqa",
+      "name": "Paper 1",
+      "examDate": "2026-06-01",
+      "examTime": "09:00"
+    },
+    {
+      "id": "history-p2",
+      "offeringId": "history-aqa",
+      "name": "Paper 2",
+      "examDate": "2026-06-08",
+      "examTime": "13:30"
+    },
+    {
+      "id": "further-maths-p1",
+      "offeringId": "further-maths-aqa",
+      "name": "Paper 1",
+      "examDate": "2026-06-12",
+      "examTime": "13:30"
+    },
+    {
+      "id": "further-maths-p2",
+      "offeringId": "further-maths-aqa",
+      "name": "Paper 2",
+      "examDate": "2026-06-17",
+      "examTime": "13:30"
+    }
   ],
   "topics": [
-    { "id": "cs-001", "paperId": "cs-p1", "offeringId": "cs-aqa", "name": "Sorting and searching algorithms", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-002", "paperId": "cs-p1", "offeringId": "cs-aqa", "name": "Pseudo-code", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-003", "paperId": "cs-p1", "offeringId": "cs-aqa", "name": "Flowcharts", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-004", "paperId": "cs-p1", "offeringId": "cs-aqa", "name": "Random number generation", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-005", "paperId": "cs-p1", "offeringId": "cs-aqa", "name": "Arrays", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-006", "paperId": "cs-p1", "offeringId": "cs-aqa", "name": "Records", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-007", "paperId": "cs-p1", "offeringId": "cs-aqa", "name": "File handling", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-008", "paperId": "cs-p1", "offeringId": "cs-aqa", "name": "Subroutines", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-009", "paperId": "cs-p2", "offeringId": "cs-aqa", "name": "Data representation", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-010", "paperId": "cs-p2", "offeringId": "cs-aqa", "name": "Computer systems", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-011", "paperId": "cs-p2", "offeringId": "cs-aqa", "name": "Networks", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-012", "paperId": "cs-p2", "offeringId": "cs-aqa", "name": "Cybersecurity", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-013", "paperId": "cs-p2", "offeringId": "cs-aqa", "name": "Ethical impacts", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "cs-014", "paperId": "cs-p2", "offeringId": "cs-aqa", "name": "SQL", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "eng-lit-001", "paperId": "eng-lit-p1", "offeringId": "eng-lit-aqa", "name": "Inspector Calls", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "eng-lit-002", "paperId": "eng-lit-p1", "offeringId": "eng-lit-aqa", "name": "Romeo and Juliet", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "eng-lit-003", "paperId": "eng-lit-p2", "offeringId": "eng-lit-aqa", "name": "Jane Eyre", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "eng-lit-004", "paperId": "eng-lit-p2", "offeringId": "eng-lit-aqa", "name": "Poetry anthology", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "eng-lit-005", "paperId": "eng-lit-p2", "offeringId": "eng-lit-aqa", "name": "Unseen poetry", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "bio-001", "paperId": "bio-p1", "offeringId": "bio-aqa", "name": "Cells tissues organs", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "bio-002", "paperId": "bio-p1", "offeringId": "bio-aqa", "name": "Animal and plant organisation", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "bio-003", "paperId": "bio-p1", "offeringId": "bio-aqa", "name": "Cell division", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "bio-004", "paperId": "bio-p1", "offeringId": "bio-aqa", "name": "Digestive system", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "bio-005", "paperId": "bio-p1", "offeringId": "bio-aqa", "name": "Breathing and circulatory system", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "bio-006", "paperId": "bio-p1", "offeringId": "bio-aqa", "name": "Plants and bioenergetics", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "bio-007", "paperId": "bio-p1", "offeringId": "bio-aqa", "name": "Health and disease", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "bio-008", "paperId": "bio-p2", "offeringId": "bio-aqa", "name": "Homeostasis", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "bio-009", "paperId": "bio-p2", "offeringId": "bio-aqa", "name": "Ecology", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "bio-010", "paperId": "bio-p2", "offeringId": "bio-aqa", "name": "Evolution and genetics", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "rs-001", "paperId": "rs-p1", "offeringId": "rs-aqa", "name": "Christianity", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "rs-002", "paperId": "rs-p1", "offeringId": "rs-aqa", "name": "Islam", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "rs-003", "paperId": "rs-p2", "offeringId": "rs-aqa", "name": "Peace and conflict", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "rs-004", "paperId": "rs-p2", "offeringId": "rs-aqa", "name": "Family and relationships", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "geo-001", "paperId": "geo-p1", "offeringId": "geo-aqa", "name": "Tectonic hazards and climate change", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-002", "paperId": "geo-p1", "offeringId": "geo-aqa", "name": "Ecosystems and cold environment", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-003", "paperId": "geo-p1", "offeringId": "geo-aqa", "name": "Coasts and rivers", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-004", "paperId": "geo-p2", "offeringId": "geo-aqa", "name": "Urban issues", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-005", "paperId": "geo-p2", "offeringId": "geo-aqa", "name": "London and Lagos", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-006", "paperId": "geo-p2", "offeringId": "geo-aqa", "name": "Nigeria", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-007", "paperId": "geo-p2", "offeringId": "geo-aqa", "name": "Changing economic world", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-008", "paperId": "geo-p2", "offeringId": "geo-aqa", "name": "Managing resources", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-009", "paperId": "geo-p3", "offeringId": "geo-aqa", "name": "Unseen evaluation", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-010", "paperId": "geo-p3", "offeringId": "geo-aqa", "name": "Bexhill", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-011", "paperId": "geo-p3", "offeringId": "geo-aqa", "name": "Tonbridge", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "geo-012", "paperId": "geo-p3", "offeringId": "geo-aqa", "name": "Ways of data representation", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "maths-001", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Fractions, decimals and percentages", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-002", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Indices and standard form", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-003", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Surds", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-004", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Bounds and error intervals", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-005", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Ratio and proportion", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-006", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Growth and decay", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-007", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Speed, distance and time", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-008", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Compound measures", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-009", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Prime factors, HCF and LCM", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-010", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Set notation and Venn diagrams", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-011", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Recurring decimals", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-012", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Expressions and substitution", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-013", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Expanding and factorising", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-014", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Linear equations", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-015", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Simultaneous equations", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-016", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Quadratic equations", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-017", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Completing the square", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-018", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Inequalities", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-019", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Sequences and nth term", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-020", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Straight line graphs", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-021", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Quadratic graphs", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-022", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Cubic, reciprocal and exponential graphs", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-023", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Graph transformations", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-024", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Algebraic fractions", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-025", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Functions and iteration", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-026", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Algebraic proof", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-027", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Direct and inverse proportion", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-028", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Angles and polygons", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-029", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Circle theorems", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-030", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Transformations", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-031", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Congruence and similarity", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-032", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Pythagoras theorem", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-033", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Trigonometry (SOHCAHTOA)", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-034", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Sine and cosine rule", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-035", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "3D Pythagoras and trigonometry", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-036", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Trigonometric graphs", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-037", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Vectors", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-038", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Constructions and loci", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-039", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Bearings", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-040", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Area and perimeter", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-041", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Volume and surface area", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-042", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Circle area and circumference", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-043", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Arc length and sector area", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-044", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Units and conversions", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-045", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Plans and elevations", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-046", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Averages and range", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-047", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Frequency tables and grouped data", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-048", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Charts and diagrams", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-049", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Scatter graphs and correlation", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-050", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Cumulative frequency and box plots", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-051", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Histograms", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-052", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Sampling methods", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-053", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Comparing distributions", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-054", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Basic probability", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-055", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Combined events", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-056", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Tree diagrams", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-057", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Conditional probability", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-058", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Venn diagrams for probability", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-059", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Relative frequency", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-060", "paperId": "maths-p1", "offeringId": "maths-edexcel", "name": "Equation of a circle", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "maths-aqa-001", "paperId": "maths-aqa-p1", "offeringId": "maths-aqa", "name": "Fractions, decimals and percentages", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-aqa-002", "paperId": "maths-aqa-p1", "offeringId": "maths-aqa", "name": "Indices and standard form", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-aqa-003", "paperId": "maths-aqa-p1", "offeringId": "maths-aqa", "name": "Surds", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-aqa-004", "paperId": "maths-aqa-p1", "offeringId": "maths-aqa", "name": "Ratio and proportion", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-aqa-005", "paperId": "maths-aqa-p1", "offeringId": "maths-aqa", "name": "Algebra and equations", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-aqa-006", "paperId": "maths-aqa-p1", "offeringId": "maths-aqa", "name": "Sequences", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-aqa-007", "paperId": "maths-aqa-p2", "offeringId": "maths-aqa", "name": "Geometry and measures", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-aqa-008", "paperId": "maths-aqa-p2", "offeringId": "maths-aqa", "name": "Trigonometry", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-aqa-009", "paperId": "maths-aqa-p2", "offeringId": "maths-aqa", "name": "Vectors", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "maths-aqa-010", "paperId": "maths-aqa-p3", "offeringId": "maths-aqa", "name": "Statistics and probability", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "chem-001", "paperId": "chem-p1", "offeringId": "chem-aqa", "name": "Atomic structure", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-002", "paperId": "chem-p1", "offeringId": "chem-aqa", "name": "Periodic table", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-003", "paperId": "chem-p1", "offeringId": "chem-aqa", "name": "Bonding and structure", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-004", "paperId": "chem-p1", "offeringId": "chem-aqa", "name": "Metals", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-005", "paperId": "chem-p1", "offeringId": "chem-aqa", "name": "Acids and bases", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-006", "paperId": "chem-p1", "offeringId": "chem-aqa", "name": "Quantitative chemistry", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-007", "paperId": "chem-p1", "offeringId": "chem-aqa", "name": "Electrolysis", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-008", "paperId": "chem-p1", "offeringId": "chem-aqa", "name": "Energy changes", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-009", "paperId": "chem-p2", "offeringId": "chem-aqa", "name": "Organics", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-010", "paperId": "chem-p2", "offeringId": "chem-aqa", "name": "Chemical analysis", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-011", "paperId": "chem-p2", "offeringId": "chem-aqa", "name": "Equilibrium and rate of reaction", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-012", "paperId": "chem-p2", "offeringId": "chem-aqa", "name": "Chemistry of atmosphere", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "chem-013", "paperId": "chem-p2", "offeringId": "chem-aqa", "name": "Haber process and using resources", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "eng-lang-001", "paperId": "eng-lang-p1", "offeringId": "eng-lang-aqa", "name": "Creative writing", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "eng-lang-002", "paperId": "eng-lang-p2", "offeringId": "eng-lang-aqa", "name": "Non-fiction writing", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "phys-001", "paperId": "phys-p1", "offeringId": "phys-aqa", "name": "Energy", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "phys-002", "paperId": "phys-p1", "offeringId": "phys-aqa", "name": "Heating", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "phys-003", "paperId": "phys-p1", "offeringId": "phys-aqa", "name": "Electricity and domestic", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "phys-004", "paperId": "phys-p1", "offeringId": "phys-aqa", "name": "Radioactivity", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "phys-005", "paperId": "phys-p1", "offeringId": "phys-aqa", "name": "Molecules and matter", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "phys-006", "paperId": "phys-p2", "offeringId": "phys-aqa", "name": "Forces", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "phys-007", "paperId": "phys-p2", "offeringId": "phys-aqa", "name": "Waves", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "phys-008", "paperId": "phys-p2", "offeringId": "phys-aqa", "name": "Electromagnetism", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "phys-009", "paperId": "phys-p2", "offeringId": "phys-aqa", "name": "Space physics", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "music-001", "paperId": "music-p1", "offeringId": "music-edexcel", "name": "Conventions of pop", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "music-002", "paperId": "music-p1", "offeringId": "music-edexcel", "name": "Rhythms of the world", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "music-003", "paperId": "music-p1", "offeringId": "music-edexcel", "name": "Concerto through time", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "spanish-001", "paperId": "spanish-p1", "offeringId": "spanish-aqa", "name": "Identities and relationships", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "spanish-002", "paperId": "spanish-p1", "offeringId": "spanish-aqa", "name": "Healthy living and lifestyle", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "spanish-003", "paperId": "spanish-p1", "offeringId": "spanish-aqa", "name": "Education and work", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "spanish-004", "paperId": "spanish-p1", "offeringId": "spanish-aqa", "name": "Free time activities", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "spanish-005", "paperId": "spanish-p1", "offeringId": "spanish-aqa", "name": "Customs festivals and traditions", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "spanish-006", "paperId": "spanish-p1", "offeringId": "spanish-aqa", "name": "Celebrity culture", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "spanish-007", "paperId": "spanish-p1", "offeringId": "spanish-aqa", "name": "Travel and tourism", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "spanish-008", "paperId": "spanish-p1", "offeringId": "spanish-aqa", "name": "Technology", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "spanish-009", "paperId": "spanish-p1", "offeringId": "spanish-aqa", "name": "Sustainability", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-
-    { "id": "add-maths-001", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Logarithms", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-002", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Permutations and combinations", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-003", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Binomial expansion", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-004", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Binomial distribution", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-005", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Graph of circle not at origin", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-006", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Trigonometric identities", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-007", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Trigonometric equations", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-008", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Recurrence relationships", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-009", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Locating a root", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-010", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Interval bisection", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-011", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Linear programming", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-012", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Factor theorem", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-013", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Polynomial division", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-014", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Kinematics", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-015", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Integration", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null },
-    { "id": "add-maths-016", "paperId": "add-maths-p1", "offeringId": "add-maths-ocr", "name": "Differentiation", "confidence": 3, "performanceScore": 0.5, "lastReviewed": null }
+    {
+      "id": "cs-001",
+      "paperId": "cs-p1",
+      "offeringId": "cs-aqa",
+      "name": "Sorting and searching algorithms",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-002",
+      "paperId": "cs-p1",
+      "offeringId": "cs-aqa",
+      "name": "Pseudo-code",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-003",
+      "paperId": "cs-p1",
+      "offeringId": "cs-aqa",
+      "name": "Flowcharts",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-004",
+      "paperId": "cs-p1",
+      "offeringId": "cs-aqa",
+      "name": "Random number generation",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-005",
+      "paperId": "cs-p1",
+      "offeringId": "cs-aqa",
+      "name": "Arrays",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-006",
+      "paperId": "cs-p1",
+      "offeringId": "cs-aqa",
+      "name": "Records",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-007",
+      "paperId": "cs-p1",
+      "offeringId": "cs-aqa",
+      "name": "File handling",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-008",
+      "paperId": "cs-p1",
+      "offeringId": "cs-aqa",
+      "name": "Subroutines",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-009",
+      "paperId": "cs-p2",
+      "offeringId": "cs-aqa",
+      "name": "Data representation",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-010",
+      "paperId": "cs-p2",
+      "offeringId": "cs-aqa",
+      "name": "Computer systems",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-011",
+      "paperId": "cs-p2",
+      "offeringId": "cs-aqa",
+      "name": "Networks",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-012",
+      "paperId": "cs-p2",
+      "offeringId": "cs-aqa",
+      "name": "Cybersecurity",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-013",
+      "paperId": "cs-p2",
+      "offeringId": "cs-aqa",
+      "name": "Ethical impacts",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "cs-014",
+      "paperId": "cs-p2",
+      "offeringId": "cs-aqa",
+      "name": "SQL",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "eng-lit-001",
+      "paperId": "eng-lit-p1",
+      "offeringId": "eng-lit-aqa",
+      "name": "Inspector Calls",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "eng-lit-002",
+      "paperId": "eng-lit-p1",
+      "offeringId": "eng-lit-aqa",
+      "name": "Romeo and Juliet",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "eng-lit-003",
+      "paperId": "eng-lit-p2",
+      "offeringId": "eng-lit-aqa",
+      "name": "Jane Eyre",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "eng-lit-004",
+      "paperId": "eng-lit-p2",
+      "offeringId": "eng-lit-aqa",
+      "name": "Poetry anthology",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "eng-lit-005",
+      "paperId": "eng-lit-p2",
+      "offeringId": "eng-lit-aqa",
+      "name": "Unseen poetry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "rs-001",
+      "paperId": "rs-p1",
+      "offeringId": "rs-aqa",
+      "name": "Christianity",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "rs-002",
+      "paperId": "rs-p1",
+      "offeringId": "rs-aqa",
+      "name": "Islam",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "rs-003",
+      "paperId": "rs-p2",
+      "offeringId": "rs-aqa",
+      "name": "Peace and conflict",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "rs-004",
+      "paperId": "rs-p2",
+      "offeringId": "rs-aqa",
+      "name": "Family and relationships",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-001",
+      "paperId": "geo-p1",
+      "offeringId": "geo-aqa",
+      "name": "Tectonic hazards and climate change",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-002",
+      "paperId": "geo-p1",
+      "offeringId": "geo-aqa",
+      "name": "Ecosystems and cold environment",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-003",
+      "paperId": "geo-p1",
+      "offeringId": "geo-aqa",
+      "name": "Coasts and rivers",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-004",
+      "paperId": "geo-p2",
+      "offeringId": "geo-aqa",
+      "name": "Urban issues",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-005",
+      "paperId": "geo-p2",
+      "offeringId": "geo-aqa",
+      "name": "London and Lagos",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-006",
+      "paperId": "geo-p2",
+      "offeringId": "geo-aqa",
+      "name": "Nigeria",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-007",
+      "paperId": "geo-p2",
+      "offeringId": "geo-aqa",
+      "name": "Changing economic world",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-008",
+      "paperId": "geo-p2",
+      "offeringId": "geo-aqa",
+      "name": "Managing resources",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-009",
+      "paperId": "geo-p3",
+      "offeringId": "geo-aqa",
+      "name": "Unseen evaluation",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-010",
+      "paperId": "geo-p3",
+      "offeringId": "geo-aqa",
+      "name": "Bexhill",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-011",
+      "paperId": "geo-p3",
+      "offeringId": "geo-aqa",
+      "name": "Tonbridge",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "geo-012",
+      "paperId": "geo-p3",
+      "offeringId": "geo-aqa",
+      "name": "Ways of data representation",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "eng-lang-001",
+      "paperId": "eng-lang-p1",
+      "offeringId": "eng-lang-aqa",
+      "name": "Creative writing",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "eng-lang-002",
+      "paperId": "eng-lang-p2",
+      "offeringId": "eng-lang-aqa",
+      "name": "Non-fiction writing",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "music-001",
+      "paperId": "music-p1",
+      "offeringId": "music-edexcel",
+      "name": "Conventions of pop",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "music-002",
+      "paperId": "music-p1",
+      "offeringId": "music-edexcel",
+      "name": "Rhythms of the world",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "music-003",
+      "paperId": "music-p1",
+      "offeringId": "music-edexcel",
+      "name": "Concerto through time",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "spanish-001",
+      "paperId": "spanish-p1",
+      "offeringId": "spanish-aqa",
+      "name": "Identities and relationships",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "spanish-002",
+      "paperId": "spanish-p1",
+      "offeringId": "spanish-aqa",
+      "name": "Healthy living and lifestyle",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "spanish-003",
+      "paperId": "spanish-p1",
+      "offeringId": "spanish-aqa",
+      "name": "Education and work",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "spanish-004",
+      "paperId": "spanish-p1",
+      "offeringId": "spanish-aqa",
+      "name": "Free time activities",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "spanish-005",
+      "paperId": "spanish-p1",
+      "offeringId": "spanish-aqa",
+      "name": "Customs festivals and traditions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "spanish-006",
+      "paperId": "spanish-p1",
+      "offeringId": "spanish-aqa",
+      "name": "Celebrity culture",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "spanish-007",
+      "paperId": "spanish-p1",
+      "offeringId": "spanish-aqa",
+      "name": "Travel and tourism",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "spanish-008",
+      "paperId": "spanish-p1",
+      "offeringId": "spanish-aqa",
+      "name": "Technology",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "spanish-009",
+      "paperId": "spanish-p1",
+      "offeringId": "spanish-aqa",
+      "name": "Sustainability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-001",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Logarithms",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-002",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Permutations and combinations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-003",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Binomial expansion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-004",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Binomial distribution",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-005",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Graph of circle not at origin",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-006",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Trigonometric identities",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-007",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Trigonometric equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-008",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Recurrence relationships",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-009",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Locating a root",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-010",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Interval bisection",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-011",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Linear programming",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-012",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Factor theorem",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-013",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Polynomial division",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-014",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Kinematics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-015",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Integration",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "add-maths-016",
+      "paperId": "add-maths-p1",
+      "offeringId": "add-maths-ocr",
+      "name": "Differentiation",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-f-001",
+      "paperId": "maths-aqa-f-paper1",
+      "offeringId": "maths-aqa-f",
+      "name": "Fractions, decimals and percentages",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-h-001",
+      "paperId": "maths-aqa-h-paper1",
+      "offeringId": "maths-aqa-h",
+      "name": "Fractions, decimals and percentages",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-f-002",
+      "paperId": "maths-aqa-f-paper1",
+      "offeringId": "maths-aqa-f",
+      "name": "Indices and standard form",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-h-002",
+      "paperId": "maths-aqa-h-paper1",
+      "offeringId": "maths-aqa-h",
+      "name": "Indices and standard form",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-f-003",
+      "paperId": "maths-aqa-f-paper1",
+      "offeringId": "maths-aqa-f",
+      "name": "Surds",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-h-003",
+      "paperId": "maths-aqa-h-paper1",
+      "offeringId": "maths-aqa-h",
+      "name": "Surds",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-f-004",
+      "paperId": "maths-aqa-f-paper1",
+      "offeringId": "maths-aqa-f",
+      "name": "Ratio and proportion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-h-004",
+      "paperId": "maths-aqa-h-paper1",
+      "offeringId": "maths-aqa-h",
+      "name": "Ratio and proportion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-f-005",
+      "paperId": "maths-aqa-f-paper1",
+      "offeringId": "maths-aqa-f",
+      "name": "Algebra and equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-h-005",
+      "paperId": "maths-aqa-h-paper1",
+      "offeringId": "maths-aqa-h",
+      "name": "Algebra and equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-f-006",
+      "paperId": "maths-aqa-f-paper1",
+      "offeringId": "maths-aqa-f",
+      "name": "Sequences",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-h-006",
+      "paperId": "maths-aqa-h-paper1",
+      "offeringId": "maths-aqa-h",
+      "name": "Sequences",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-f-007",
+      "paperId": "maths-aqa-f-paper2",
+      "offeringId": "maths-aqa-f",
+      "name": "Geometry and measures",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-h-007",
+      "paperId": "maths-aqa-h-paper2",
+      "offeringId": "maths-aqa-h",
+      "name": "Geometry and measures",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-f-008",
+      "paperId": "maths-aqa-f-paper2",
+      "offeringId": "maths-aqa-f",
+      "name": "Trigonometry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-h-008",
+      "paperId": "maths-aqa-h-paper2",
+      "offeringId": "maths-aqa-h",
+      "name": "Trigonometry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-f-009",
+      "paperId": "maths-aqa-f-paper2",
+      "offeringId": "maths-aqa-f",
+      "name": "Vectors",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-h-009",
+      "paperId": "maths-aqa-h-paper2",
+      "offeringId": "maths-aqa-h",
+      "name": "Vectors",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-f-010",
+      "paperId": "maths-aqa-f-paper3",
+      "offeringId": "maths-aqa-f",
+      "name": "Statistics and probability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-aqa-h-010",
+      "paperId": "maths-aqa-h-paper3",
+      "offeringId": "maths-aqa-h",
+      "name": "Statistics and probability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-001",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Fractions, decimals and percentages",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-001",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Fractions, decimals and percentages",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-002",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Indices and standard form",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-002",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Indices and standard form",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-003",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Surds",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-003",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Surds",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-004",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Bounds and error intervals",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-004",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Bounds and error intervals",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-005",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Ratio and proportion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-005",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Ratio and proportion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-006",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Growth and decay",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-006",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Growth and decay",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-007",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Speed, distance and time",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-007",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Speed, distance and time",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-008",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Compound measures",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-008",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Compound measures",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-009",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Prime factors, HCF and LCM",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-009",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Prime factors, HCF and LCM",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-010",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Set notation and Venn diagrams",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-010",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Set notation and Venn diagrams",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-011",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Recurring decimals",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-011",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Recurring decimals",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-012",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Expressions and substitution",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-012",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Expressions and substitution",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-013",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Expanding and factorising",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-013",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Expanding and factorising",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-014",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Linear equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-014",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Linear equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-015",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Simultaneous equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-015",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Simultaneous equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-016",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Quadratic equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-016",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Quadratic equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-017",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Completing the square",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-017",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Completing the square",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-018",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Inequalities",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-018",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Inequalities",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-019",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Sequences and nth term",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-019",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Sequences and nth term",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-020",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Straight line graphs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-020",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Straight line graphs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-021",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Quadratic graphs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-021",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Quadratic graphs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-022",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Cubic, reciprocal and exponential graphs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-022",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Cubic, reciprocal and exponential graphs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-023",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Graph transformations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-023",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Graph transformations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-024",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Algebraic fractions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-024",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Algebraic fractions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-025",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Functions and iteration",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-025",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Functions and iteration",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-026",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Algebraic proof",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-026",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Algebraic proof",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-027",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Direct and inverse proportion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-027",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Direct and inverse proportion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-028",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Angles and polygons",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-028",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Angles and polygons",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-029",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Circle theorems",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-029",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Circle theorems",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-030",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Transformations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-030",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Transformations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-031",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Congruence and similarity",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-031",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Congruence and similarity",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-032",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Pythagoras theorem",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-032",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Pythagoras theorem",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-033",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Trigonometry (SOHCAHTOA)",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-033",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Trigonometry (SOHCAHTOA)",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-034",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Sine and cosine rule",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-034",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Sine and cosine rule",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-035",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "3D Pythagoras and trigonometry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-035",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "3D Pythagoras and trigonometry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-036",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Trigonometric graphs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-036",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Trigonometric graphs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-037",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Vectors",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-037",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Vectors",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-038",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Constructions and loci",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-038",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Constructions and loci",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-039",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Bearings",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-039",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Bearings",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-040",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Area and perimeter",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-040",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Area and perimeter",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-041",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Volume and surface area",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-041",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Volume and surface area",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-042",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Circle area and circumference",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-042",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Circle area and circumference",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-043",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Arc length and sector area",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-043",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Arc length and sector area",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-044",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Units and conversions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-044",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Units and conversions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-045",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Plans and elevations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-045",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Plans and elevations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-046",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Averages and range",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-046",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Averages and range",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-047",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Frequency tables and grouped data",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-047",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Frequency tables and grouped data",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-048",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Charts and diagrams",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-048",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Charts and diagrams",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-049",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Scatter graphs and correlation",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-049",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Scatter graphs and correlation",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-050",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Cumulative frequency and box plots",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-050",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Cumulative frequency and box plots",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-051",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Histograms",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-051",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Histograms",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-052",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Sampling methods",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-052",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Sampling methods",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-053",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Comparing distributions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-053",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Comparing distributions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-054",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Basic probability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-054",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Basic probability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-055",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Combined events",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-055",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Combined events",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-056",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Tree diagrams",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-056",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Tree diagrams",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-057",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Conditional probability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-057",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Conditional probability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-058",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Venn diagrams for probability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-058",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Venn diagrams for probability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-059",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Relative frequency",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-059",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Relative frequency",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-f-060",
+      "paperId": "maths-edexcel-f-paper1",
+      "offeringId": "maths-edexcel-f",
+      "name": "Equation of a circle",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-edexcel-h-060",
+      "paperId": "maths-edexcel-h-paper1",
+      "offeringId": "maths-edexcel-h",
+      "name": "Equation of a circle",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-f-001",
+      "paperId": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Fractions, decimals and percentages",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-h-001",
+      "paperId": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Fractions, decimals and percentages",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-f-002",
+      "paperId": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Indices and standard form",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-h-002",
+      "paperId": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Indices and standard form",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-f-003",
+      "paperId": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Surds",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-h-003",
+      "paperId": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Surds",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-f-004",
+      "paperId": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Ratio and proportion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-h-004",
+      "paperId": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Ratio and proportion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-f-005",
+      "paperId": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Algebra and equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-h-005",
+      "paperId": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Algebra and equations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-f-006",
+      "paperId": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Sequences",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-h-006",
+      "paperId": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Sequences",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-f-007",
+      "paperId": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Geometry and measures",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-h-007",
+      "paperId": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Geometry and measures",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-f-008",
+      "paperId": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Trigonometry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-h-008",
+      "paperId": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Trigonometry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-f-009",
+      "paperId": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Vectors",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-h-009",
+      "paperId": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Vectors",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-f-010",
+      "paperId": "maths-ocr-f-paper1",
+      "offeringId": "maths-ocr-f",
+      "name": "Statistics and probability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "maths-ocr-h-010",
+      "paperId": "maths-ocr-h-paper1",
+      "offeringId": "maths-ocr-h",
+      "name": "Statistics and probability",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-f-001",
+      "paperId": "bio-aqa-f-paper1",
+      "offeringId": "bio-aqa-f",
+      "name": "Cells tissues organs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-h-001",
+      "paperId": "bio-aqa-h-paper1",
+      "offeringId": "bio-aqa-h",
+      "name": "Cells tissues organs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-f-002",
+      "paperId": "bio-aqa-f-paper1",
+      "offeringId": "bio-aqa-f",
+      "name": "Animal and plant organisation",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-h-002",
+      "paperId": "bio-aqa-h-paper1",
+      "offeringId": "bio-aqa-h",
+      "name": "Animal and plant organisation",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-f-003",
+      "paperId": "bio-aqa-f-paper1",
+      "offeringId": "bio-aqa-f",
+      "name": "Cell division",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-h-003",
+      "paperId": "bio-aqa-h-paper1",
+      "offeringId": "bio-aqa-h",
+      "name": "Cell division",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-f-004",
+      "paperId": "bio-aqa-f-paper1",
+      "offeringId": "bio-aqa-f",
+      "name": "Digestive system",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-h-004",
+      "paperId": "bio-aqa-h-paper1",
+      "offeringId": "bio-aqa-h",
+      "name": "Digestive system",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-f-005",
+      "paperId": "bio-aqa-f-paper1",
+      "offeringId": "bio-aqa-f",
+      "name": "Breathing and circulatory system",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-h-005",
+      "paperId": "bio-aqa-h-paper1",
+      "offeringId": "bio-aqa-h",
+      "name": "Breathing and circulatory system",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-f-006",
+      "paperId": "bio-aqa-f-paper1",
+      "offeringId": "bio-aqa-f",
+      "name": "Plants and bioenergetics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-h-006",
+      "paperId": "bio-aqa-h-paper1",
+      "offeringId": "bio-aqa-h",
+      "name": "Plants and bioenergetics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-f-007",
+      "paperId": "bio-aqa-f-paper1",
+      "offeringId": "bio-aqa-f",
+      "name": "Health and disease",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-h-007",
+      "paperId": "bio-aqa-h-paper1",
+      "offeringId": "bio-aqa-h",
+      "name": "Health and disease",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-f-008",
+      "paperId": "bio-aqa-f-paper2",
+      "offeringId": "bio-aqa-f",
+      "name": "Homeostasis",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-h-008",
+      "paperId": "bio-aqa-h-paper2",
+      "offeringId": "bio-aqa-h",
+      "name": "Homeostasis",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-f-009",
+      "paperId": "bio-aqa-f-paper2",
+      "offeringId": "bio-aqa-f",
+      "name": "Ecology",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-h-009",
+      "paperId": "bio-aqa-h-paper2",
+      "offeringId": "bio-aqa-h",
+      "name": "Ecology",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-f-010",
+      "paperId": "bio-aqa-f-paper2",
+      "offeringId": "bio-aqa-f",
+      "name": "Evolution and genetics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-aqa-h-010",
+      "paperId": "bio-aqa-h-paper2",
+      "offeringId": "bio-aqa-h",
+      "name": "Evolution and genetics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-f-001",
+      "paperId": "bio-ocr-a-f-paper1",
+      "offeringId": "bio-ocr-a-f",
+      "name": "Cell biology",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-h-001",
+      "paperId": "bio-ocr-a-h-paper1",
+      "offeringId": "bio-ocr-a-h",
+      "name": "Cell biology",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-f-002",
+      "paperId": "bio-ocr-a-f-paper1",
+      "offeringId": "bio-ocr-a-f",
+      "name": "Organisation in animals and plants",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-h-002",
+      "paperId": "bio-ocr-a-h-paper1",
+      "offeringId": "bio-ocr-a-h",
+      "name": "Organisation in animals and plants",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-f-003",
+      "paperId": "bio-ocr-a-f-paper1",
+      "offeringId": "bio-ocr-a-f",
+      "name": "Communicable diseases",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-h-003",
+      "paperId": "bio-ocr-a-h-paper1",
+      "offeringId": "bio-ocr-a-h",
+      "name": "Communicable diseases",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-f-004",
+      "paperId": "bio-ocr-a-f-paper1",
+      "offeringId": "bio-ocr-a-f",
+      "name": "Bioenergetics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-h-004",
+      "paperId": "bio-ocr-a-h-paper1",
+      "offeringId": "bio-ocr-a-h",
+      "name": "Bioenergetics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-f-005",
+      "paperId": "bio-ocr-a-f-paper1",
+      "offeringId": "bio-ocr-a-f",
+      "name": "Homeostasis and response",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-h-005",
+      "paperId": "bio-ocr-a-h-paper1",
+      "offeringId": "bio-ocr-a-h",
+      "name": "Homeostasis and response",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-f-006",
+      "paperId": "bio-ocr-a-f-paper2",
+      "offeringId": "bio-ocr-a-f",
+      "name": "Inheritance, variation and evolution",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-h-006",
+      "paperId": "bio-ocr-a-h-paper2",
+      "offeringId": "bio-ocr-a-h",
+      "name": "Inheritance, variation and evolution",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-f-007",
+      "paperId": "bio-ocr-a-f-paper2",
+      "offeringId": "bio-ocr-a-f",
+      "name": "Ecology",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-h-007",
+      "paperId": "bio-ocr-a-h-paper2",
+      "offeringId": "bio-ocr-a-h",
+      "name": "Ecology",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-f-008",
+      "paperId": "bio-ocr-a-f-paper2",
+      "offeringId": "bio-ocr-a-f",
+      "name": "Key concepts in biology",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-a-h-008",
+      "paperId": "bio-ocr-a-h-paper2",
+      "offeringId": "bio-ocr-a-h",
+      "name": "Key concepts in biology",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-f-001",
+      "paperId": "bio-ocr-b-f-paper1",
+      "offeringId": "bio-ocr-b-f",
+      "name": "You and your genes",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-h-001",
+      "paperId": "bio-ocr-b-h-paper1",
+      "offeringId": "bio-ocr-b-h",
+      "name": "You and your genes",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-f-002",
+      "paperId": "bio-ocr-b-f-paper1",
+      "offeringId": "bio-ocr-b-f",
+      "name": "Keeping healthy",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-h-002",
+      "paperId": "bio-ocr-b-h-paper1",
+      "offeringId": "bio-ocr-b-h",
+      "name": "Keeping healthy",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-f-003",
+      "paperId": "bio-ocr-b-f-paper1",
+      "offeringId": "bio-ocr-b-f",
+      "name": "Living together - food and ecosystems",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-h-003",
+      "paperId": "bio-ocr-b-h-paper1",
+      "offeringId": "bio-ocr-b-h",
+      "name": "Living together - food and ecosystems",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-f-004",
+      "paperId": "bio-ocr-b-f-paper2",
+      "offeringId": "bio-ocr-b-f",
+      "name": "Using food and controlling growth",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-h-004",
+      "paperId": "bio-ocr-b-h-paper2",
+      "offeringId": "bio-ocr-b-h",
+      "name": "Using food and controlling growth",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-f-005",
+      "paperId": "bio-ocr-b-f-paper2",
+      "offeringId": "bio-ocr-b-f",
+      "name": "The human body - staying alive",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-h-005",
+      "paperId": "bio-ocr-b-h-paper2",
+      "offeringId": "bio-ocr-b-h",
+      "name": "The human body - staying alive",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-f-006",
+      "paperId": "bio-ocr-b-f-paper2",
+      "offeringId": "bio-ocr-b-f",
+      "name": "Life on Earth - past, present and future",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "bio-ocr-b-h-006",
+      "paperId": "bio-ocr-b-h-paper2",
+      "offeringId": "bio-ocr-b-h",
+      "name": "Life on Earth - past, present and future",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-001",
+      "paperId": "chem-aqa-f-paper1",
+      "offeringId": "chem-aqa-f",
+      "name": "Atomic structure",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-001",
+      "paperId": "chem-aqa-h-paper1",
+      "offeringId": "chem-aqa-h",
+      "name": "Atomic structure",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-002",
+      "paperId": "chem-aqa-f-paper1",
+      "offeringId": "chem-aqa-f",
+      "name": "Periodic table",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-002",
+      "paperId": "chem-aqa-h-paper1",
+      "offeringId": "chem-aqa-h",
+      "name": "Periodic table",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-003",
+      "paperId": "chem-aqa-f-paper1",
+      "offeringId": "chem-aqa-f",
+      "name": "Bonding and structure",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-003",
+      "paperId": "chem-aqa-h-paper1",
+      "offeringId": "chem-aqa-h",
+      "name": "Bonding and structure",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-004",
+      "paperId": "chem-aqa-f-paper1",
+      "offeringId": "chem-aqa-f",
+      "name": "Metals",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-004",
+      "paperId": "chem-aqa-h-paper1",
+      "offeringId": "chem-aqa-h",
+      "name": "Metals",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-005",
+      "paperId": "chem-aqa-f-paper1",
+      "offeringId": "chem-aqa-f",
+      "name": "Acids and bases",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-005",
+      "paperId": "chem-aqa-h-paper1",
+      "offeringId": "chem-aqa-h",
+      "name": "Acids and bases",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-006",
+      "paperId": "chem-aqa-f-paper1",
+      "offeringId": "chem-aqa-f",
+      "name": "Quantitative chemistry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-006",
+      "paperId": "chem-aqa-h-paper1",
+      "offeringId": "chem-aqa-h",
+      "name": "Quantitative chemistry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-007",
+      "paperId": "chem-aqa-f-paper1",
+      "offeringId": "chem-aqa-f",
+      "name": "Electrolysis",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-007",
+      "paperId": "chem-aqa-h-paper1",
+      "offeringId": "chem-aqa-h",
+      "name": "Electrolysis",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-008",
+      "paperId": "chem-aqa-f-paper1",
+      "offeringId": "chem-aqa-f",
+      "name": "Energy changes",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-008",
+      "paperId": "chem-aqa-h-paper1",
+      "offeringId": "chem-aqa-h",
+      "name": "Energy changes",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-009",
+      "paperId": "chem-aqa-f-paper2",
+      "offeringId": "chem-aqa-f",
+      "name": "Organics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-009",
+      "paperId": "chem-aqa-h-paper2",
+      "offeringId": "chem-aqa-h",
+      "name": "Organics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-010",
+      "paperId": "chem-aqa-f-paper2",
+      "offeringId": "chem-aqa-f",
+      "name": "Chemical analysis",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-010",
+      "paperId": "chem-aqa-h-paper2",
+      "offeringId": "chem-aqa-h",
+      "name": "Chemical analysis",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-011",
+      "paperId": "chem-aqa-f-paper2",
+      "offeringId": "chem-aqa-f",
+      "name": "Equilibrium and rate of reaction",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-011",
+      "paperId": "chem-aqa-h-paper2",
+      "offeringId": "chem-aqa-h",
+      "name": "Equilibrium and rate of reaction",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-012",
+      "paperId": "chem-aqa-f-paper2",
+      "offeringId": "chem-aqa-f",
+      "name": "Chemistry of atmosphere",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-012",
+      "paperId": "chem-aqa-h-paper2",
+      "offeringId": "chem-aqa-h",
+      "name": "Chemistry of atmosphere",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-f-013",
+      "paperId": "chem-aqa-f-paper2",
+      "offeringId": "chem-aqa-f",
+      "name": "Haber process and using resources",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-aqa-h-013",
+      "paperId": "chem-aqa-h-paper2",
+      "offeringId": "chem-aqa-h",
+      "name": "Haber process and using resources",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-f-001",
+      "paperId": "chem-ocr-a-f-paper1",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Particles",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-h-001",
+      "paperId": "chem-ocr-a-h-paper1",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Particles",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-f-002",
+      "paperId": "chem-ocr-a-f-paper1",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Elements, compounds and mixtures",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-h-002",
+      "paperId": "chem-ocr-a-h-paper1",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Elements, compounds and mixtures",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-f-003",
+      "paperId": "chem-ocr-a-f-paper1",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Chemical reactions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-h-003",
+      "paperId": "chem-ocr-a-h-paper1",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Chemical reactions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-f-004",
+      "paperId": "chem-ocr-a-f-paper1",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Predicting and identifying reactions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-h-004",
+      "paperId": "chem-ocr-a-h-paper1",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Predicting and identifying reactions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-f-005",
+      "paperId": "chem-ocr-a-f-paper1",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Monitoring chemical reactions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-h-005",
+      "paperId": "chem-ocr-a-h-paper1",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Monitoring chemical reactions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-f-006",
+      "paperId": "chem-ocr-a-f-paper2",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Global challenges",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-h-006",
+      "paperId": "chem-ocr-a-h-paper2",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Global challenges",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-f-007",
+      "paperId": "chem-ocr-a-f-paper2",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Organic chemistry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-h-007",
+      "paperId": "chem-ocr-a-h-paper2",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Organic chemistry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-f-008",
+      "paperId": "chem-ocr-a-f-paper2",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Quantitative chemistry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-h-008",
+      "paperId": "chem-ocr-a-h-paper2",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Quantitative chemistry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-f-009",
+      "paperId": "chem-ocr-a-f-paper2",
+      "offeringId": "chem-ocr-a-f",
+      "name": "Chemical analysis",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-a-h-009",
+      "paperId": "chem-ocr-a-h-paper2",
+      "offeringId": "chem-ocr-a-h",
+      "name": "Chemical analysis",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-f-001",
+      "paperId": "chem-ocr-b-f-paper1",
+      "offeringId": "chem-ocr-b-f",
+      "name": "Air and water",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-h-001",
+      "paperId": "chem-ocr-b-h-paper1",
+      "offeringId": "chem-ocr-b-h",
+      "name": "Air and water",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-f-002",
+      "paperId": "chem-ocr-b-f-paper1",
+      "offeringId": "chem-ocr-b-f",
+      "name": "Chemical patterns",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-h-002",
+      "paperId": "chem-ocr-b-h-paper1",
+      "offeringId": "chem-ocr-b-h",
+      "name": "Chemical patterns",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-f-003",
+      "paperId": "chem-ocr-b-f-paper1",
+      "offeringId": "chem-ocr-b-f",
+      "name": "Chemicals of the natural environment",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-h-003",
+      "paperId": "chem-ocr-b-h-paper1",
+      "offeringId": "chem-ocr-b-h",
+      "name": "Chemicals of the natural environment",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-f-004",
+      "paperId": "chem-ocr-b-f-paper2",
+      "offeringId": "chem-ocr-b-f",
+      "name": "Material choices",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-h-004",
+      "paperId": "chem-ocr-b-h-paper2",
+      "offeringId": "chem-ocr-b-h",
+      "name": "Material choices",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-f-005",
+      "paperId": "chem-ocr-b-f-paper2",
+      "offeringId": "chem-ocr-b-f",
+      "name": "Chemical analysis and making useful chemicals",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-h-005",
+      "paperId": "chem-ocr-b-h-paper2",
+      "offeringId": "chem-ocr-b-h",
+      "name": "Chemical analysis and making useful chemicals",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-f-006",
+      "paperId": "chem-ocr-b-f-paper2",
+      "offeringId": "chem-ocr-b-f",
+      "name": "Ideas about science",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "chem-ocr-b-h-006",
+      "paperId": "chem-ocr-b-h-paper2",
+      "offeringId": "chem-ocr-b-h",
+      "name": "Ideas about science",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-f-001",
+      "paperId": "phys-aqa-f-paper1",
+      "offeringId": "phys-aqa-f",
+      "name": "Energy",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-h-001",
+      "paperId": "phys-aqa-h-paper1",
+      "offeringId": "phys-aqa-h",
+      "name": "Energy",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-f-002",
+      "paperId": "phys-aqa-f-paper1",
+      "offeringId": "phys-aqa-f",
+      "name": "Heating",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-h-002",
+      "paperId": "phys-aqa-h-paper1",
+      "offeringId": "phys-aqa-h",
+      "name": "Heating",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-f-003",
+      "paperId": "phys-aqa-f-paper1",
+      "offeringId": "phys-aqa-f",
+      "name": "Electricity and domestic",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-h-003",
+      "paperId": "phys-aqa-h-paper1",
+      "offeringId": "phys-aqa-h",
+      "name": "Electricity and domestic",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-f-004",
+      "paperId": "phys-aqa-f-paper1",
+      "offeringId": "phys-aqa-f",
+      "name": "Radioactivity",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-h-004",
+      "paperId": "phys-aqa-h-paper1",
+      "offeringId": "phys-aqa-h",
+      "name": "Radioactivity",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-f-005",
+      "paperId": "phys-aqa-f-paper1",
+      "offeringId": "phys-aqa-f",
+      "name": "Molecules and matter",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-h-005",
+      "paperId": "phys-aqa-h-paper1",
+      "offeringId": "phys-aqa-h",
+      "name": "Molecules and matter",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-f-006",
+      "paperId": "phys-aqa-f-paper2",
+      "offeringId": "phys-aqa-f",
+      "name": "Forces",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-h-006",
+      "paperId": "phys-aqa-h-paper2",
+      "offeringId": "phys-aqa-h",
+      "name": "Forces",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-f-007",
+      "paperId": "phys-aqa-f-paper2",
+      "offeringId": "phys-aqa-f",
+      "name": "Waves",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-h-007",
+      "paperId": "phys-aqa-h-paper2",
+      "offeringId": "phys-aqa-h",
+      "name": "Waves",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-f-008",
+      "paperId": "phys-aqa-f-paper2",
+      "offeringId": "phys-aqa-f",
+      "name": "Electromagnetism",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-h-008",
+      "paperId": "phys-aqa-h-paper2",
+      "offeringId": "phys-aqa-h",
+      "name": "Electromagnetism",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-f-009",
+      "paperId": "phys-aqa-f-paper2",
+      "offeringId": "phys-aqa-f",
+      "name": "Space physics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-aqa-h-009",
+      "paperId": "phys-aqa-h-paper2",
+      "offeringId": "phys-aqa-h",
+      "name": "Space physics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-f-001",
+      "paperId": "phys-ocr-a-f-paper1",
+      "offeringId": "phys-ocr-a-f",
+      "name": "Forces and motion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-h-001",
+      "paperId": "phys-ocr-a-h-paper1",
+      "offeringId": "phys-ocr-a-h",
+      "name": "Forces and motion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-f-002",
+      "paperId": "phys-ocr-a-f-paper1",
+      "offeringId": "phys-ocr-a-f",
+      "name": "Energy",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-h-002",
+      "paperId": "phys-ocr-a-h-paper1",
+      "offeringId": "phys-ocr-a-h",
+      "name": "Energy",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-f-003",
+      "paperId": "phys-ocr-a-f-paper1",
+      "offeringId": "phys-ocr-a-f",
+      "name": "Waves",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-h-003",
+      "paperId": "phys-ocr-a-h-paper1",
+      "offeringId": "phys-ocr-a-h",
+      "name": "Waves",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-f-004",
+      "paperId": "phys-ocr-a-f-paper1",
+      "offeringId": "phys-ocr-a-f",
+      "name": "Electricity",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-h-004",
+      "paperId": "phys-ocr-a-h-paper1",
+      "offeringId": "phys-ocr-a-h",
+      "name": "Electricity",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-f-005",
+      "paperId": "phys-ocr-a-f-paper1",
+      "offeringId": "phys-ocr-a-f",
+      "name": "Magnetism and electromagnetism",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-h-005",
+      "paperId": "phys-ocr-a-h-paper1",
+      "offeringId": "phys-ocr-a-h",
+      "name": "Magnetism and electromagnetism",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-f-006",
+      "paperId": "phys-ocr-a-f-paper2",
+      "offeringId": "phys-ocr-a-f",
+      "name": "Radioactivity",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-h-006",
+      "paperId": "phys-ocr-a-h-paper2",
+      "offeringId": "phys-ocr-a-h",
+      "name": "Radioactivity",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-f-007",
+      "paperId": "phys-ocr-a-f-paper2",
+      "offeringId": "phys-ocr-a-f",
+      "name": "Astrophysics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-h-007",
+      "paperId": "phys-ocr-a-h-paper2",
+      "offeringId": "phys-ocr-a-h",
+      "name": "Astrophysics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-f-008",
+      "paperId": "phys-ocr-a-f-paper2",
+      "offeringId": "phys-ocr-a-f",
+      "name": "Global challenges",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-a-h-008",
+      "paperId": "phys-ocr-a-h-paper2",
+      "offeringId": "phys-ocr-a-h",
+      "name": "Global challenges",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-f-001",
+      "paperId": "phys-ocr-b-f-paper1",
+      "offeringId": "phys-ocr-b-f",
+      "name": "Radiation and waves",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-h-001",
+      "paperId": "phys-ocr-b-h-paper1",
+      "offeringId": "phys-ocr-b-h",
+      "name": "Radiation and waves",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-f-002",
+      "paperId": "phys-ocr-b-f-paper1",
+      "offeringId": "phys-ocr-b-f",
+      "name": "Sustainable energy",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-h-002",
+      "paperId": "phys-ocr-b-h-paper1",
+      "offeringId": "phys-ocr-b-h",
+      "name": "Sustainable energy",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-f-003",
+      "paperId": "phys-ocr-b-f-paper1",
+      "offeringId": "phys-ocr-b-f",
+      "name": "Electric circuits",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-h-003",
+      "paperId": "phys-ocr-b-h-paper1",
+      "offeringId": "phys-ocr-b-h",
+      "name": "Electric circuits",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-f-004",
+      "paperId": "phys-ocr-b-f-paper2",
+      "offeringId": "phys-ocr-b-f",
+      "name": "Explaining motion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-h-004",
+      "paperId": "phys-ocr-b-h-paper2",
+      "offeringId": "phys-ocr-b-h",
+      "name": "Explaining motion",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-f-005",
+      "paperId": "phys-ocr-b-f-paper2",
+      "offeringId": "phys-ocr-b-f",
+      "name": "Radioactive materials",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-h-005",
+      "paperId": "phys-ocr-b-h-paper2",
+      "offeringId": "phys-ocr-b-h",
+      "name": "Radioactive materials",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-f-006",
+      "paperId": "phys-ocr-b-f-paper2",
+      "offeringId": "phys-ocr-b-f",
+      "name": "Matter - models and explanations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "phys-ocr-b-h-006",
+      "paperId": "phys-ocr-b-h-paper2",
+      "offeringId": "phys-ocr-b-h",
+      "name": "Matter - models and explanations",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-f-001",
+      "paperId": "french-aqa-f-paper1listening",
+      "offeringId": "french-aqa-f",
+      "name": "Listening comprehension",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-h-001",
+      "paperId": "french-aqa-h-paper1listening",
+      "offeringId": "french-aqa-h",
+      "name": "Listening comprehension",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-f-002",
+      "paperId": "french-aqa-f-paper1listening",
+      "offeringId": "french-aqa-f",
+      "name": "Dictation and transcription",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-h-002",
+      "paperId": "french-aqa-h-paper1listening",
+      "offeringId": "french-aqa-h",
+      "name": "Dictation and transcription",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-f-003",
+      "paperId": "french-aqa-f-paper3reading",
+      "offeringId": "french-aqa-f",
+      "name": "Reading comprehension",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-h-003",
+      "paperId": "french-aqa-h-paper3reading",
+      "offeringId": "french-aqa-h",
+      "name": "Reading comprehension",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-f-004",
+      "paperId": "french-aqa-f-paper3reading",
+      "offeringId": "french-aqa-f",
+      "name": "Translation into English",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-h-004",
+      "paperId": "french-aqa-h-paper3reading",
+      "offeringId": "french-aqa-h",
+      "name": "Translation into English",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-f-005",
+      "paperId": "french-aqa-f-paper4writing",
+      "offeringId": "french-aqa-f",
+      "name": "Writing in French",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-h-005",
+      "paperId": "french-aqa-h-paper4writing",
+      "offeringId": "french-aqa-h",
+      "name": "Writing in French",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-f-006",
+      "paperId": "french-aqa-f-paper4writing",
+      "offeringId": "french-aqa-f",
+      "name": "Translation into French",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-aqa-h-006",
+      "paperId": "french-aqa-h-paper4writing",
+      "offeringId": "french-aqa-h",
+      "name": "Translation into French",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-f-001",
+      "paperId": "french-edexcel-f-paper1listening",
+      "offeringId": "french-edexcel-f",
+      "name": "Listening comprehension",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-h-001",
+      "paperId": "french-edexcel-h-paper1listening",
+      "offeringId": "french-edexcel-h",
+      "name": "Listening comprehension",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-f-002",
+      "paperId": "french-edexcel-f-paper1listening",
+      "offeringId": "french-edexcel-f",
+      "name": "Dictation and transcription",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-h-002",
+      "paperId": "french-edexcel-h-paper1listening",
+      "offeringId": "french-edexcel-h",
+      "name": "Dictation and transcription",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-f-003",
+      "paperId": "french-edexcel-f-paper3reading",
+      "offeringId": "french-edexcel-f",
+      "name": "Reading comprehension",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-h-003",
+      "paperId": "french-edexcel-h-paper3reading",
+      "offeringId": "french-edexcel-h",
+      "name": "Reading comprehension",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-f-004",
+      "paperId": "french-edexcel-f-paper3reading",
+      "offeringId": "french-edexcel-f",
+      "name": "Translation into English",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-h-004",
+      "paperId": "french-edexcel-h-paper3reading",
+      "offeringId": "french-edexcel-h",
+      "name": "Translation into English",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-f-005",
+      "paperId": "french-edexcel-f-paper4writing",
+      "offeringId": "french-edexcel-f",
+      "name": "Writing in French",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-h-005",
+      "paperId": "french-edexcel-h-paper4writing",
+      "offeringId": "french-edexcel-h",
+      "name": "Writing in French",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-f-006",
+      "paperId": "french-edexcel-f-paper4writing",
+      "offeringId": "french-edexcel-f",
+      "name": "Translation into French",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "french-edexcel-h-006",
+      "paperId": "french-edexcel-h-paper4writing",
+      "offeringId": "french-edexcel-h",
+      "name": "Translation into French",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "history-001",
+      "paperId": "history-p1",
+      "offeringId": "history-aqa",
+      "name": "America 1920-1973: Opportunity and inequality",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "history-002",
+      "paperId": "history-p1",
+      "offeringId": "history-aqa",
+      "name": "Conflict and tension 1894-1918",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "history-003",
+      "paperId": "history-p1",
+      "offeringId": "history-aqa",
+      "name": "Germany 1890-1945: Democracy and dictatorship",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "history-004",
+      "paperId": "history-p2",
+      "offeringId": "history-aqa",
+      "name": "Norman England c1066-c1100",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "history-005",
+      "paperId": "history-p2",
+      "offeringId": "history-aqa",
+      "name": "The Peoples Health c1250 to present",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "further-maths-001",
+      "paperId": "further-maths-p1",
+      "offeringId": "further-maths-aqa",
+      "name": "Coordinate geometry",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "further-maths-002",
+      "paperId": "further-maths-p1",
+      "offeringId": "further-maths-aqa",
+      "name": "Trigonometric functions",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "further-maths-003",
+      "paperId": "further-maths-p1",
+      "offeringId": "further-maths-aqa",
+      "name": "Algebraic proof",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "further-maths-004",
+      "paperId": "further-maths-p1",
+      "offeringId": "further-maths-aqa",
+      "name": "Matrices",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "further-maths-005",
+      "paperId": "further-maths-p1",
+      "offeringId": "further-maths-aqa",
+      "name": "Series and limits",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "further-maths-006",
+      "paperId": "further-maths-p2",
+      "offeringId": "further-maths-aqa",
+      "name": "Calculus",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "further-maths-007",
+      "paperId": "further-maths-p2",
+      "offeringId": "further-maths-aqa",
+      "name": "Factor theorem",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "further-maths-008",
+      "paperId": "further-maths-p2",
+      "offeringId": "further-maths-aqa",
+      "name": "Sequences",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "further-maths-009",
+      "paperId": "further-maths-p2",
+      "offeringId": "further-maths-aqa",
+      "name": "Combinatorics",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    },
+    {
+      "id": "further-maths-010",
+      "paperId": "further-maths-p2",
+      "offeringId": "further-maths-aqa",
+      "name": "Inequalities and graphs",
+      "confidence": 3,
+      "performanceScore": 0.5,
+      "lastReviewed": null
+    }
   ]
 }

@@ -60,7 +60,7 @@ export default function SummaryTray({
                   {off ? (
                     <span className="text-xs text-gray-400 shrink-0">{board?.name} {off.spec}</span>
                   ) : (
-                    <span className="text-xs text-gray-400 shrink-0">Pick board</span>
+                    <span className="text-xs text-gray-400 shrink-0">Pick option</span>
                   )}
                   {conf !== undefined && (
                     <span className="text-sm leading-none shrink-0">{EMOJIS[Math.max(0, Math.min(4, conf - 1))]}</span>

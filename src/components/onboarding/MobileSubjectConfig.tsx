@@ -92,6 +92,7 @@ export default function MobileSubjectConfig({ ctrl }: MobileSubjectConfigProps) 
             onAddBoard={() => ctrl.openAddBoard(subjectId)}
             onEditBoard={(oid) => ctrl.openEditBoard(oid)}
             onRemoveOffering={(oid) => ctrl.handleRemoveOffering(oid)}
+            pendingTierConfirmation={ctrl.pendingTierConfirmations.has(subjectId)}
           />
         </div>
       </div>

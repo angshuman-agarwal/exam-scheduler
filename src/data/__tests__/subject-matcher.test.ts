@@ -42,6 +42,10 @@ const LEGACY_ALIASES: Record<string, string> = {
   'eng lit': 'english literature',
   'english language': 'english language',
   'eng lang': 'english language',
+  'french': 'french',
+  'further mathematics': 'further mathematics',
+  'further maths': 'further mathematics',
+  'fm': 'further mathematics',
 }
 
 describe('sanitizeSubjectInput', () => {
@@ -308,6 +312,9 @@ describe('Regression: seeded subjects.json names', () => {
     'Music': 'music',
     'Spanish': 'spanish',
     'Additional Maths': 'additional mathematics',
+    'History': 'history',
+    'French': 'french',
+    'Further Mathematics': 'further mathematics',
   }
 
   // Verify fixture matches actual seed data

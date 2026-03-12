@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useAppStore } from '../stores/app.store'
+import { useAppStore, useLogicalSelectedOfferingIds } from '../stores/app.store'
 import { daysRemaining, toMidnightUTC } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
 import QualificationChip from './QualificationChip'
@@ -510,7 +510,7 @@ function SubjectRow({
   const hasMoreNotes = allOfferingNotes.length > 3
 
   return (
-    <div data-testid="progress-subject-row" className="rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+    <div data-testid={`progress-subject-row-${subject.id}`} className="rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
       <button
         onClick={onToggle}
         className="w-full flex items-stretch text-left transition-shadow hover:shadow-md active:scale-[0.99]"
@@ -745,7 +745,7 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
   const subjects = useAppStore((s) => s.subjects)
   const papers = useAppStore((s) => s.papers)
   const allOfferings = useAppStore((s) => s.offerings)
-  const selectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
+  const selectedOfferingIds = useLogicalSelectedOfferingIds()
   const notes = useAppStore((s) => s.notes)
 
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -825,7 +825,7 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
     ? Math.round(((weekDuration - prevWeekDuration) / prevWeekDuration) * 100)
     : weekDuration > 0 ? 100 : 0
 
-  // Build offering groups
+  // Build offering groups keyed by subject ID (prevents duplicate rows for F/H twins)
   const offeringGroups = useMemo(() => {
     const subjectMap = new Map(subjects.map((s) => [s.id, s]))
     const groups = new Map<string, { subject: Subject; offering: Offering; topics: Topic[]; papers: Paper[] }>()
@@ -833,37 +833,41 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
     for (const t of selTopics) {
       const off = offeringMapAll.get(t.offeringId)
       if (!off) continue
-      let group = groups.get(off.id)
+      let group = groups.get(off.subjectId)
       if (!group) {
         const sub = subjectMap.get(off.subjectId)
         if (!sub) continue
         group = { subject: sub, offering: off, topics: [], papers: [] }
-        groups.set(off.id, group)
+        groups.set(off.subjectId, group)
       }
       group.topics.push(t)
     }
 
     for (const p of selPapers) {
-      const group = groups.get(p.offeringId)
+      const off = offeringMapAll.get(p.offeringId)
+      if (!off) continue
+      const group = groups.get(off.subjectId)
       if (group) group.papers.push(p)
     }
 
     return groups
   }, [selTopics, selPapers, subjects, offeringMapAll])
 
-  // Notes grouped by offering -> topic
-  const notesByOfferingTopic = useMemo(() => {
+  // Notes grouped by subject -> topic
+  const notesBySubjectTopic = useMemo(() => {
     const result = new Map<string, Map<string, Note[]>>()
     for (const note of notes) {
       const topic = topicMapAll.get(note.topicId)
       if (!topic) continue
-      if (!result.has(topic.offeringId)) result.set(topic.offeringId, new Map())
-      const topicGroup = result.get(topic.offeringId)!
+      const off = offeringMapAll.get(topic.offeringId)
+      if (!off) continue
+      if (!result.has(off.subjectId)) result.set(off.subjectId, new Map())
+      const topicGroup = result.get(off.subjectId)!
       if (!topicGroup.has(note.topicId)) topicGroup.set(note.topicId, [])
       topicGroup.get(note.topicId)!.push(note)
     }
     return result
-  }, [notes, topicMapAll])
+  }, [notes, topicMapAll, offeringMapAll])
 
   // Active offering groups
   const activeOfferingGroups = useMemo(() => {
@@ -975,15 +979,15 @@ export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
           <div className="flex flex-col gap-3 mb-5">
             {activeOfferingGroups.map((group) => (
               <SubjectRow
-                key={group.offering.id}
+                key={group.subject.id}
                 subject={group.subject}
                 offering={group.offering}
                 offeringTopics={group.topics}
                 offeringPapers={group.papers}
-                offeringNotes={notesByOfferingTopic.get(group.offering.id) || new Map()}
+                offeringNotes={notesBySubjectTopic.get(group.subject.id) || new Map()}
                 statusChip={group.statusChip}
-                expanded={expanded === group.offering.id}
-                onToggle={() => toggle(group.offering.id)}
+                expanded={expanded === group.subject.id}
+                onToggle={() => toggle(group.subject.id)}
                 today={today}
                 allSessions={filteredSessions}
               />

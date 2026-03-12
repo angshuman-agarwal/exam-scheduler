@@ -35,6 +35,7 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
       <div
         key={s.id}
         data-subject-id={s.id}
+        data-testid={`subject-card-${s.id}`}
         className={`rounded-2xl border border-l-[3px] overflow-hidden transition-all duration-200 ${
           isSelected
             ? 'border-gray-200 shadow-md ring-1 ring-gray-200/60 bg-white'
@@ -136,6 +137,7 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
                   onAddBoard={() => ctrl.openAddBoard(s.id)}
                   onEditBoard={(oid) => ctrl.openEditBoard(oid)}
                   onRemoveOffering={(oid) => ctrl.handleRemoveOffering(oid)}
+                  pendingTierConfirmation={ctrl.pendingTierConfirmations.has(s.id)}
                 />
               )}
             </div>
@@ -174,7 +176,7 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
           {ctrl.studyMode && <QualificationChip mode={ctrl.studyMode} />}
         </div>
         <p className="text-sm text-gray-500 leading-relaxed mb-2">
-          Pick the subjects you take, choose the right board, and rate your confidence.
+          Pick the subjects you take, choose the right exam option, and rate your confidence.
         </p>
         {ctrl.isEdit && (
           <p className="text-xs text-gray-400 mb-6">
@@ -216,7 +218,7 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
                       onClick={() => ctrl.openAddBoard(m.id)}
                       className="block mx-auto mt-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
                     >
-                      Add board to {m.name}
+                      Add option to {m.name}
                     </button>
                   ))}
                 </>
@@ -231,7 +233,7 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
                           onClick={() => ctrl.openAddBoard(m.id)}
                           className="block mx-auto mt-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
                         >
-                          Add board to {m.name}
+                          Add option to {m.name}
                         </button>
                       ))}
                     </div>

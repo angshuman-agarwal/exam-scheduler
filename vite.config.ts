@@ -11,6 +11,7 @@ export default defineConfig({
   base: '/',
   define: {
     __APP_VERSION__: JSON.stringify(packageJson.version),
+    __E2E_BRIDGE__: JSON.stringify(process.env.PLAYWRIGHT_E2E === '1'),
   },
   plugins: [react(), tailwindcss(), VitePWA({
     registerType: 'prompt',

@@ -72,16 +72,19 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel, onB
     ? () => { ctrl.resetForQualificationChange(); ctrl.setLocalStudyMode(null) }
     : onBackToHome
 
-  // Mobile back: same logic
-  const handleMobileBack = !ctrl.isEdit && !ctrl.persistedStudyMode
+  // Mobile back: in edit mode prefer onCancel, then onBackToHome
+  const mobileBackHandler = !ctrl.isEdit && !ctrl.persistedStudyMode
     ? () => { ctrl.resetForQualificationChange(); ctrl.setLocalStudyMode(null) }
-    : onBackToHome ?? (() => {})
+    : ctrl.isEdit
+      ? (onCancel ?? onBackToHome ?? null)
+      : (onBackToHome ?? null)
+  // handleMobileBack fallback removed — null hides the button on mobile
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       {/* Mobile flow */}
       <div className="md:hidden">
-        <MobileFlow ctrl={ctrl} onBack={handleMobileBack} />
+        <MobileFlow ctrl={ctrl} onBack={mobileBackHandler} />
       </div>
 
       {/* Desktop flow */}

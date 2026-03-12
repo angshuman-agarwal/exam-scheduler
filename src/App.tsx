@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import LandingPage from './components/LandingPage'
 import FeedbackSheet from './components/FeedbackSheet'
-import { useAppStore } from './stores/app.store'
+import { useAppStore, useLogicalSelectedOfferingIds } from './stores/app.store'
 import { useTimerStore } from './stores/timer.store'
 import { scoreSingleTopic } from './lib/engine'
 import Layout from './components/Layout'
@@ -88,7 +88,7 @@ function App() {
   const offerings = useAppStore((s) => s.offerings)
   const subjects = useAppStore((s) => s.subjects)
   const boards = useAppStore((s) => s.boards)
-  const selectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
+  const selectedOfferingIds = useLogicalSelectedOfferingIds()
 
   useEffect(() => {
     const doInit = async () => {

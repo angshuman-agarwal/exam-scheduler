@@ -18,6 +18,7 @@ interface SubjectConfigPanelProps {
   onAddBoard?: () => void
   onEditBoard?: (offeringId: string) => void
   onRemoveOffering?: (offeringId: string) => void
+  pendingTierConfirmation?: boolean
 }
 
 export default function SubjectConfigPanel({
@@ -35,41 +36,75 @@ export default function SubjectConfigPanel({
   onAddBoard,
   onEditBoard,
   onRemoveOffering,
+  pendingTierConfirmation,
 }: SubjectConfigPanelProps) {
   const hasMultipleOfferings = subjectOfferings.length > 1
   const chosenOff = chosenOfferingId ? subjectOfferings.find(o => o.id === chosenOfferingId) : undefined
 
   return (
     <div className="flex flex-col gap-1">
+      {/* Tier confirmation banner for migrated subjects */}
+      {pendingTierConfirmation && (
+        <div data-testid={`pending-tier-banner-${subject.id}`} className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 mt-1 mb-1">
+          <p className="text-sm text-amber-800">
+            We've updated exam options for this subject. Please confirm your tier.
+          </p>
+        </div>
+      )}
+
       {/* Board selection */}
       {hasMultipleOfferings ? (
         <div className="pt-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">Choose your board</p>
-          <div className="flex gap-3">
-            {subjectOfferings.map((o) => {
-              const boardName = boardDisplayNames.get(o.id) ?? o.boardId
-              const meta = offeringMeta.get(o.id)
-              const examInfo = meta?.nearestDate
-                ? new Date(meta.nearestDate + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-                : null
-              return (
-                <BoardTile
-                  key={o.id}
-                  offering={o}
-                  boardName={boardName}
-                  paperCount={meta?.paperCount ?? 0}
-                  firstExamLabel={examInfo}
-                  selected={chosenOfferingId === o.id}
-                  subjectColor={subject.color}
-                  onSelect={() => onSelectOffering(o.id)}
-                />
-              )
-            })}
-          </div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">Choose your exam option</p>
+          {(() => {
+            // Group offerings by boardId for visual grouping
+            const groups: Array<{ boardId: string; boardName: string; offerings: Offering[] }> = []
+            const seen = new Map<string, number>()
+            for (const o of subjectOfferings) {
+              const idx = seen.get(o.boardId)
+              if (idx !== undefined) {
+                groups[idx].offerings.push(o)
+              } else {
+                const bName = boardDisplayNames.get(o.id) ?? o.boardId
+                seen.set(o.boardId, groups.length)
+                groups.push({ boardId: o.boardId, boardName: bName, offerings: [o] })
+              }
+            }
+            return groups.map(({ boardId, boardName, offerings: groupOfferings }) => (
+              <div key={boardId} className="mb-3">
+                {groups.length > 1 && (
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">{boardName}</p>
+                )}
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
+                  {groupOfferings.map((o) => {
+                    const primaryLabel = o.label.startsWith(boardName + ' ')
+                      ? o.label.slice(boardName.length + 1)
+                      : o.label
+                    const meta = offeringMeta.get(o.id)
+                    const examInfo = meta?.nearestDate
+                      ? new Date(meta.nearestDate + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                      : null
+                    return (
+                      <BoardTile
+                        key={o.id}
+                        offering={o}
+                        primaryLabel={primaryLabel}
+                        paperCount={meta?.paperCount ?? 0}
+                        firstExamLabel={examInfo}
+                        selected={chosenOfferingId === o.id}
+                        subjectColor={subject.color}
+                        onSelect={() => onSelectOffering(o.id)}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+            ))
+          })()}
         </div>
       ) : chosenOff ? (
         <div className="pt-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">Board</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">Exam option</p>
           <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50/80 border border-gray-100">
             <span className="text-sm font-medium text-gray-700">{chosenOff.label}</span>
             {(() => {
@@ -121,7 +156,7 @@ export default function SubjectConfigPanel({
             onClick={onAddBoard}
             className="text-sm font-semibold text-blue-600 hover:text-blue-700 px-1"
           >
-            + Add board
+            + Add exam option
           </button>
         </div>
       )}

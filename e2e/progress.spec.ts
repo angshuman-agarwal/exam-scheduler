@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './helpers/base'
 import { openProgress } from './helpers/seedAppState'
 import {
   progressEmpty,
@@ -20,7 +20,7 @@ test('1. Empty progress state', async ({ page }) => {
 
   await expect(page.locator('[data-testid="progress-hero"]')).toBeVisible()
   await expect(page.locator('[data-testid="progress-hero-cta"]')).toHaveText("Plan today\u2019s study")
-  await expect(page.locator('[data-testid="progress-consistency"]')).not.toBeVisible()
+  await expect(page.locator('[data-testid="progress-allocation"]')).not.toBeVisible()
   await expect(page.locator('[data-testid="progress-sessions-list"]')).not.toBeVisible()
   await expect(page.locator('[data-testid="progress-best-next-focus"]')).not.toBeVisible()
   await expect(page.locator('[data-testid="progress-empty-message"]')).toBeVisible()
@@ -39,7 +39,6 @@ test('2. One-day activity', async ({ page }) => {
   await expect(page.locator('[data-testid="progress-hero"]')).toContainText('You studied today')
   // streak=1 → no CTA ("You studied today" is streak=1, showCta is false when hasSessions && streak !== 0)
   await expect(page.locator('[data-testid="progress-hero-cta"]')).not.toBeVisible()
-  await expect(page.locator('[data-testid="progress-consistency"]')).toBeVisible()
   // Session outcome chip shows label instead of raw percentage
   await expect(page.locator('[data-testid="progress-outcome-chip"]')).toHaveText('Solid')
 
@@ -58,10 +57,10 @@ test('3. Active streak', async ({ page }) => {
 test('4. Consistency with duration distribution', async ({ page }) => {
   await openProgress(page, progressDistDuration(), FROZEN_DATE)
 
-  await expect(page.locator('[data-testid="progress-consistency"]')).toBeVisible()
+  await expect(page.locator('[data-testid="progress-allocation"]')).toBeVisible()
   await expect(page.locator('[data-testid="progress-distribution"]')).toBeVisible()
   // Duration labels should show time format (e.g. "30m", "1h")
-  const distText = await page.locator('[data-testid="progress-consistency"]').textContent()
+  const distText = await page.locator('[data-testid="progress-allocation"]').textContent()
   expect(distText).toMatch(/\d+m/)
 
   await expect(page).toHaveScreenshot('04-dist-duration.png')
@@ -72,7 +71,7 @@ test('5. Distribution fallback to counts', async ({ page }) => {
 
   await expect(page.locator('[data-testid="progress-distribution"]')).toBeVisible()
   // Should show "sessions" label
-  const distText = await page.locator('[data-testid="progress-consistency"]').textContent()
+  const distText = await page.locator('[data-testid="progress-allocation"]').textContent()
   expect(distText).toMatch(/sessions/)
 
   await expect(page).toHaveScreenshot('05-dist-counts.png')
@@ -97,11 +96,11 @@ test('7. Expanded subject row', async ({ page }) => {
   await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
 
   // Click to expand the CS row
-  const subjectRow = page.locator('[data-testid="progress-subject-row"]').first()
+  const subjectRow = page.locator('[data-testid^="progress-subject-row"]').first()
   await subjectRow.locator('button').first().click()
 
-  // Should show average result with hybrid label
-  await expect(subjectRow).toContainText('Average result this week')
+  // Should show session result label
+  await expect(subjectRow).toContainText("This week's session result")
   // Should show confidence gap message (overconfident)
   await expect(subjectRow).toContainText('confidence is ahead')
   // Should show 3 notes (first 3 of 5)
@@ -118,7 +117,7 @@ test('8. Show all notes interaction', async ({ page }) => {
   await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
 
   // Expand
-  const subjectRow = page.locator('[data-testid="progress-subject-row"]').first()
+  const subjectRow = page.locator('[data-testid^="progress-subject-row"]').first()
   await subjectRow.locator('button').first().click()
 
   // Click "Show all notes"
@@ -158,7 +157,7 @@ test('11. Not started expanded panel', async ({ page }) => {
   await expect(chip).toHaveText('Not started')
 
   // Expand the subject row
-  const subjectRow = page.locator('[data-testid="progress-subject-row"]').first()
+  const subjectRow = page.locator('[data-testid^="progress-subject-row"]').first()
   await subjectRow.locator('button').first().click()
 
   // Should show "not started" message, not "Nice work"
@@ -180,7 +179,7 @@ test('12. No future exams', async ({ page }) => {
   await expect(page.locator('[data-testid="progress-no-upcoming"]')).toBeVisible()
   await expect(page.locator('[data-testid="progress-no-upcoming"]')).toContainText('No upcoming exams')
   // No subject rows
-  await expect(page.locator('[data-testid="progress-subject-row"]')).toHaveCount(0)
+  await expect(page.locator('[data-testid^="progress-subject-row"]')).toHaveCount(0)
   // No best next focus
   await expect(page.locator('[data-testid="progress-best-next-focus"]')).not.toBeVisible()
 
