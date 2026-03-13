@@ -8,14 +8,14 @@ interface LayoutProps {
 
 export default function Layout({ children, currentPage, onNavigate }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <main className="flex-1 overflow-y-auto pb-20">{children}</main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex">
+      <nav className="fixed bottom-0 left-0 right-0 ios-glass flex z-50">
         <button
           onClick={() => onNavigate('home')}
           className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
-            currentPage === 'home' ? 'text-blue-600 bg-blue-50' : 'text-gray-500'
+            currentPage === 'home' ? 'text-system-blue' : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           <svg className="w-5 h-5 mx-auto mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -26,7 +26,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
         <button
           onClick={() => onNavigate('today')}
           className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
-            currentPage === 'today' ? 'text-blue-600 bg-blue-50' : 'text-gray-500'
+            currentPage === 'today' ? 'text-system-blue' : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           <svg className="w-5 h-5 mx-auto mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -37,7 +37,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
         <button
           onClick={() => onNavigate('progress')}
           className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
-            currentPage === 'progress' ? 'text-blue-600 bg-blue-50' : 'text-gray-500'
+            currentPage === 'progress' ? 'text-system-blue' : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           <svg className="w-5 h-5 mx-auto mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

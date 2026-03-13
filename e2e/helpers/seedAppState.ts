@@ -106,10 +106,9 @@ export async function openProgress(page: Page, state: PersistedState, frozenDate
   // 6. Wait for app to settle
   await page.locator('text=Loading...').waitFor({ state: 'hidden', timeout: 10000 })
 
-  // 7. Click Progress tab
-  await page.locator('button:has-text("Progress")').click()
+  // 7. Click Progress tab via hero CTA
+  await page.getByTestId('home-hero-view-progress').click()
 
-  // 8. Wait for hero and active tab
-  await page.locator('[data-testid="progress-hero"]').waitFor({ state: 'visible', timeout: 5000 })
-  await page.locator('button:has-text("Progress").bg-blue-50').waitFor({ state: 'visible', timeout: 3000 })
+  // 8. Wait for hero
+  await page.getByTestId('progress-hero').waitFor({ state: 'visible', timeout: 5000 })
 }
