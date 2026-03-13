@@ -40,6 +40,7 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel, onB
 
           <div className="flex flex-col md:flex-row gap-4">
             <button
+              data-testid="qual-gcse"
               onClick={() => { ctrl.resetForQualificationChange(); ctrl.setLocalStudyMode('gcse') }}
               className="flex-1 rounded-2xl border-2 border-gray-100 bg-white p-6 text-left transition-all hover:border-blue-500 hover:ring-2 hover:ring-blue-100 hover:shadow"
             >
@@ -47,6 +48,7 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel, onB
               <p className="text-sm text-gray-500">Typical Year 10-11 subjects and papers</p>
             </button>
             <button
+              data-testid="qual-alevel"
               onClick={() => { ctrl.resetForQualificationChange(); ctrl.setLocalStudyMode('alevel') }}
               className="flex-1 rounded-2xl border-2 border-gray-100 bg-white p-6 text-left transition-all hover:border-blue-500 hover:ring-2 hover:ring-blue-100 hover:shadow"
             >

@@ -157,6 +157,7 @@ export default function DesktopFlow({ ctrl, onBack, showBackButton, backLabel, o
       <div className="flex-1 min-w-0 px-4 pt-12 pb-10">
         {showBackButton && onBack && (
           <button
+            data-testid="desktop-back-button"
             onClick={onBack}
             className="inline-flex items-center gap-2 rounded-2xl border border-gray-200/80 bg-white text-gray-700 text-sm font-semibold tracking-tight pl-1.5 pr-4 py-1.5 shadow-sm hover:bg-gray-50 hover:shadow-md hover:border-gray-300/80 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-150 mb-6"
           >

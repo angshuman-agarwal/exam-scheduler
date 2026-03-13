@@ -78,6 +78,7 @@ export default function SummaryTray({
         </>
       )}
       <button
+        data-testid="finish-button"
         onClick={onFinish}
         disabled={!canFinish}
         className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -86,6 +87,7 @@ export default function SummaryTray({
       </button>
       {onCancel && (
         <button
+          data-testid="cancel-button"
           onClick={onCancel}
           className="w-full py-3 mt-2 bg-white text-gray-700 font-medium rounded-xl border border-gray-200 transition-colors hover:bg-gray-50"
         >

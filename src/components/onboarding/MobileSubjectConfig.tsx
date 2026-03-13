@@ -58,6 +58,7 @@ export default function MobileSubjectConfig({ ctrl }: MobileSubjectConfigProps) 
       <div className="sticky top-0 z-10 bg-[#faf9f7] border-b border-gray-100 px-4 py-3">
         <div className="flex items-center gap-3">
           <button
+            data-testid="mobile-config-back-button"
             onClick={handleBack}
             className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 shrink-0"
           >
@@ -101,6 +102,7 @@ export default function MobileSubjectConfig({ ctrl }: MobileSubjectConfigProps) 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden z-20">
         {isCurrentConfigured && hasNextUnconfigured ? (
           <button
+            data-testid="mobile-config-footer-cta"
             onClick={handleNext}
             className="w-full py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 active:bg-amber-700 transition-colors"
           >
@@ -108,6 +110,7 @@ export default function MobileSubjectConfig({ ctrl }: MobileSubjectConfigProps) 
           </button>
         ) : isCurrentConfigured && allConfigured ? (
           <button
+            data-testid="mobile-config-footer-cta"
             onClick={handleBack}
             className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-colors"
           >
@@ -115,6 +118,7 @@ export default function MobileSubjectConfig({ ctrl }: MobileSubjectConfigProps) 
           </button>
         ) : (
           <button
+            data-testid="mobile-config-footer-cta"
             onClick={handleBack}
             className="w-full py-3 bg-gray-100 text-gray-600 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
           >

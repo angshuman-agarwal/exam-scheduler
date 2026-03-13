@@ -64,6 +64,7 @@ export default function MobileSubjectPicker({ ctrl, onBack }: MobileSubjectPicke
         <div className="flex items-center gap-3 mb-3">
           {onBack && (
             <button
+              data-testid="mobile-back-button"
               onClick={onBack}
               className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 shrink-0"
             >
@@ -175,6 +176,7 @@ export default function MobileSubjectPicker({ ctrl, onBack }: MobileSubjectPicke
             )}
           </div>
           <button
+            data-testid="mobile-footer-cta"
             onClick={handleFooterCta}
             disabled={selectedCount === 0}
             className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors shrink-0 ${
