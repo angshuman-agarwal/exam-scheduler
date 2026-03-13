@@ -148,7 +148,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
   }
 
   return (
-    <div className="px-4 pt-6 pb-8 min-h-screen bg-[#faf9f7]">
+    <div className="px-4 pt-6 pb-8 min-h-screen bg-system-gray">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2.5">
           <div className="flex flex-wrap items-center gap-2">
@@ -166,7 +166,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
         </div>
         <button
           onClick={onEditSubjects}
-          className="flex items-center gap-1.5 text-xs text-gray-400 font-medium transition-colors hover:text-blue-600"
+          className="flex items-center gap-1.5 text-xs text-gray-400 font-medium transition-colors hover:text-system-blue"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
@@ -187,7 +187,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
           <NudgeBanner scoredTopics={scored} mode={planningMode} nearestExamDays={nearestDays} enabled={planItems.length > 0} />
 
           {/* 2. Plan Tray */}
-          <div className="mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="mb-6 ios-card overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3.5">
               <div className="flex items-center gap-2.5">
@@ -195,7 +195,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                   {planLabel}
                 </p>
                 {planItems.length > 0 && (
-                  <span className="text-[11px] font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
+                  <span className="text-[11px] font-semibold bg-gray-100 text-system-blue px-2 py-0.5 rounded-full">
                     {planItems.length}
                   </span>
                 )}
@@ -203,7 +203,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
               {hasUserItems && (
                 <button
                   onClick={() => { clearPlan(); autoFillPlan(today) }}
-                  className="flex items-center gap-1 text-[11px] text-gray-400 font-medium transition-colors hover:text-blue-600"
+                  className="flex items-center gap-1 text-[11px] text-gray-400 font-medium transition-colors hover:text-system-blue"
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
@@ -267,7 +267,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                       <button
                         type="button"
                         onClick={() => autoFillPlan(today)}
-                        className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl transition-colors hover:bg-blue-700"
+                        className="w-full py-2.5 ios-button text-sm"
                       >
                         Create suggested plan
                       </button>
@@ -278,7 +278,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                       <button
                         type="button"
                         onClick={() => autoFillPlan(today)}
-                        className="w-full py-2.5 border border-dashed border-blue-200 text-sm text-blue-600 font-medium rounded-xl transition-colors hover:border-blue-400 hover:bg-blue-50"
+                        className="w-full py-2.5 border border-dashed border-gray-300 text-sm text-system-blue font-medium rounded-xl transition-colors hover:border-black/20 hover:bg-black/5"
                       >
                         Complete plan
                       </button>
@@ -318,7 +318,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                   return (
                     <div
                       key={subject.id}
-                      className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden"
+                      className="ios-card overflow-hidden"
                     >
                       <button
                         onClick={() => setExpanded(isExpanded ? null : subject.id)}

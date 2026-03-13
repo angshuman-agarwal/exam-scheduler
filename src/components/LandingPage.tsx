@@ -232,11 +232,11 @@ function SessionPreview() {
 
 function StoryStepCard({ step, title, description, children }: { step: number; title: string; description: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 flex flex-col">
-      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600 text-sm font-bold mb-4">{step}</span>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1.5">{title}</h3>
+    <div className="ios-card p-6 flex flex-col">
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-system-gray text-system-blue text-sm font-bold mb-4">{step}</span>
+      <h3 className="text-lg font-semibold text-gray-900 tracking-tight mb-1.5">{title}</h3>
       <p className="text-sm text-gray-500 leading-relaxed mb-5">{description}</p>
-      <div className="mt-auto rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+      <div className="mt-auto rounded-2xl border border-black/5 bg-gray-50/50 p-4">
         {children}
       </div>
     </div>
@@ -245,7 +245,7 @@ function StoryStepCard({ step, title, description, children }: { step: number; t
 
 function ProductShowcase() {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 sm:p-8">
+    <div className="ios-card p-5 sm:p-8">
       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-1">
         Your revision journey
       </p>
@@ -344,8 +344,8 @@ function TrustSection() {
 
   return (
     <section className="px-5 py-12 sm:py-16 max-w-5xl mx-auto">
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 sm:p-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-600 mb-2">
+      <div className="ios-card p-5 sm:p-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-system-blue mb-2">
           Built for trust
         </p>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
@@ -370,6 +370,12 @@ function TrustSection() {
   )
 }
 
+export function homeUrgencyTone(days: number) {
+  if (days < 14) return { label: 'Final stretch' as const, bg: 'bg-orange-100', text: 'text-orange-700' }
+  if (days < 30) return { label: 'Getting close' as const, bg: 'bg-amber-100', text: 'text-amber-700' }
+  return { label: 'On track' as const, bg: 'bg-blue-50', text: 'text-blue-600' }
+}
+
 export default function LandingPage({
   onboarded,
   onGetStarted,
@@ -391,18 +397,12 @@ export default function LandingPage({
   const details = selectedSubjectDetails ?? []
 
   // Tone chip logic (returning user)
-  const toneChip = nearestUserExam
-    ? nearestUserExam.days < 14
-      ? { label: 'Final stretch', bg: 'bg-orange-100', text: 'text-orange-700' }
-      : nearestUserExam.days <= 60
-        ? { label: 'Getting close', bg: 'bg-amber-100', text: 'text-amber-700' }
-        : { label: 'On track', bg: 'bg-blue-50', text: 'text-blue-600' }
-    : null
+  const toneChip = nearestUserExam ? homeUrgencyTone(nearestUserExam.days) : null
 
   const stripGradient = nearestUserExam
     ? nearestUserExam.days < 14
       ? 'bg-gradient-to-r from-orange-50 to-amber-50'
-      : nearestUserExam.days <= 60
+      : nearestUserExam.days < 30
         ? 'bg-gradient-to-r from-amber-50 to-orange-50'
         : 'bg-gradient-to-r from-blue-50 to-sky-50'
     : ''
@@ -417,13 +417,13 @@ export default function LandingPage({
       <section className="px-5 pt-14 pb-10 sm:pt-20 sm:pb-16 max-w-5xl mx-auto">
         {onboarded ? (
           /* Returning user hero */
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 sm:p-8">
+          <div className="ios-card p-5 sm:p-8">
             <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">
               <span>Home</span>
               {studyMode && <span>&middot;</span>}
               {studyMode && <QualificationChip mode={studyMode} />}
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-5">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight leading-tight mb-5">
               Ready for today's revision?
             </h1>
 
@@ -442,7 +442,7 @@ export default function LandingPage({
                   </p>
                 </div>
                 {toneChip && (
-                  <span className={`shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full ${toneChip.bg} ${toneChip.text}`}>
+                  <span data-testid="home-urgency-chip" className={`shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full ${toneChip.bg} ${toneChip.text}`}>
                     {toneChip.label}
                   </span>
                 )}
@@ -484,12 +484,12 @@ export default function LandingPage({
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={onContinuePlanning}
-                className="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm
-                           hover:bg-blue-700 active:scale-[0.98] transition-all duration-150 shadow-sm"
+                className="px-6 py-3 ios-button text-sm"
               >
                 Open today's plan
               </button>
               <button
+                data-testid="home-hero-view-progress"
                 onClick={onViewProgress}
                 className="px-6 py-3 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium text-sm
                            hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all duration-150"
@@ -515,10 +515,10 @@ export default function LandingPage({
           </div>
           <div className="sm:grid sm:grid-cols-2 sm:gap-12 sm:items-center">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-600 mb-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-system-blue mb-3">
                 {landingCopy.hero.tagline}
               </p>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-4">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight leading-tight mb-4">
                 {landingCopy.hero.headline}
               </h1>
               <p className="text-base text-gray-500 leading-relaxed mb-6 max-w-md">
@@ -547,8 +547,7 @@ export default function LandingPage({
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={onGetStarted}
-                  className="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm
-                             hover:bg-blue-700 active:scale-[0.98] transition-all duration-150 shadow-sm"
+                  className="px-6 py-3 ios-button text-sm"
                 >
                   Start your revision schedule
                 </button>
@@ -587,6 +586,7 @@ export default function LandingPage({
               <p className="text-xs text-gray-500">Pick up where you left off</p>
             </button>
             <button
+              data-testid="home-quicklink-progress"
               onClick={onViewProgress}
               className="rounded-xl border border-gray-100 bg-white p-4 hover:border-gray-200 hover:shadow-sm transition cursor-pointer text-left"
             >
@@ -678,12 +678,10 @@ export default function LandingPage({
           {/* Trust / coverage section */}
           <TrustSection />
 
-          {/* Final CTA */}
           <section className="px-5 pb-16 max-w-5xl mx-auto text-center">
             <button
               onClick={onGetStarted}
-              className="px-8 py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm
-                         hover:bg-blue-700 active:scale-[0.98] transition-all duration-150 shadow-sm"
+              className="px-8 py-3.5 ios-button text-sm"
             >
               Start your revision schedule
             </button>
