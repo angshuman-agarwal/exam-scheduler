@@ -1,18 +1,18 @@
 {
   "meta": {
     "title": "Study Hour | GCSE Revision Planner and Study Schedule App",
-    "description": "Build a GCSE revision schedule that adapts to exam dates, confidence, and unfinished topics. No account needed. Works offline.",
+    "description": "Help GCSE students decide what to revise next with a revision planner based on exam timing, weaker topics, and recent study. No account needed. Works offline.",
     "canonicalUrl": "https://studyhour.uk/",
     "ogTitle": "Study Hour | GCSE Revision Planner and Study Schedule App",
-    "ogDescription": "Build a GCSE revision schedule that adapts to exam dates, confidence, and unfinished topics. No account needed. Works offline.",
+    "ogDescription": "Help GCSE students decide what to revise next with a revision planner based on exam timing, weaker topics, and recent study. No account needed. Works offline.",
     "twitterTitle": "Study Hour | GCSE Revision Planner",
-    "twitterDescription": "Build a GCSE revision schedule that adapts to exam dates, confidence, and unfinished topics.",
+    "twitterDescription": "Help GCSE students decide what to revise next based on exam timing, weaker topics, and recent study.",
     "twitterSite": "@studyhourlabs"
   },
   "hero": {
     "tagline": "Revision, prioritised",
-    "headline": "Your exams are coming. Your schedule starts now.",
-    "subheadline": "Build a revision plan that adapts to your confidence, your exam dates, and what you haven't covered yet."
+    "headline": "Know what to revise next, not just when to revise.",
+    "subheadline": "Study Hour helps GCSE students build a revision plan around exam timing, weaker topics, and what they have not reviewed recently."
   },
   "sectionHeadings": {
     "howItWorks": "How it works",
@@ -29,7 +29,7 @@
     {
       "step": 2,
       "title": "See what matters today",
-      "description": "A prioritised revision list that shifts daily based on exam dates, confidence, and coverage."
+      "description": "A prioritised revision list that shifts daily based on exam dates, weaker topics, and what you have already covered."
     },
     {
       "step": 3,
@@ -39,16 +39,16 @@
   ],
   "scenarios": [
     {
-      "situation": "I don't know where to start",
-      "response": "The app looks at every exam date, your confidence scores, and what you've already covered \u2014 then gives you one clear recommendation."
+      "situation": "I don't know what to revise next",
+      "response": "The app looks at every exam date, your confidence scores, and what you've already covered — then gives you one clear recommendation."
     },
     {
       "situation": "I keep revising the same subjects",
-      "response": "Weak topics surface automatically so you can tackle them now, not the night before the exam."
+      "response": "Weak topics and neglected areas surface automatically so you can tackle them before they become last-minute panic revision."
     },
     {
       "situation": "I can't tell if revision is working",
-      "response": "Track sessions, confidence, and momentum across every subject \u2014 so you can see progress building over time."
+      "response": "Track sessions, confidence, and momentum across every subject — so you can see progress building over time."
     }
   ],
   "trustFeatures": [
