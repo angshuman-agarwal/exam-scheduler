@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { homeUrgencyTone } from '../LandingPage'
+import { homeUrgencyTone } from '../../lib/homeUrgency'
 
 describe('homeUrgencyTone', () => {
   it.each([

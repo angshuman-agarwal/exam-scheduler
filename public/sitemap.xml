@@ -4,4 +4,8 @@
     <loc>https://studyhour.uk/</loc>
     <changefreq>weekly</changefreq>
   </url>
+  <url>
+    <loc>https://studyhour.uk/gcse-revision-planner</loc>
+    <changefreq>weekly</changefreq>
+  </url>
 </urlset>

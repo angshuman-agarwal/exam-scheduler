@@ -10,6 +10,8 @@ import TodayPlan from './components/TodayPlan'
 import SubjectPicker from './components/SubjectPicker'
 import SessionLogger from './components/SessionLogger'
 import Progress from './components/Progress'
+import PublicSeoPage from './components/PublicSeoPage'
+import { getPublicPageByPath } from './lib/publicPages'
 import type { ScoredTopic, Offering, Subject, Paper, ScheduleSource } from './types'
 
 const PAGES = ['home', 'today', 'progress'] as const
@@ -22,6 +24,10 @@ function isPageHash(value: string): value is Page {
 function getPageFromHash(): Page {
   const h = window.location.hash.slice(1)
   return isPageHash(h) ? h : 'home'
+}
+
+function shouldShowOnboardingFromHash() {
+  return window.location.hash.slice(1) === 'onboarding'
 }
 
 function recoverActiveSession(): { scored: ScoredTopic; source: ScheduleSource; scheduleItemId?: string } | null {
@@ -43,6 +49,7 @@ function recoverActiveSession(): { scored: ScoredTopic; source: ScheduleSource; 
 }
 
 function App() {
+  const publicPage = getPublicPageByPath(window.location.pathname)
   const init = useAppStore((s) => s.init)
   const initialized = useAppStore((s) => s.initialized)
   const onboarded = useAppStore((s) => s.onboarded)
@@ -59,7 +66,7 @@ function App() {
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null)
   const [activePaper, setActivePaper] = useState<Paper | null>(null)
   const [editingSetup, setEditingSetup] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(shouldShowOnboardingFromHash)
   const [showFeedback, setShowFeedback] = useState(false)
   const [recoveryDone, setRecoveryDone] = useState(false)
   const recoveryRan = useRef(false)
@@ -76,13 +83,18 @@ function App() {
   }
 
   useEffect(() => {
-    if (!isPageHash(window.location.hash.slice(1))) {
+    if (publicPage) return
+    const hash = window.location.hash.slice(1)
+    if (hash !== 'onboarding' && !isPageHash(hash)) {
       window.history.replaceState(null, '', '#home')
     }
-    const onHashChange = () => setPage(getPageFromHash())
+    const onHashChange = () => {
+      setShowOnboarding(shouldShowOnboardingFromHash())
+      setPage(getPageFromHash())
+    }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
+  }, [publicPage])
 
   const papers = useAppStore((s) => s.papers)
   const offerings = useAppStore((s) => s.offerings)
@@ -107,6 +119,23 @@ function App() {
     doInit()
   }, [init, initTimer])
 
+  function openOnboarding() {
+    const url = new URL(window.location.href)
+    url.pathname = '/'
+    url.search = ''
+    url.hash = 'onboarding'
+    window.location.assign(url.toString())
+  }
+
+  function closeOnboarding() {
+    window.location.hash = 'home'
+    setShowOnboarding(false)
+  }
+
+  if (publicPage) {
+    return <PublicSeoPage page={publicPage} />
+  }
+
   if (!initialized || !recoveryDone) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -123,11 +152,11 @@ function App() {
       return (
         <Onboarding
           onComplete={() => navigateTo('today')}
-          onBackToHome={() => setShowOnboarding(false)}
+          onBackToHome={closeOnboarding}
         />
       )
     }
-    return <LandingPage onboarded={false} onGetStarted={() => setShowOnboarding(true)} />
+    return <LandingPage onboarded={false} onGetStarted={openOnboarding} />
   }
 
   // Edit subjects mode (full-screen, no bottom nav)

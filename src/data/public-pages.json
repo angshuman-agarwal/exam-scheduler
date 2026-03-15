@@ -1,0 +1,78 @@
+{
+  "pages": [
+    {
+      "id": "gcse-revision-planner",
+      "path": "/gcse-revision-planner",
+      "meta": {
+        "title": "GCSE Revision Planner | Study Hour",
+        "description": "Study Hour is a GCSE revision planner that helps students decide what to revise next based on exam timing, weaker topics, and recent study.",
+        "canonicalUrl": "https://studyhour.uk/gcse-revision-planner",
+        "ogTitle": "GCSE Revision Planner | Study Hour",
+        "ogDescription": "A GCSE revision planner that helps students know what to study next instead of relying on a static timetable.",
+        "twitterTitle": "GCSE Revision Planner | Study Hour",
+        "twitterDescription": "Plan GCSE revision around exam timing, weaker topics, and recent study."
+      },
+      "hero": {
+        "eyebrow": "GCSE revision planner",
+        "headline": "GCSE revision planner that helps you know what to study next",
+        "intro": "Study Hour helps GCSE students build a revision plan around exam timing, weaker topics, and recent study, so revision feels directed instead of random."
+      },
+      "problem": {
+        "title": "Why GCSE revision planning is hard",
+        "points": [
+          "Static revision timetables become outdated quickly as exams get closer and priorities change.",
+          "Students often spend too much time on familiar subjects because they feel easier to start.",
+          "It is hard to know what matters most today without checking exam dates, weak topics, and recent study together."
+        ]
+      },
+      "contrast": {
+        "title": "Why static timetables fall short",
+        "points": [
+          "A timetable can tell you when to revise, but not whether you are revising the right topic.",
+          "Template-based schedules rarely adapt to weaker or neglected areas.",
+          "When the plan stops feeling relevant, students ignore it instead of trusting it."
+        ]
+      },
+      "solution": {
+        "title": "How Study Hour helps",
+        "points": [
+          {
+            "title": "Exam timing stays visible",
+            "description": "Upcoming papers still matter, but they are balanced against what you have actually been studying."
+          },
+          {
+            "title": "Weak topics rise to the top",
+            "description": "Low-confidence or lower-performing topics surface before they become last-minute panic revision."
+          },
+          {
+            "title": "Recent study still counts",
+            "description": "Topics you have ignored recently can regain priority, so revision stays balanced over time."
+          }
+        ]
+      },
+      "faq": [
+        {
+          "question": "What makes this different from a revision timetable?",
+          "answer": "A revision timetable gives structure, but Study Hour also helps decide what to revise next based on exam timing, weaker topics, and recent study."
+        },
+        {
+          "question": "Do I need an account?",
+          "answer": "No. Study Hour works without login, ads, or tracking."
+        },
+        {
+          "question": "Is it only for GCSE students?",
+          "answer": "GCSE coverage is built in. Other qualifications can be added through custom setup."
+        }
+      ],
+      "cta": {
+        "label": "Start your revision schedule",
+        "href": "/#onboarding"
+      },
+      "card": {
+        "eyebrow": "Guide",
+        "title": "GCSE revision planner",
+        "description": "See how Study Hour plans revision around exam timing, weak topics, and recent study."
+      }
+    }
+  ]
+}

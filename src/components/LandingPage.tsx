@@ -2,7 +2,9 @@ import { useMemo, useRef } from 'react'
 import seedData from '../data/subjects.json'
 import landingCopy from '../data/landing-copy.json'
 import { useAppStore } from '../stores/app.store'
+import { homeUrgencyTone } from '../lib/homeUrgency'
 import QualificationChip from './QualificationChip'
+import { getHomepageExplorePages } from '../lib/publicPages'
 
 const X_URL = 'https://x.com/studyhourlabs'
 
@@ -370,10 +372,55 @@ function TrustSection() {
   )
 }
 
-export function homeUrgencyTone(days: number) {
-  if (days < 14) return { label: 'Final stretch' as const, bg: 'bg-orange-100', text: 'text-orange-700' }
-  if (days < 30) return { label: 'Getting close' as const, bg: 'bg-amber-100', text: 'text-amber-700' }
-  return { label: 'On track' as const, bg: 'bg-blue-50', text: 'text-blue-600' }
+function ExploreMoreSection() {
+  const pages = getHomepageExplorePages()
+
+  if (pages.length === 0) return null
+
+  return (
+    <section data-testid="home-explore-more" className="px-5 pb-12 max-w-5xl mx-auto">
+      <div className="ios-card p-5 sm:p-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">
+          Explore more
+        </p>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
+          Learn more about planning revision
+        </h2>
+        <p className="text-sm text-gray-500 max-w-xl mb-6">
+          A few focused pages for students, parents, and tutors who want to understand how Study Hour plans revision.
+        </p>
+        <div className="grid grid-cols-1 gap-4">
+          {pages.map((page) => (
+            <a
+              key={page.id}
+              data-testid={`home-explore-card-${page.id === 'gcse-revision-planner' ? 'gcse-planner' : page.id}`}
+              href={page.path}
+              className="group rounded-[1.35rem] border border-black/5 bg-white px-5 py-5 shadow-[0_10px_30px_rgba(0,0,0,0.03)] transition-all duration-200 hover:-translate-y-0.5 hover:border-black/10 hover:shadow-[0_14px_34px_rgba(0,0,0,0.05)]"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-system-blue mb-2">
+                    {page.card.eyebrow}
+                  </p>
+                  <h3 className="text-lg font-semibold text-gray-900 tracking-tight mb-1.5">
+                    {page.card.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 leading-relaxed max-w-2xl">
+                    {page.card.description}
+                  </p>
+                </div>
+                <span className="shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-gray-500">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                  </svg>
+                </span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
 }
 
 export default function LandingPage({
@@ -677,6 +724,8 @@ export default function LandingPage({
 
           {/* Trust / coverage section */}
           <TrustSection />
+
+          <ExploreMoreSection />
 
           <section className="px-5 pb-16 max-w-5xl mx-auto text-center">
             <button
