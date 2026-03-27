@@ -1,9 +1,10 @@
 import { type ReactNode } from 'react'
+import type { AppPage } from '../lib/navigation'
 
 interface LayoutProps {
   children: ReactNode
-  currentPage: 'home' | 'today' | 'progress'
-  onNavigate: (page: 'home' | 'today' | 'progress') => void
+  currentPage: AppPage
+  onNavigate: (page: AppPage) => void
 }
 
 export default function Layout({ children, currentPage, onNavigate }: LayoutProps) {
@@ -13,6 +14,8 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
 
       <nav className="fixed bottom-0 left-0 right-0 ios-glass flex z-50">
         <button
+          type="button"
+          aria-current={currentPage === 'home' ? 'page' : undefined}
           onClick={() => onNavigate('home')}
           className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
             currentPage === 'home' ? 'text-system-blue' : 'text-gray-400 hover:text-gray-600'
@@ -24,6 +27,8 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
           Home
         </button>
         <button
+          type="button"
+          aria-current={currentPage === 'today' ? 'page' : undefined}
           onClick={() => onNavigate('today')}
           className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
             currentPage === 'today' ? 'text-system-blue' : 'text-gray-400 hover:text-gray-600'
@@ -35,6 +40,8 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
           Today
         </button>
         <button
+          type="button"
+          aria-current={currentPage === 'progress' ? 'page' : undefined}
           onClick={() => onNavigate('progress')}
           className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
             currentPage === 'progress' ? 'text-system-blue' : 'text-gray-400 hover:text-gray-600'

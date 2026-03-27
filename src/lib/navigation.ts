@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react'
-
 export const APP_PAGES = ['home', 'today', 'progress'] as const
 export type AppPage = (typeof APP_PAGES)[number]
 
@@ -12,27 +10,15 @@ export function getPageFromHash(hash: string): AppPage {
   return isAppPage(value) ? value : 'home'
 }
 
-export function useHashPageNavigation() {
-  const [page, setPage] = useState<AppPage>(() => getPageFromHash(window.location.hash))
+export function getPageFromPath(pathname: string): AppPage {
+  const value = pathname.replace(/^\/+/, '')
+  return isAppPage(value) ? value : 'home'
+}
 
-  useEffect(() => {
-    if (!isAppPage(window.location.hash.slice(1))) {
-      window.history.replaceState(null, '', '#home')
-    }
+export function getPathForPage(page: AppPage): `/${AppPage}` {
+  return `/${page}`
+}
 
-    const onHashChange = () => setPage(getPageFromHash(window.location.hash))
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
-
-  function navigateTo(nextPage: AppPage) {
-    if (window.location.hash === '#' + nextPage) {
-      setPage(nextPage)
-      return
-    }
-
-    window.location.hash = '#' + nextPage
-  }
-
-  return { page, navigateTo }
+export function getPathFromHash(hash: string): `/${AppPage}` {
+  return getPathForPage(getPageFromHash(hash))
 }

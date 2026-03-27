@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import LandingPage from './components/LandingPage'
 import FeedbackSheet from './components/FeedbackSheet'
 import { useAppStore } from './stores/app.store'
@@ -6,7 +7,7 @@ import { useTimerStore } from './stores/timer.store'
 import { scoreSingleTopic } from './lib/engine'
 import { useLocalAccountApi } from './lib/api/local/useAccountApi'
 import { localSubjectsApi } from './lib/api/local/subjects'
-import { useHashPageNavigation } from './lib/navigation'
+import { getPageFromPath, getPathForPage, type AppPage } from './lib/navigation'
 import Layout from './components/Layout'
 import Onboarding from './components/Onboarding'
 import TodayPlan from './components/TodayPlan'
@@ -33,13 +34,32 @@ function recoverActiveSession(): { scored: ScoredTopic; source: ScheduleSource; 
   return { scored, source: timerSession.source, scheduleItemId: timerSession.scheduleItemId }
 }
 
+function useAppNavigation() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const page = getPageFromPath(location.pathname)
+
+  useEffect(() => {
+    if (location.pathname === '/' || getPathForPage(page) !== location.pathname) {
+      navigate(getPathForPage(page), { replace: true })
+    }
+  }, [location.pathname, navigate, page])
+
+  return {
+    page,
+    navigateTo(nextPage: AppPage) {
+      navigate(getPathForPage(nextPage))
+    },
+  }
+}
+
 function App() {
   const init = useAppStore((s) => s.init)
   const account = useLocalAccountApi()
 
   const initTimer = useTimerStore((s) => s.initTimer)
 
-  const { page, navigateTo } = useHashPageNavigation()
+  const { page, navigateTo } = useAppNavigation()
   const [activeSession, setActiveSession] = useState<{
     scored: ScoredTopic
     source: ScheduleSource
@@ -185,20 +205,26 @@ function App() {
 
   return (
     <Layout currentPage={page} onNavigate={navigateTo}>
-      {page === 'today' && (
-        <TodayPlan
-          onStartSession={(scored, source, scheduleItemId) =>
-            setActiveSession({ scored, source, scheduleItemId })
-          }
-          onBrowseOffering={(offering, subject, paper) => {
-            setActiveOffering(offering)
-            setActiveSubject(subject)
-            setActivePaper(paper ?? null)
-          }}
-          onEditSubjects={() => setEditingSetup(true)}
+      <Routes>
+        <Route
+          path="/today"
+          element={(
+            <TodayPlan
+              onStartSession={(scored, source, scheduleItemId) =>
+                setActiveSession({ scored, source, scheduleItemId })
+              }
+              onBrowseOffering={(offering, subject, paper) => {
+                setActiveOffering(offering)
+                setActiveSubject(subject)
+                setActivePaper(paper ?? null)
+              }}
+              onEditSubjects={() => setEditingSetup(true)}
+            />
+          )}
         />
-      )}
-      {page === 'progress' && <Progress onGoToToday={() => navigateTo('today')} />}
+        <Route path="/progress" element={<Progress onGoToToday={() => navigateTo('today')} />} />
+        <Route path="*" element={<Navigate to={getPathForPage('today')} replace />} />
+      </Routes>
     </Layout>
   )
 }
