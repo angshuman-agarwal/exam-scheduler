@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import LandingPage from './components/LandingPage'
-import FeedbackSheet from './components/FeedbackSheet'
 import { useAppStore } from './stores/app.store'
 import { useTimerStore } from './stores/timer.store'
 import { scoreSingleTopic } from './lib/engine'
@@ -10,10 +9,11 @@ import { localSubjectsApi } from './lib/api/local/subjects'
 import { getPageFromPath, getPathForPage, type AppPage } from './lib/navigation'
 import Layout from './components/Layout'
 import Onboarding from './components/Onboarding'
-import TodayPlan from './components/TodayPlan'
 import SubjectPicker from './components/SubjectPicker'
 import SessionLogger from './components/SessionLogger'
-import Progress from './components/Progress'
+import HomeScreen from './screens/HomeScreen'
+import TodayScreen from './screens/TodayScreen'
+import ProgressScreen from './screens/ProgressScreen'
 import type { ScoredTopic, Offering, Subject, Paper, ScheduleSource } from './types'
 
 function recoverActiveSession(): { scored: ScoredTopic; source: ScheduleSource; scheduleItemId?: string } | null {
@@ -187,19 +187,16 @@ function App() {
   // Returning-user Home: full-screen front door, no bottom nav
   if (page === 'home') {
     return (
-      <>
-        <LandingPage
-          onboarded={true}
-          onGetStarted={() => {}}
-          onContinuePlanning={() => navigateTo('today')}
-          onViewProgress={() => navigateTo('progress')}
-          onEditSubjects={() => setEditingSetup(true)}
-          onOpenFeedback={() => setShowFeedback(true)}
-          nearestUserExam={nearestUserExam}
-          selectedSubjectDetails={selectedSubjectDetails}
-        />
-        {showFeedback && <FeedbackSheet onClose={() => setShowFeedback(false)} />}
-      </>
+      <HomeScreen
+        showFeedback={showFeedback}
+        onContinuePlanning={() => navigateTo('today')}
+        onViewProgress={() => navigateTo('progress')}
+        onEditSubjects={() => setEditingSetup(true)}
+        onOpenFeedback={() => setShowFeedback(true)}
+        onCloseFeedback={() => setShowFeedback(false)}
+        nearestUserExam={nearestUserExam}
+        selectedSubjectDetails={selectedSubjectDetails}
+      />
     )
   }
 
@@ -209,7 +206,7 @@ function App() {
         <Route
           path="/today"
           element={(
-            <TodayPlan
+            <TodayScreen
               onStartSession={(scored, source, scheduleItemId) =>
                 setActiveSession({ scored, source, scheduleItemId })
               }
@@ -222,7 +219,10 @@ function App() {
             />
           )}
         />
-        <Route path="/progress" element={<Progress onGoToToday={() => navigateTo('today')} />} />
+        <Route
+          path="/progress"
+          element={<ProgressScreen onGoToToday={() => navigateTo('today')} />}
+        />
         <Route path="*" element={<Navigate to={getPathForPage('today')} replace />} />
       </Routes>
     </Layout>
