@@ -217,6 +217,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                   return (
                     <div
                       key={item.id}
+                      data-testid="today-plan-item"
                       role="button"
                       tabIndex={0}
                       onClick={() => onStartSession(s, item.source, item.id)}
@@ -240,6 +241,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                         </p>
                       </div>
                       <button
+                        data-testid="today-plan-remove"
                         onClick={(e) => { e.stopPropagation(); plansApi.removeFromPlan(item.id) }}
                         className="shrink-0 p-1 text-red-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
                         aria-label="Remove from plan"
