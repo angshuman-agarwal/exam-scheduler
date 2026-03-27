@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import LandingPage from './components/LandingPage'
 import FeedbackSheet from './components/FeedbackSheet'
 import { useAppStore } from './stores/app.store'
 import { useTimerStore } from './stores/timer.store'
 import { scoreSingleTopic } from './lib/engine'
+import { localSubjectsApi } from './lib/api/local/subjects'
 import Layout from './components/Layout'
 import Onboarding from './components/Onboarding'
 import TodayPlan from './components/TodayPlan'
@@ -89,6 +90,29 @@ function App() {
   const subjects = useAppStore((s) => s.subjects)
   const boards = useAppStore((s) => s.boards)
   const selectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
+  const nearestUserExam = useMemo(
+    () =>
+      localSubjectsApi.getNearestExamSummary({
+        papers,
+        offerings,
+        subjects,
+        boards,
+        selectedOfferingIds,
+        today: new Date(),
+      }),
+    [boards, offerings, papers, selectedOfferingIds, subjects],
+  )
+
+  const selectedSubjectDetails = useMemo(
+    () =>
+      localSubjectsApi.getSelectedSubjectSummaries({
+        offerings,
+        subjects,
+        boards,
+        selectedOfferingIds,
+      }),
+    [boards, offerings, selectedOfferingIds, subjects],
+  )
 
   useEffect(() => {
     const doInit = async () => {
@@ -171,45 +195,6 @@ function App() {
 
   // ── App shell (bottom nav visible) ──
 
-  // Compute returning-user data for app Home
-  const selectedIds = new Set(selectedOfferingIds)
-
-  const nearestUserExam = (() => {
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    let nearest: { days: number; subjectName: string; paperName: string; board: string } | null = null
-    for (const p of papers) {
-      if (!selectedIds.has(p.offeringId)) continue
-      const exam = new Date(p.examDate + 'T00:00:00')
-      const diff = Math.ceil((exam.getTime() - today.getTime()) / 86_400_000)
-      if (diff > 0 && (!nearest || diff < nearest.days)) {
-        const offering = offerings.find((o) => o.id === p.offeringId)
-        const subject = offering ? subjects.find((s) => s.id === offering.subjectId) : null
-        const board = offering ? boards.find((b) => b.id === offering.boardId) : null
-        nearest = { days: diff, subjectName: subject?.name ?? '', paperName: p.name, board: board?.name ?? '' }
-      }
-    }
-    return nearest
-  })()
-
-  // Build deduplicated selected subject details
-  const selectedSubjectDetails = (() => {
-    const seen = new Set<string>()
-    const result: { name: string; board: string }[] = []
-    for (const oid of selectedOfferingIds) {
-      const offering = offerings.find((o) => o.id === oid)
-      if (!offering) continue
-      const key = `${offering.subjectId}|${offering.boardId}`
-      if (seen.has(key)) continue
-      seen.add(key)
-      const subject = subjects.find((s) => s.id === offering.subjectId)
-      const board = boards.find((b) => b.id === offering.boardId)
-      if (subject && board) result.push({ name: subject.name, board: board.name })
-    }
-    result.sort((a, b) => a.name.localeCompare(b.name))
-    return result
-  })()
-
   // Returning-user Home: full-screen front door, no bottom nav
   if (page === 'home') {
     return (
@@ -250,4 +235,3 @@ function App() {
 }
 
 export default App
-

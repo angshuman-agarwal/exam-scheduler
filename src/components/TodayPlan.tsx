@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, scoreAllTopics, autoFillPlanItems, getPlanningMode, nearestExamDays as calcNearestExamDays } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
+import { localPlansApi } from '../lib/api/local/plans'
 import NudgeBanner from './NudgeBanner'
 import ExamCalendar from './ExamCalendar'
 import QualificationChip from './QualificationChip'
@@ -117,7 +118,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scored, subjects, todayKey])
 
-  const planItems = planDay === todayKey ? dailyPlan : []
+  const planItems = localPlansApi.getPlanItems({ dailyPlan, planDay, today })
   const planTopicIds = new Set(planItems.map((i) => i.topicId))
   const planFull = planItems.length >= 4
   const hasUserItems = planItems.some((i) => i.source !== 'auto')

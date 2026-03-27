@@ -1,7 +1,6 @@
-import { useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, daysSince } from '../lib/engine'
-import { getLocalDayKey } from '../lib/date'
+import { localPlansApi } from '../lib/api/local/plans'
 import QualificationChip from './QualificationChip'
 import type { ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../types'
 
@@ -169,8 +168,7 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
   const subjects = useAppStore((s) => s.subjects)
 
   const today = new Date()
-  const todayKey = getLocalDayKey(today)
-  const planItems = planDay === todayKey ? dailyPlan : []
+  const planItems = localPlansApi.getPlanItems({ dailyPlan, planDay, today })
   const planTopicIds = new Set(planItems.map((i) => i.topicId))
   const planFull = planItems.length >= 4
 
@@ -197,14 +195,14 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
     })
     .filter(Boolean) as { item: typeof planItems[number]; scored: ScoredTopic }[]
 
-  const swapCandidate = useMemo(() => {
+  const swapCandidate = (() => {
     if (resolvedPlan.length === 0) return null
     return [...resolvedPlan].sort((a, b) => {
       if (a.item.source === 'auto' && b.item.source !== 'auto') return -1
       if (a.item.source !== 'auto' && b.item.source === 'auto') return 1
       return a.scored.score - b.scored.score
     })[0]
-  }, [resolvedPlan])
+  })()
 
   const handleSwap = (topicId: string) => {
     if (!swapCandidate) return
