@@ -6,6 +6,7 @@ import { useTimerStore } from './stores/timer.store'
 import { scoreSingleTopic } from './lib/engine'
 import { useLocalAccountApi } from './lib/api/local/useAccountApi'
 import { localSubjectsApi } from './lib/api/local/subjects'
+import { useHashPageNavigation } from './lib/navigation'
 import Layout from './components/Layout'
 import Onboarding from './components/Onboarding'
 import TodayPlan from './components/TodayPlan'
@@ -13,18 +14,6 @@ import SubjectPicker from './components/SubjectPicker'
 import SessionLogger from './components/SessionLogger'
 import Progress from './components/Progress'
 import type { ScoredTopic, Offering, Subject, Paper, ScheduleSource } from './types'
-
-const PAGES = ['home', 'today', 'progress'] as const
-type Page = (typeof PAGES)[number]
-
-function isPageHash(value: string): value is Page {
-  return (PAGES as readonly string[]).includes(value)
-}
-
-function getPageFromHash(): Page {
-  const h = window.location.hash.slice(1)
-  return isPageHash(h) ? h : 'home'
-}
 
 function recoverActiveSession(): { scored: ScoredTopic; source: ScheduleSource; scheduleItemId?: string } | null {
   const timerSession = useTimerStore.getState().session
@@ -50,7 +39,7 @@ function App() {
 
   const initTimer = useTimerStore((s) => s.initTimer)
 
-  const [page, setPage] = useState<Page>(getPageFromHash)
+  const { page, navigateTo } = useHashPageNavigation()
   const [activeSession, setActiveSession] = useState<{
     scored: ScoredTopic
     source: ScheduleSource
@@ -64,26 +53,6 @@ function App() {
   const [showFeedback, setShowFeedback] = useState(false)
   const [recoveryDone, setRecoveryDone] = useState(false)
   const recoveryRan = useRef(false)
-
-  function navigateTo(p: Page) {
-    // Same-hash guard: no hashchange fires, so sync state directly as a
-    // defensive recovery in case React state drifted from the URL.
-    if (window.location.hash === '#' + p) {
-      setPage(p)
-      return
-    }
-    // URL-driven: setting hash fires hashchange, whose listener calls setPage.
-    window.location.hash = '#' + p
-  }
-
-  useEffect(() => {
-    if (!isPageHash(window.location.hash.slice(1))) {
-      window.history.replaceState(null, '', '#home')
-    }
-    const onHashChange = () => setPage(getPageFromHash())
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
 
   const papers = useAppStore((s) => s.papers)
   const offerings = useAppStore((s) => s.offerings)
