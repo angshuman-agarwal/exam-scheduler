@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, toMidnightUTC } from '../lib/engine'
+import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
 import { getLocalDayKey } from '../lib/date'
 import QualificationChip from './QualificationChip'
 import type { Topic, Paper, Session, Subject, Offering, Note } from '../types'
@@ -739,7 +740,7 @@ function BestNextFocus({
 // -- Main --
 
 export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
-  const studyMode = useAppStore((s) => s.studyMode)
+  const { studyMode } = useLocalAccountApi()
   const topics = useAppStore((s) => s.topics)
   const sessions = useAppStore((s) => s.sessions)
   const subjects = useAppStore((s) => s.subjects)

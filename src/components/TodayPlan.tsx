@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, scoreAllTopics, autoFillPlanItems, getPlanningMode, nearestExamDays as calcNearestExamDays } from '../lib/engine'
+import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
 import { getLocalDayKey } from '../lib/date'
 import { useLocalPlansApi } from '../lib/api/local/usePlansApi'
 import NudgeBanner from './NudgeBanner'
@@ -37,10 +38,8 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
   const subjects = useAppStore((s) => s.subjects)
   const allOfferings = useAppStore((s) => s.offerings)
   const selectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
-  const initialized = useAppStore((s) => s.initialized)
   const resetAll = useAppStore((s) => s.resetAll)
-
-  const studyMode = useAppStore((s) => s.studyMode)
+  const { initialized, studyMode } = useLocalAccountApi()
   const plansApi = useLocalPlansApi()
   const [expanded, setExpanded] = useState<string | null>(null)
 

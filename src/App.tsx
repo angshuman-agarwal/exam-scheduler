@@ -4,6 +4,7 @@ import FeedbackSheet from './components/FeedbackSheet'
 import { useAppStore } from './stores/app.store'
 import { useTimerStore } from './stores/timer.store'
 import { scoreSingleTopic } from './lib/engine'
+import { useLocalAccountApi } from './lib/api/local/useAccountApi'
 import { localSubjectsApi } from './lib/api/local/subjects'
 import Layout from './components/Layout'
 import Onboarding from './components/Onboarding'
@@ -45,8 +46,7 @@ function recoverActiveSession(): { scored: ScoredTopic; source: ScheduleSource; 
 
 function App() {
   const init = useAppStore((s) => s.init)
-  const initialized = useAppStore((s) => s.initialized)
-  const onboarded = useAppStore((s) => s.onboarded)
+  const account = useLocalAccountApi()
 
   const initTimer = useTimerStore((s) => s.initTimer)
 
@@ -131,7 +131,7 @@ function App() {
     doInit()
   }, [init, initTimer])
 
-  if (!initialized || !recoveryDone) {
+  if (!account.initialized || !recoveryDone) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-400">Loading...</p>
@@ -142,7 +142,7 @@ function App() {
   // ── Pre-app surfaces (no bottom nav) ──
 
   // Non-onboarded: marketing landing or initial onboarding
-  if (!onboarded) {
+  if (!account.onboarded) {
     if (showOnboarding) {
       return (
         <Onboarding

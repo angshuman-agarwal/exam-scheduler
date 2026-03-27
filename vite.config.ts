@@ -9,6 +9,10 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 
 export default defineConfig({
   base: '/',
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
   define: {
     __APP_VERSION__: JSON.stringify(packageJson.version),
   },

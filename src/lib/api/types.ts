@@ -36,3 +36,9 @@ export interface PlansApi {
     today: Date
   }): ScheduleItem[]
 }
+
+export interface AccountContext {
+  initialized: boolean
+  onboarded: boolean
+  studyMode: 'gcse' | 'alevel' | null
+}

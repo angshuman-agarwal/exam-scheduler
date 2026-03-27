@@ -1,5 +1,6 @@
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, daysSince } from '../lib/engine'
+import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
 import { useLocalPlansApi } from '../lib/api/local/usePlansApi'
 import QualificationChip from './QualificationChip'
 import type { ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../types'
@@ -156,12 +157,12 @@ function CompactRow({
 }
 
 export default function SubjectPicker({ offering, subject, paper, onBack, onStartSession }: SubjectPickerProps) {
-  const studyMode = useAppStore((s) => s.studyMode)
   const getTopicsForOffering = useAppStore((s) => s.getTopicsForOffering)
   const topics = useAppStore((s) => s.topics)
   const papers = useAppStore((s) => s.papers)
   const allOfferings = useAppStore((s) => s.offerings)
   const subjects = useAppStore((s) => s.subjects)
+  const { studyMode } = useLocalAccountApi()
   const plansApi = useLocalPlansApi()
 
   const today = new Date()

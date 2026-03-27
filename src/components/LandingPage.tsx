@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import seedData from '../data/subjects.json'
 import landingCopy from '../data/landing-copy.json'
-import { useAppStore } from '../stores/app.store'
+import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
 import QualificationChip from './QualificationChip'
 import { homeUrgencyTone } from './landing-page-urgency'
 
@@ -381,7 +381,7 @@ export default function LandingPage({
   nearestUserExam,
   selectedSubjectDetails,
 }: LandingPageProps) {
-  const studyMode = useAppStore(s => s.studyMode)
+  const { studyMode } = useLocalAccountApi()
   const countdown = useMemo(() => getCountdown(), [])
   const demoRef = useRef<HTMLDivElement>(null)
 
