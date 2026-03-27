@@ -1,34 +1,15 @@
-import { useEffect } from 'react'
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import LandingPage from './components/LandingPage'
 import { useLocalAccountApi } from './lib/api/local/useAccountApi'
-import { getPageFromPath, getPathForPage, type AppPage } from './lib/navigation'
+import { getPathForPage } from './lib/navigation'
 import { useAppBootstrap } from './hooks/useAppBootstrap'
+import { useAppNavigation } from './hooks/useAppNavigation'
 import { useAppShell } from './hooks/useAppShell'
 import Layout from './components/Layout'
 import HomeScreen from './screens/HomeScreen'
 import TodayScreen from './screens/TodayScreen'
 import ProgressScreen from './screens/ProgressScreen'
 import AppOverlays from './screens/AppOverlays'
-
-function useAppNavigation() {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const page = getPageFromPath(location.pathname)
-
-  useEffect(() => {
-    if (location.pathname === '/' || getPathForPage(page) !== location.pathname) {
-      navigate(getPathForPage(page), { replace: true })
-    }
-  }, [location.pathname, navigate, page])
-
-  return {
-    page,
-    navigateTo(nextPage: AppPage) {
-      navigate(getPathForPage(nextPage))
-    },
-  }
-}
 
 function App() {
   const account = useLocalAccountApi()
