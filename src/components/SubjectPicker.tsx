@@ -1,6 +1,6 @@
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, daysSince } from '../lib/engine'
-import { localPlansApi } from '../lib/api/local/plans'
+import { useLocalPlansApi } from '../lib/api/local/usePlansApi'
 import QualificationChip from './QualificationChip'
 import type { ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../types'
 
@@ -158,17 +158,14 @@ function CompactRow({
 export default function SubjectPicker({ offering, subject, paper, onBack, onStartSession }: SubjectPickerProps) {
   const studyMode = useAppStore((s) => s.studyMode)
   const getTopicsForOffering = useAppStore((s) => s.getTopicsForOffering)
-  const dailyPlan = useAppStore((s) => s.dailyPlan)
-  const planDay = useAppStore((s) => s.planDay)
-  const addToPlan = useAppStore((s) => s.addToPlan)
-  const removeFromPlan = useAppStore((s) => s.removeFromPlan)
   const topics = useAppStore((s) => s.topics)
   const papers = useAppStore((s) => s.papers)
   const allOfferings = useAppStore((s) => s.offerings)
   const subjects = useAppStore((s) => s.subjects)
+  const plansApi = useLocalPlansApi()
 
   const today = new Date()
-  const planItems = localPlansApi.getPlanItems({ dailyPlan, planDay, today })
+  const planItems = plansApi.getPlanItems(today)
   const planTopicIds = new Set(planItems.map((i) => i.topicId))
   const planFull = planItems.length >= 4
 
@@ -206,8 +203,8 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
 
   const handleSwap = (topicId: string) => {
     if (!swapCandidate) return
-    removeFromPlan(swapCandidate.item.id)
-    setTimeout(() => addToPlan(topicId, 'manual', new Date()), 0)
+    plansApi.removeFromPlan(swapCandidate.item.id)
+    setTimeout(() => plansApi.addToPlan(topicId, 'manual', new Date()), 0)
   }
 
   const offeringScored = getTopicsForOffering(offering.id, today)
@@ -275,7 +272,7 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
                 />
                 <span className="text-sm text-gray-800 truncate flex-1">{s.topic.name}</span>
                 <button
-                  onClick={(e) => { e.stopPropagation(); removeFromPlan(item.id) }}
+                  onClick={(e) => { e.stopPropagation(); plansApi.removeFromPlan(item.id) }}
                   className="shrink-0 p-1 text-red-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
                   aria-label="Remove from plan"
                 >
@@ -307,7 +304,7 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
                 scored={scored}
                 inPlan={planTopicIds.has(scored.topic.id)}
                 planFull={planFull}
-                onAdd={() => addToPlan(scored.topic.id, 'manual', new Date())}
+                onAdd={() => plansApi.addToPlan(scored.topic.id, 'manual', new Date())}
                 onSwap={swapCandidate ? () => handleSwap(scored.topic.id) : undefined}
                 swapName={swapCandidate?.scored.topic.name}
                 today={today}
@@ -329,7 +326,7 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
                     scored={scored}
                     inPlan={planTopicIds.has(scored.topic.id)}
                     planFull={planFull}
-                    onAdd={() => addToPlan(scored.topic.id, 'manual', new Date())}
+                    onAdd={() => plansApi.addToPlan(scored.topic.id, 'manual', new Date())}
                     onSwap={swapCandidate ? () => handleSwap(scored.topic.id) : undefined}
                     swapName={swapCandidate?.scored.topic.name}
                     today={today}

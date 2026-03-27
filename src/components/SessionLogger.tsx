@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { useTimerStore } from '../stores/timer.store'
+import { useLocalPlansApi } from '../lib/api/local/usePlansApi'
 import { useWakeLock } from '../lib/useWakeLock'
 import QualificationChip from './QualificationChip'
 import type { ScoredTopic, ScheduleSource } from '../types'
@@ -226,7 +227,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
   const studyMode = useAppStore((s) => s.studyMode)
   const logSession = useAppStore((s) => s.logSession)
   const addNote = useAppStore((s) => s.addNote)
-  const removeFromPlan = useAppStore((s) => s.removeFromPlan)
+  const plansApi = useLocalPlansApi()
 
   const session = useTimerStore((s) => s.session)
   const settings = useTimerStore((s) => s.settings)
@@ -350,7 +351,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
       setNoteText('')
     }
     if (scheduleItemId) {
-      removeFromPlan(scheduleItemId)
+      plansApi.removeFromPlan(scheduleItemId)
     }
     setSubmitted(true)
   }
