@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
-import { useAppStore } from '../stores/app.store'
 import { daysRemaining, toMidnightUTC } from '../lib/engine'
-import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
+import { useLocalProgressApi } from '../lib/api/local/useProgressApi'
 import { getLocalDayKey } from '../lib/date'
 import QualificationChip from './QualificationChip'
 import type { Topic, Paper, Session, Subject, Offering, Note } from '../types'
@@ -740,14 +739,16 @@ function BestNextFocus({
 // -- Main --
 
 export default function Progress({ onGoToToday }: { onGoToToday: () => void }) {
-  const { studyMode } = useLocalAccountApi()
-  const topics = useAppStore((s) => s.topics)
-  const sessions = useAppStore((s) => s.sessions)
-  const subjects = useAppStore((s) => s.subjects)
-  const papers = useAppStore((s) => s.papers)
-  const allOfferings = useAppStore((s) => s.offerings)
-  const selectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
-  const notes = useAppStore((s) => s.notes)
+  const {
+    studyMode,
+    topics,
+    sessions,
+    subjects,
+    papers,
+    offerings: allOfferings,
+    selectedOfferingIds,
+    notes,
+  } = useLocalProgressApi()
 
   const [expanded, setExpanded] = useState<string | null>(null)
 
