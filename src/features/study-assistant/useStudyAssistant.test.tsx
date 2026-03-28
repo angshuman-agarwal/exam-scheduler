@@ -21,9 +21,11 @@ function requireLatest(
 describe('study assistant state', () => {
   it('creates a closed idle initial state', () => {
     expect(createInitialStudyAssistantState()).toEqual({
+      isEnabled: true,
       isOpen: false,
       mode: 'search',
       status: 'idle',
+      tutoringReady: false,
       error: null,
       result: {
         search: null,
@@ -130,6 +132,48 @@ describe('study assistant state', () => {
 
     expect(updated.status).toBe('error')
     expect(updated.error).toBe('Topic not found.')
+
+    await act(async () => {
+      root.unmount()
+    })
+  })
+
+  it('maps missing tutoring configuration to a graceful message', async () => {
+    const api: TutoringApi = {
+      search: vi.fn().mockRejectedValue(
+        new TutoringApiError('TUTORING_API_NOT_CONFIGURED', 'Tutoring API base URL is not configured.'),
+      ),
+      lookup: vi.fn(),
+      quiz: vi.fn(),
+      markscheme: vi.fn(),
+      grade: vi.fn(),
+    }
+
+    let latest: ReturnType<typeof useStudyAssistant> | null = null
+    function Harness({ onValue }: { onValue: (value: ReturnType<typeof useStudyAssistant>) => void }) {
+      const value = useStudyAssistant(api)
+
+      useEffect(() => {
+        onValue(value)
+      }, [onValue, value])
+
+      return null
+    }
+
+    const container = document.createElement('div')
+    const root = createRoot(container)
+
+    await act(async () => {
+      root.render(<Harness onValue={(value) => { latest = value }} />)
+    })
+
+    const current = requireLatest(latest)
+
+    await act(async () => {
+      await expect(current.runSearch({ query: 'photosynthesis' })).rejects.toBeInstanceOf(TutoringApiError)
+    })
+
+    expect(requireLatest(latest).error).toBe('Tutor tools are not connected yet.')
 
     await act(async () => {
       root.unmount()

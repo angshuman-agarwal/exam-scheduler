@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { TutoringApiError, type GradeInput, type GradeResult, type LookupInput, type LookupResult, type MarkSchemeInput, type MarkSchemeResult, type QuizInput, type QuizResult, type SearchInput, type SearchResultItem, type TutoringApi } from '../../lib/api/types'
 import { useTutoringApi } from '../../lib/api/local/useTutoringApi'
+import { getStudyAssistantAvailability } from './config'
 import type { StudyAssistantActions, StudyAssistantMode, StudyAssistantResultState, StudyAssistantState } from './types'
 
 function createEmptyResultState(): StudyAssistantResultState {
@@ -14,10 +15,14 @@ function createEmptyResultState(): StudyAssistantResultState {
 }
 
 export function createInitialStudyAssistantState(): StudyAssistantState {
+  const availability = getStudyAssistantAvailability()
+
   return {
+    isEnabled: availability.enabled,
     isOpen: false,
     mode: 'search',
     status: 'idle',
+    tutoringReady: availability.tutoringReady,
     error: null,
     result: createEmptyResultState(),
   }
@@ -53,7 +58,12 @@ export function useStudyAssistant(api?: TutoringApi): StudyAssistantState & Stud
       }))
       return result
     } catch (error) {
-      const message = error instanceof TutoringApiError ? error.message : 'Study assistant request failed.'
+      const message =
+        error instanceof TutoringApiError
+          ? error.code === 'TUTORING_API_NOT_CONFIGURED'
+            ? 'Tutor tools are not connected yet.'
+            : error.message
+          : 'Study assistant request failed.'
       setState((current) => ({
         ...current,
         isOpen: true,

@@ -2,17 +2,29 @@ import { type ReactNode } from 'react'
 import type { AppPage } from '../lib/navigation'
 
 interface LayoutProps {
+  assistantDocked?: boolean
   children: ReactNode
   currentPage: AppPage
   onNavigate: (page: AppPage) => void
 }
 
-export default function Layout({ children, currentPage, onNavigate }: LayoutProps) {
+export default function Layout({
+  assistantDocked = false,
+  children,
+  currentPage,
+  onNavigate,
+}: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1 overflow-y-auto pb-20">{children}</main>
+      <main
+        className={`flex-1 overflow-y-auto pb-20 transition-[padding] duration-300 ${
+          assistantDocked ? 'lg:pr-[24.5rem]' : ''
+        }`}
+      >
+        {children}
+      </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 ios-glass flex z-50">
+      <nav className="fixed bottom-0 left-0 right-0 ios-glass flex z-50 lg:right-[24.5rem] lg:left-0">
         <button
           type="button"
           aria-current={currentPage === 'home' ? 'page' : undefined}

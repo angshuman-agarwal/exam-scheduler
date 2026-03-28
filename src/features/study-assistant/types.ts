@@ -11,7 +11,7 @@ import type {
   SearchResultItem,
 } from '../../lib/api/types'
 
-export type StudyAssistantMode = 'lookup' | 'search' | 'quiz' | 'markscheme' | 'grade'
+export type StudyAssistantMode = 'lookup' | 'search' | 'quiz' | 'markscheme' | 'grade' | 'progress'
 
 export type StudyAssistantStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -24,9 +24,11 @@ export interface StudyAssistantResultState {
 }
 
 export interface StudyAssistantState {
+  isEnabled: boolean
   isOpen: boolean
   mode: StudyAssistantMode
   status: StudyAssistantStatus
+  tutoringReady: boolean
   error: string | null
   result: StudyAssistantResultState
 }
@@ -42,3 +44,5 @@ export interface StudyAssistantActions {
   runSearch: (input: SearchInput) => Promise<SearchResultItem[]>
   setMode: (mode: StudyAssistantMode) => void
 }
+
+export type StudyAssistantController = StudyAssistantState & StudyAssistantActions

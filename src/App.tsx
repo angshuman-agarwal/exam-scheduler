@@ -10,12 +10,15 @@ import HomeScreen from './screens/HomeScreen'
 import TodayScreen from './screens/TodayScreen'
 import ProgressScreen from './screens/ProgressScreen'
 import AppOverlays from './screens/AppOverlays'
+import StudyAssistantPresence from './features/study-assistant/StudyAssistantPresence'
+import { useStudyAssistant } from './features/study-assistant/useStudyAssistant'
 
 function App() {
   const account = useLocalAccountApi()
   const { recoveryDone, recoveredSession } = useAppBootstrap()
   const { page, navigateTo } = useAppNavigation()
   const shell = useAppShell({ recoveredSession, navigateTo })
+  const assistant = useStudyAssistant()
 
   if (!account.initialized || !recoveryDone) {
     return (
@@ -56,21 +59,32 @@ function App() {
   // Returning-user Home: full-screen front door, no bottom nav
   if (page === 'home') {
     return (
-      <HomeScreen
-        showFeedback={shell.showFeedback}
-        onContinuePlanning={shell.goToToday}
-        onViewProgress={shell.goToProgress}
-        onEditSubjects={shell.openEditSetup}
-        onOpenFeedback={shell.openFeedback}
-        onCloseFeedback={shell.closeFeedback}
-        nearestUserExam={shell.nearestUserExam}
-        selectedSubjectDetails={shell.selectedSubjectDetails}
-      />
+      <div className={assistant.isEnabled && assistant.isOpen ? 'lg:pr-[24.5rem] transition-[padding] duration-300' : ''}>
+        <HomeScreen
+          showFeedback={shell.showFeedback}
+          onContinuePlanning={shell.goToToday}
+          onViewProgress={shell.goToProgress}
+          onEditSubjects={shell.openEditSetup}
+          onOpenFeedback={shell.openFeedback}
+          onCloseFeedback={shell.closeFeedback}
+          nearestUserExam={shell.nearestUserExam}
+          selectedSubjectDetails={shell.selectedSubjectDetails}
+        />
+        <StudyAssistantPresence
+          assistant={assistant}
+          currentPage="home"
+          subjectCount={shell.selectedSubjectDetails.length}
+        />
+      </div>
     )
   }
 
   return (
-    <Layout currentPage={page} onNavigate={navigateTo}>
+    <Layout
+      assistantDocked={assistant.isEnabled && assistant.isOpen}
+      currentPage={page}
+      onNavigate={navigateTo}
+    >
       <Routes>
         <Route
           path="/today"
@@ -88,6 +102,11 @@ function App() {
         />
         <Route path="*" element={<Navigate to={getPathForPage('today')} replace />} />
       </Routes>
+      <StudyAssistantPresence
+        assistant={assistant}
+        currentPage={page}
+        subjectCount={shell.selectedSubjectDetails.length}
+      />
     </Layout>
   )
 }

@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Assistant Concept</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f8ff;
+        --panel: rgba(255, 255, 255, 0.9);
+        --line: rgba(182, 193, 224, 0.55);
+        --text: #15213d;
+        --muted: #64748b;
+        --blue: #305dff;
+        --blue-soft: #e8efff;
+        --cyan: #55d9ff;
+        --purple: #6674ff;
+        --shadow: 0 20px 60px rgba(52, 84, 190, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(74, 144, 255, 0.12), transparent 28%),
+          radial-gradient(circle at bottom right, rgba(124, 92, 255, 0.12), transparent 24%),
+          linear-gradient(180deg, #fbfcff 0%, #f4f7ff 100%);
+        display: grid;
+        place-items: center;
+        padding: 28px;
+      }
+
+      .frame {
+        width: 1360px;
+        height: 860px;
+        border-radius: 34px;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid rgba(188, 201, 237, 0.75);
+        box-shadow:
+          0 28px 100px rgba(66, 94, 178, 0.22),
+          inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(245, 248, 255, 0.94));
+      }
+
+      .sidebar {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 244px;
+        padding: 26px 18px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(246, 248, 255, 0.9));
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .brand {
+        padding: 10px 14px 18px;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        display: inline-grid;
+        place-items: center;
+        background: linear-gradient(135deg, #3f6eff, #2447df);
+        color: white;
+        font-weight: 800;
+        margin-bottom: 14px;
+        box-shadow: 0 12px 24px rgba(48, 93, 255, 0.25);
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .brand p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .nav {
+        display: grid;
+        gap: 8px;
+        padding: 0 10px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 14px;
+        border-radius: 16px;
+        color: #5f6f93;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .nav-item.active {
+        background: linear-gradient(180deg, rgba(48, 93, 255, 0.12), rgba(48, 93, 255, 0.07));
+        color: var(--blue);
+      }
+
+      .nav-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 8px;
+        background: rgba(104, 127, 199, 0.12);
+      }
+
+      .sidebar-card {
+        margin-top: auto;
+        padding: 18px;
+        border-radius: 22px;
+        background: linear-gradient(180deg, rgba(238, 243, 255, 0.92), rgba(229, 235, 255, 0.85));
+        border: 1px solid rgba(196, 207, 241, 0.6);
+      }
+
+      .sidebar-card strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+
+      .sidebar-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .sidebar-card button {
+        margin-top: 16px;
+        width: 100%;
+        border: 0;
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: linear-gradient(135deg, #4e73ff, #305dff);
+        color: white;
+        font-weight: 700;
+      }
+
+      .content {
+        position: absolute;
+        inset: 0 0 0 244px;
+        padding: 34px 38px 34px 36px;
+        background:
+          radial-gradient(circle at 20% 18%, rgba(81, 151, 255, 0.1), transparent 28%),
+          linear-gradient(180deg, rgba(251, 252, 255, 0.92), rgba(245, 248, 255, 0.94));
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+      }
+
+      .headline h2 {
+        margin: 0;
+        font-size: 34px;
+        letter-spacing: -0.04em;
+      }
+
+      .headline p {
+        margin: 8px 0 0;
+        color: var(--muted);
+      }
+
+      .top-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .ghost {
+        border: 1px solid rgba(196, 207, 241, 0.85);
+        background: rgba(255, 255, 255, 0.78);
+        color: #516182;
+        border-radius: 16px;
+        padding: 12px 18px;
+        font-weight: 700;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.25fr 0.9fr;
+        gap: 22px;
+        margin-bottom: 22px;
+      }
+
+      .hero-card {
+        min-height: 220px;
+        border-radius: 30px;
+        padding: 28px 30px;
+        background: linear-gradient(135deg, #4466f2, #6674ff 54%, #7c5cff);
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 26px 54px rgba(68, 102, 242, 0.3);
+      }
+
+      .hero-card::after {
+        content: "";
+        position: absolute;
+        right: 22px;
+        bottom: -24px;
+        width: 160px;
+        height: 160px;
+        border-radius: 42px;
+        background: rgba(255, 255, 255, 0.08);
+        filter: blur(2px);
+      }
+
+      .eyebrow {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .hero-card h3 {
+        margin: 18px 0 8px;
+        font-size: 42px;
+        letter-spacing: -0.05em;
+      }
+
+      .hero-card p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.86);
+        max-width: 420px;
+        line-height: 1.5;
+      }
+
+      .hero-metric {
+        margin-top: 28px;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+
+      .hero-metric strong {
+        font-size: 66px;
+        line-height: 0.95;
+        letter-spacing: -0.06em;
+      }
+
+      .insight-card {
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.76);
+        border: 1px solid rgba(196, 207, 241, 0.8);
+        padding: 24px;
+        box-shadow: var(--shadow);
+      }
+
+      .insight-card h4 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .insight-card p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        line-height: 1.55;
+        font-size: 14px;
+      }
+
+      .metric-list {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .metric {
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: rgba(244, 247, 255, 0.9);
+      }
+
+      .metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+
+      .metric strong {
+        font-size: 28px;
+        letter-spacing: -0.04em;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 22px;
+      }
+
+      .section {
+        border-radius: 28px;
+        border: 1px solid rgba(196, 207, 241, 0.85);
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: var(--shadow);
+        padding: 24px;
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+
+      .section-header h4 {
+        margin: 0;
+        font-size: 19px;
+      }
+
+      .section-header span {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .topic {
+        padding: 16px 0;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        border-top: 1px solid rgba(220, 227, 247, 0.8);
+      }
+
+      .topic:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .topic strong {
+        display: block;
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+
+      .topic p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .topic-badge {
+        align-self: start;
+        padding: 8px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .critical {
+        background: #ffe5e6;
+        color: #d43c51;
+      }
+
+      .watch {
+        background: #fff1d9;
+        color: #d48a1c;
+      }
+
+      .tip-card {
+        min-height: 240px;
+        background: linear-gradient(180deg, rgba(16, 24, 48, 0.94), rgba(25, 37, 75, 0.96));
+        color: white;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .tip-card::before {
+        content: "";
+        position: absolute;
+        inset: auto -40px -80px auto;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(85, 217, 255, 0.18), rgba(85, 217, 255, 0));
+      }
+
+      .tip-card p {
+        color: rgba(225, 233, 255, 0.8);
+      }
+
+      .tip-card button {
+        margin-top: 18px;
+        border: 0;
+        border-radius: 16px;
+        padding: 13px 16px;
+        background: white;
+        color: #1b2f71;
+        font-weight: 800;
+      }
+
+      .assistant {
+        position: absolute;
+        top: 24px;
+        right: 24px;
+        width: 386px;
+        height: calc(100% - 48px);
+        border-radius: 30px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 250, 255, 0.95));
+        border: 1px solid rgba(196, 207, 241, 0.85);
+        box-shadow: 0 30px 90px rgba(57, 78, 155, 0.22);
+        backdrop-filter: blur(22px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .assistant-header {
+        padding: 18px 18px 16px;
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        align-items: flex-start;
+        border-bottom: 1px solid rgba(221, 228, 247, 0.9);
+      }
+
+      .assistant-id {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .orb {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.08) 24%),
+          linear-gradient(135deg, var(--cyan), var(--purple) 56%, #3a62ff);
+        box-shadow:
+          inset 0 2px 8px rgba(255, 255, 255, 0.35),
+          0 16px 34px rgba(82, 120, 255, 0.34);
+        position: relative;
+      }
+
+      .orb::after {
+        content: "";
+        position: absolute;
+        inset: -7px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(85, 217, 255, 0.18), rgba(85, 217, 255, 0));
+        z-index: -1;
+      }
+
+      .assistant-title strong {
+        display: block;
+        font-size: 16px;
+        letter-spacing: -0.02em;
+      }
+
+      .assistant-title span {
+        display: block;
+        color: var(--muted);
+        margin-top: 4px;
+        font-size: 13px;
+      }
+
+      .close {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 0;
+        background: rgba(232, 237, 252, 0.88);
+        color: #60729f;
+        font-size: 22px;
+      }
+
+      .messages {
+        flex: 1;
+        overflow: hidden;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        background:
+          linear-gradient(180deg, rgba(251, 252, 255, 0.5), rgba(243, 246, 255, 0.65));
+      }
+
+      .bubble {
+        max-width: 88%;
+        padding: 14px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        line-height: 1.52;
+      }
+
+      .assistant-bubble {
+        background: rgba(237, 242, 255, 0.9);
+        color: #21304f;
+        border-top-left-radius: 8px;
+      }
+
+      .user-bubble {
+        margin-left: auto;
+        background: linear-gradient(135deg, #305dff, #4f76ff);
+        color: white;
+        border-top-right-radius: 8px;
+        box-shadow: 0 18px 30px rgba(48, 93, 255, 0.2);
+      }
+
+      .response-card {
+        border-radius: 24px;
+        background: white;
+        border: 1px solid rgba(215, 224, 247, 0.9);
+        box-shadow: 0 16px 32px rgba(64, 87, 162, 0.12);
+        overflow: hidden;
+      }
+
+      .response-head {
+        padding: 14px 16px;
+        background: linear-gradient(180deg, rgba(234, 240, 255, 0.95), rgba(245, 247, 255, 0.95));
+        border-bottom: 1px solid rgba(220, 228, 247, 0.9);
+      }
+
+      .response-head strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .response-head span {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .response-body {
+        padding: 16px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .signal {
+        display: grid;
+        gap: 8px;
+      }
+
+      .signal-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .bar {
+        height: 9px;
+        border-radius: 999px;
+        background: rgba(221, 227, 245, 0.9);
+        overflow: hidden;
+      }
+
+      .bar > span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .primary {
+        border: 0;
+        border-radius: 14px;
+        padding: 11px 14px;
+        background: linear-gradient(135deg, #305dff, #4d77ff);
+        color: white;
+        font-weight: 800;
+      }
+
+      .secondary {
+        border: 1px solid rgba(207, 217, 245, 0.9);
+        border-radius: 14px;
+        padding: 11px 14px;
+        background: white;
+        color: #506283;
+        font-weight: 700;
+      }
+
+      .input {
+        padding: 16px 18px 18px;
+        border-top: 1px solid rgba(221, 228, 247, 0.92);
+        background: rgba(255, 255, 255, 0.88);
+      }
+
+      .composer {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px 10px 16px;
+        border-radius: 18px;
+        background: rgba(244, 247, 255, 0.95);
+        border: 1px solid rgba(215, 224, 247, 0.96);
+      }
+
+      .composer span {
+        flex: 1;
+        color: #8492b1;
+        font-size: 14px;
+      }
+
+      .send {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 0;
+        color: white;
+        background: linear-gradient(135deg, #305dff, #4872ff);
+        font-size: 18px;
+        box-shadow: 0 14px 24px rgba(48, 93, 255, 0.24);
+      }
+
+      .launcher {
+        position: absolute;
+        right: 34px;
+        bottom: 30px;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.06) 22%),
+          linear-gradient(135deg, var(--cyan), var(--purple) 56%, #305dff);
+        box-shadow:
+          0 18px 40px rgba(70, 104, 255, 0.28),
+          inset 0 2px 10px rgba(255, 255, 255, 0.36);
+        display: grid;
+        place-items: center;
+      }
+
+      .launcher::before {
+        content: "";
+        position: absolute;
+        inset: -10px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(85, 217, 255, 0.16), rgba(85, 217, 255, 0));
+        z-index: -1;
+      }
+
+      .spark {
+        color: white;
+        font-size: 26px;
+        text-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">G</div>
+          <h1>GCSE Hub</h1>
+          <p>Your revision control room</p>
+        </div>
+        <nav class="nav">
+          <div class="nav-item active"><div class="nav-icon"></div>Today</div>
+          <div class="nav-item"><div class="nav-icon"></div>Subjects</div>
+          <div class="nav-item"><div class="nav-icon"></div>Calendar</div>
+          <div class="nav-item"><div class="nav-icon"></div>Progress</div>
+          <div class="nav-item"><div class="nav-icon"></div>Settings</div>
+        </nav>
+        <div class="sidebar-card">
+          <strong>Pro Plan</strong>
+          <p>Unlock assistant study help, richer insights, and tutor tools across your revision workflow.</p>
+          <button>Compare Plans</button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <div class="topbar">
+          <div class="headline">
+            <h2>Today's Plan</h2>
+            <p>Tuesday, 17 March · Your next best revision move is Biology: Cell Division</p>
+          </div>
+          <div class="top-actions">
+            <button class="ghost">Edit Subjects</button>
+            <button class="ghost">View Progress</button>
+          </div>
+        </div>
+
+        <section class="hero">
+          <div class="hero-card">
+            <span class="eyebrow">Upcoming Exam</span>
+            <h3>Mathematics</h3>
+            <p>Edexcel Paper 1 is carrying the most pressure this week because Algebra has stayed weak while your review recency is slipping.</p>
+            <div class="hero-metric">
+              <strong>79</strong>
+              <span>days away</span>
+            </div>
+          </div>
+
+          <div class="insight-card">
+            <h4>Next Best Move</h4>
+            <p>Start with one deep Biology block, then switch to light recall for Macbeth. This balances urgency and subject diversity.</p>
+            <div class="metric-list">
+              <div class="metric">
+                <span>Daily load</span>
+                <strong>4 blocks</strong>
+              </div>
+              <div class="metric">
+                <span>Needs attention</span>
+                <strong>3 topics</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid">
+          <div class="section">
+            <div class="section-header">
+              <h4>Needs Attention</h4>
+              <span>Ranked by weakness × urgency × recency</span>
+            </div>
+
+            <div class="topic">
+              <div>
+                <strong>Biology · Cell Division &amp; Mitosis</strong>
+                <p>Confidence dropped after your last session and this topic hasn’t been reviewed in 18 days.</p>
+              </div>
+              <div class="topic-badge critical">Critical</div>
+            </div>
+
+            <div class="topic">
+              <div>
+                <strong>Physics · Electromagnetic Waves</strong>
+                <p>Exam pressure is rising and performance is still below your recent average.</p>
+              </div>
+              <div class="topic-badge watch">Watch</div>
+            </div>
+
+            <div class="topic">
+              <div>
+                <strong>English Lit · Macbeth, Act 1</strong>
+                <p>Solid confidence, but recency is slipping enough that it’s becoming a risk this week.</p>
+              </div>
+              <div class="topic-badge watch">Watch</div>
+            </div>
+          </div>
+
+          <div class="section tip-card">
+            <div class="section-header">
+              <h4>Study Tip</h4>
+              <span>Focus-safe guidance</span>
+            </div>
+            <p>Use the assistant to ask natural questions like “What should I revise next?” or “How am I doing in Chemistry?” and get a richer answer than plain chat.</p>
+            <button>Open Assistant</button>
+          </div>
+        </section>
+
+        <aside class="assistant">
+          <div class="assistant-header">
+            <div class="assistant-id">
+              <div class="orb"></div>
+              <div class="assistant-title">
+                <strong>Study Assistant</strong>
+                <span>Planner and tutor help in one calm layer</span>
+              </div>
+            </div>
+            <button class="close">×</button>
+          </div>
+
+          <div class="messages">
+            <div class="bubble assistant-bubble">
+              Hi. I’ve looked at today’s plan and your recent sessions. Ask naturally and I’ll decide whether you need planner guidance or tutor help.
+            </div>
+
+            <div class="bubble user-bubble">
+              How am I doing in Biology?
+            </div>
+
+            <div class="response-card">
+              <div class="response-head">
+                <strong>Biology needs attention, but it’s manageable</strong>
+                <span>Your next exam pressure is moderate. The main issue is Cell Division slipping into a weak + stale zone.</span>
+              </div>
+              <div class="response-body">
+                <div class="signal">
+                  <div class="signal-row"><span>Weakness</span><strong>0.71</strong></div>
+                  <div class="bar"><span style="width: 71%; background: linear-gradient(90deg, #ff8b94, #ff6175);"></span></div>
+                </div>
+                <div class="signal">
+                  <div class="signal-row"><span>Urgency</span><strong>0.43</strong></div>
+                  <div class="bar"><span style="width: 43%; background: linear-gradient(90deg, #7c5cff, #5670ff);"></span></div>
+                </div>
+                <div class="signal">
+                  <div class="signal-row"><span>Recency factor</span><strong>1.12</strong></div>
+                  <div class="bar"><span style="width: 78%; background: linear-gradient(90deg, #6dd7ff, #3d8eff);"></span></div>
+                </div>
+
+                <div class="cta-row">
+                  <button class="primary">Add Biology to today</button>
+                  <button class="secondary">Quiz me on this</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="input">
+            <div class="composer">
+              <span>Ask anything about your plan or subjects...</span>
+              <button class="send">↑</button>
+            </div>
+          </div>
+        </aside>
+
+        <div class="launcher"><div class="spark">✦</div></div>
+      </main>
+    </div>
+  </body>
+</html>
