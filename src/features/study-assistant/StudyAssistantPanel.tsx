@@ -82,19 +82,19 @@ export default function StudyAssistantPanel({
       <section
         id="study-assistant-panel"
         data-testid="study-assistant-panel"
-        className="fixed inset-0 z-[80] flex flex-col bg-white/97 shadow-[0_28px_60px_rgba(15,23,42,0.18)] backdrop-blur-2xl lg:inset-y-0 lg:right-0 lg:left-auto lg:w-[24.5rem] lg:border-l lg:border-slate-200"
+        className="fixed inset-0 z-[80] flex flex-col bg-white/97 shadow-[0_28px_60px_rgba(15,23,42,0.18)] backdrop-blur-2xl lg:inset-y-0 lg:right-0 lg:left-auto lg:w-[22rem] lg:border-l lg:border-slate-200 lg:bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,249,255,0.98))]"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 pb-4 pt-5 lg:px-6">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 pb-3 pt-4 lg:px-5">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_25%,_#f4fbff_0%,_#d6efff_18%,_#79b6ff_38%,_#5e72ff_68%,_#7463ff_100%)] text-white shadow-[0_12px_24px_rgba(75,106,255,0.2)]">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_25%,_#f4fbff_0%,_#d6efff_18%,_#79b6ff_38%,_#5e72ff_68%,_#7463ff_100%)] text-white shadow-[0_12px_24px_rgba(75,106,255,0.2)]">
               <span className="absolute inset-[-7px] rounded-full bg-[radial-gradient(circle,_rgba(93,170,255,0.16),_rgba(93,170,255,0)_66%)] opacity-80 blur-[4px]" />
               <span className="text-[1.1rem] leading-none text-white drop-shadow-[0_2px_8px_rgba(255,255,255,0.35)]">
                 ✦
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900">Study Assistant</h2>
-              <p className="mt-1 text-sm leading-relaxed text-slate-500">
+              <h2 className="text-lg font-bold tracking-tight text-slate-900">Study Assistant</h2>
+              <p className="mt-0.5 text-[13px] leading-relaxed text-slate-500">
                 {getContextCopy(currentPage, subjectCount)}
               </p>
             </div>
@@ -102,26 +102,26 @@ export default function StudyAssistantPanel({
           <button
             type="button"
             aria-label="Close help panel"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"
             onClick={onClose}
           >
             <span className="text-2xl leading-none">×</span>
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-slate-50/70 px-5 py-5 lg:px-6">
-          <div className="mx-auto flex max-w-md flex-col gap-4">
-            <div className="max-w-[90%] rounded-[1.5rem] rounded-tl-md border border-slate-200 bg-white px-4 py-4 text-sm leading-relaxed text-slate-700 shadow-sm">
+        <div className="flex-1 overflow-y-auto bg-slate-50/55 px-4 py-4 lg:px-5">
+          <div className="mx-auto flex max-w-md flex-col gap-3.5">
+            <div className="max-w-[92%] rounded-[1.4rem] rounded-tl-md border border-slate-200 bg-white px-4 py-3.5 text-[14px] leading-relaxed text-slate-700 shadow-[0_10px_20px_rgba(15,23,42,0.05)]">
               Hi. I’m here for both planner guidance and tutor help. Ask naturally and I’ll guide you with the right kind of support.
             </div>
 
-            <div className="self-end rounded-[1.5rem] rounded-tr-md bg-blue-600 px-4 py-4 text-sm leading-relaxed text-white shadow-[0_16px_28px_rgba(37,99,235,0.16)]">
+            <div className="self-end rounded-[1.35rem] rounded-tr-md bg-blue-600 px-4 py-3.5 text-[14px] leading-relaxed text-white shadow-[0_14px_24px_rgba(37,99,235,0.14)]">
               {suggestions[0]?.label ?? 'What should I revise next?'}
             </div>
 
-            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-semibold capitalize text-slate-900">{getModeSummary(mode)}</p>
-              <p className="mt-1 text-sm leading-relaxed text-slate-500">
+            <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_10px_20px_rgba(15,23,42,0.05)]">
+              <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-slate-400">{getModeSummary(mode)}</p>
+              <p className="mt-2 text-[14px] leading-relaxed text-slate-600">
                 {tutoringReady
                   ? 'The conversation shell is ready. Live planner and tutor responses will slot into this stream next.'
                   : 'The assistant shell is ready. Tutor tools will connect here once the backend is enabled.'}
@@ -134,7 +134,7 @@ export default function StudyAssistantPanel({
             </div>
 
             <div>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
                 Suggested prompts
               </p>
               <div className="flex flex-wrap gap-2">
@@ -144,7 +144,7 @@ export default function StudyAssistantPanel({
                     type="button"
                     data-testid={index === 0 ? 'study-assistant-suggestion-primary' : undefined}
                     onClick={() => onOpenMode(entry.mode)}
-                    className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-blue-100 hover:text-blue-700"
+                    className="rounded-full border border-slate-200 bg-white px-3.5 py-2 text-[13px] font-medium text-slate-600 shadow-sm transition hover:border-blue-100 hover:text-blue-700"
                   >
                     {entry.label}
                   </button>
@@ -154,8 +154,8 @@ export default function StudyAssistantPanel({
           </div>
         </div>
 
-        <div className="border-t border-slate-100 bg-white px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-4 lg:px-6">
-          <div className="mx-auto max-w-md rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
+        <div className="border-t border-slate-100 bg-white/96 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-3.5 lg:px-5">
+          <div className="mx-auto max-w-md rounded-[1.15rem] border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
             <div className="flex items-center gap-3">
               <input
                 data-testid="study-assistant-input"
@@ -163,11 +163,11 @@ export default function StudyAssistantPanel({
                 value=""
                 aria-label="Ask the study assistant"
                 placeholder="Ask about your plan or subjects..."
-                className="w-full border-0 bg-transparent p-0 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0"
+                className="w-full border-0 bg-transparent p-0 text-[14px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0"
               />
               <button
                 type="button"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-[0_12px_24px_rgba(37,99,235,0.2)]"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-[0_12px_20px_rgba(37,99,235,0.18)]"
                 aria-label="Send message"
               >
                 ↑

@@ -59,7 +59,12 @@ function App() {
   // Returning-user Home: full-screen front door, no bottom nav
   if (page === 'home') {
     return (
-      <div className={assistant.isEnabled && assistant.isOpen ? 'lg:pr-[24.5rem] transition-[padding] duration-300' : ''}>
+      <Layout
+        assistantDocked={assistant.isEnabled && assistant.isOpen}
+        currentPage={page}
+        onNavigate={navigateTo}
+        showMobileBottomNav={false}
+      >
         <HomeScreen
           showFeedback={shell.showFeedback}
           onContinuePlanning={shell.goToToday}
@@ -75,7 +80,7 @@ function App() {
           currentPage="home"
           subjectCount={shell.selectedSubjectDetails.length}
         />
-      </div>
+      </Layout>
     )
   }
 
