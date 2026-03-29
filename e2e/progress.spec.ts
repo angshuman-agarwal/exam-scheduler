@@ -97,16 +97,15 @@ test('5. Calendar keeps a single selected day when switching between dates', asy
   await expect(calendar.getByRole('button', { name: '15' })).not.toHaveClass(/ring-gray-200/)
 })
 
-test('6. Exam dates in the progress calendar preserve the browse flow', async ({ page }) => {
+test('6. Exam dates in the progress calendar apply the reviewed-date lens without expanding the calendar', async ({ page }) => {
   await openProgress(page, progressMixedStatuses(), FROZEN_DATE)
 
   const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
   await calendar.getByLabel('Next month').click()
   await calendar.getByRole('button', { name: '5', exact: true }).click()
-  await calendar.getByRole('button', { name: /Computer Science/i }).first().click()
-
-  await expect(page.getByRole('heading', { name: /Computer Science/i })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Back' })).toBeVisible()
+  await expect(page.getByTestId('progress-day-detail')).toHaveCount(0)
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 5 Jun')
+  await expect(page.getByTestId('progress-filter-priority-now')).toBeDisabled()
 })
 
 test('7. No future exams state shows the informational banner and hides analytics', async ({ page }) => {
