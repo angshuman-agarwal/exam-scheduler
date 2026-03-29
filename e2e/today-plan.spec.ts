@@ -24,6 +24,25 @@ function todayPlanState(): PersistedState {
   }
 }
 
+function multiMonthCalendarState(): PersistedState {
+  return {
+    version: 2,
+    seedRevision: SEED_REVISION,
+    boards: JSON.parse(JSON.stringify(seedData.boards)),
+    subjects: JSON.parse(JSON.stringify(seedData.subjects)),
+    offerings: JSON.parse(JSON.stringify(seedData.offerings)),
+    papers: JSON.parse(JSON.stringify(seedData.papers)),
+    topics: JSON.parse(JSON.stringify(seedData.topics)),
+    sessions: [],
+    notes: [],
+    userState: { energyLevel: 3, stress: 2 },
+    onboarded: true,
+    selectedOfferingIds: ['bio-aqa'],
+    dailyPlan: [],
+    planDay: '',
+  }
+}
+
 async function openToday(page: Page, state: PersistedState) {
   await page.addInitScript((dateStr: string) => {
     const frozen = new Date(dateStr + 'T12:00:00').getTime()
@@ -101,4 +120,14 @@ test('Create suggested plan fills the empty today plan', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Create suggested plan' })).not.toBeVisible()
   await expect(page.getByTestId('today-plan-item')).toHaveCount(4)
   await expect(page.getByTestId('today-plan-remove')).toHaveCount(4)
+})
+
+test('Exam calendar navigates from May into June when selected exams span both months', async ({ page }) => {
+  await openToday(page, multiMonthCalendarState())
+
+  const nextMonthButton = page.locator('button[aria-label="Next month"]:visible').first()
+  await expect(page.locator('h2:visible', { hasText: 'May 2026' }).first()).toBeVisible()
+  await nextMonthButton.click()
+  await expect(page.locator('h2:visible', { hasText: 'June 2026' }).first()).toBeVisible()
+  await expect(page.locator('button:visible').filter({ hasText: /^8$/ }).first()).toBeVisible()
 })

@@ -103,7 +103,7 @@ function App() {
         />
         <Route
           path="/progress"
-          element={<ProgressScreen onGoToToday={shell.goToToday} />}
+          element={<ProgressScreen onGoToToday={shell.goToToday} onBrowseOffering={shell.startSubjectBrowse} />}
         />
         <Route path="*" element={<Navigate to={getPathForPage('today')} replace />} />
       </Routes>

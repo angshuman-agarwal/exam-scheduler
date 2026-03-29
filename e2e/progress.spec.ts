@@ -1,198 +1,155 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { openProgress } from './helpers/seedAppState'
 import {
   progressEmpty,
-  progressTodayOnly,
-  progressStreak,
-  progressMixedStatuses,
-  progressDistDuration,
-  progressDistCounts,
   progressExpandedNotes,
-  progressNoWeakSpots,
-  progressNotStartedExpanded,
+  progressMixedStatuses,
   progressNoFutureExams,
+  progressStreak,
 } from './fixtures/progressState'
 
 const FROZEN_DATE = '2026-04-15'
 
-test('1. Empty progress state', async ({ page }) => {
+test('1. Empty progress state keeps the CTA path and hides analytics sections', async ({ page }) => {
   await openProgress(page, progressEmpty(), FROZEN_DATE)
 
-  await expect(page.locator('[data-testid="progress-hero"]')).toBeVisible()
-  await expect(page.locator('[data-testid="progress-hero-cta"]')).toHaveText("Plan today\u2019s study")
-  await expect(page.locator('[data-testid="progress-consistency"]')).not.toBeVisible()
-  await expect(page.locator('[data-testid="progress-sessions-list"]')).not.toBeVisible()
-  await expect(page.locator('[data-testid="progress-best-next-focus"]')).not.toBeVisible()
-  await expect(page.locator('[data-testid="progress-empty-message"]')).toBeVisible()
-  // With 0 topics studied and exams ≤30d, all subjects show "At risk soon" — never "On track"
-  const chips = page.locator('[data-testid="progress-status-chip"]')
-  const allText = await chips.allTextContents()
-  expect(allText).not.toContain('On track')
-  expect(allText).not.toContain('Not started') // all exams ≤30d triggers "At risk soon" first
-
-  await expect(page).toHaveScreenshot('01-empty.png')
+  await expect(page.getByTestId('progress-hero')).toBeVisible()
+  await expect(page.getByTestId('progress-hero')).toContainText('Performance Overview')
+  await expect(page.getByTestId('progress-hero-cta')).toHaveText("Plan today’s study")
+  await expect(page.getByTestId('progress-empty-message')).toBeVisible()
+  await expect(page.getByTestId('progress-daily-streak-card')).toHaveCount(0)
+  await expect(page.getByTestId('progress-last-session-card')).toHaveCount(0)
+  await expect(page.getByTestId('progress-study-velocity-card')).toHaveCount(0)
+  await expect(page.getByTestId('progress-calendar-card')).toHaveCount(0)
+  await expect(page.getByTestId('progress-topic-table')).toHaveCount(0)
 })
 
-test('2. One-day activity', async ({ page }) => {
-  await openProgress(page, progressTodayOnly(), FROZEN_DATE)
-
-  await expect(page.locator('[data-testid="progress-hero"]')).toContainText('You studied today')
-  // streak=1 → no CTA ("You studied today" is streak=1, showCta is false when hasSessions && streak !== 0)
-  await expect(page.locator('[data-testid="progress-hero-cta"]')).not.toBeVisible()
-  await expect(page.getByTestId('progress-allocation')).not.toBeVisible()
-  // Session outcome chip shows label instead of raw percentage
-  await expect(page.locator('[data-testid="progress-outcome-chip"]')).toHaveText('Solid')
-
-  await expect(page).toHaveScreenshot('02-one-day.png')
-})
-
-test('3. Active streak', async ({ page }) => {
+test('2. Active progress renders the analytics row and compact calendar', async ({ page }) => {
   await openProgress(page, progressStreak(), FROZEN_DATE)
+  const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
 
-  await expect(page.locator('[data-testid="progress-hero"]')).toContainText('3 day streak')
-  await expect(page.locator('[data-testid="progress-hero-cta"]')).not.toBeVisible()
-
-  await expect(page).toHaveScreenshot('03-streak.png')
+  await expect(page.getByTestId('progress-hero')).toContainText('3 day streak')
+  await expect(page.getByTestId('progress-hero-cta')).toHaveCount(0)
+  await expect(page.getByTestId('progress-daily-streak-card')).toContainText('Daily Streak')
+  await expect(page.getByTestId('progress-last-session-card')).toContainText('Last Session')
+  await expect(page.getByTestId('progress-study-velocity-card')).toContainText('Study Velocity')
+  await expect(page.getByTestId('progress-study-velocity-card').getByTestId('progress-velocity-bar')).toHaveCount(6)
+  await expect(calendar).toBeVisible()
+  await expect(page.getByTestId('progress-day-detail')).toHaveCount(0)
 })
 
-test('4. Consistency with duration distribution', async ({ page }) => {
-  await openProgress(page, progressDistDuration(), FROZEN_DATE)
+test('3. Clicking a studied date filters the topic grid and toggles the reviewed-date lens', async ({ page }) => {
+  await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
+  const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
 
-  await expect(page.getByTestId('progress-allocation')).toBeVisible()
-  await expect(page.locator('[data-testid="progress-distribution"]')).toBeVisible()
-  // Duration labels should show time format (e.g. "30m", "1h")
-  const distText = await page.getByTestId('progress-allocation').textContent()
-  expect(distText).toMatch(/\d+m/)
+  await page.getByTestId('progress-filter-recently-reviewed').click()
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Recently Reviewed')
 
-  await expect(page).toHaveScreenshot('04-dist-duration.png')
+  await calendar.getByRole('button', { name: '15' }).click()
+
+  await expect(page.getByTestId('progress-day-detail')).toHaveCount(0)
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 15 Apr')
+  await expect(page.getByTestId('progress-filter-priority-now')).toBeDisabled()
+  await expect(page.getByTestId('progress-topic-row')).toHaveCount(2)
+  await expect(page.getByTestId('progress-topic-table')).toContainText('Computer Science')
+  await expect(page.getByTestId('progress-topic-table')).toContainText('Flowcharts')
+  await expect(page.getByTestId('progress-topic-table')).toContainText('Networks')
+
+  await calendar.getByRole('button', { name: '15' }).click()
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Recently Reviewed')
+  await expect(page.getByTestId('progress-filter-priority-now')).toBeEnabled()
 })
 
-test('5. Distribution fallback to counts', async ({ page }) => {
-  await openProgress(page, progressDistCounts(), FROZEN_DATE)
-
-  await expect(page.locator('[data-testid="progress-distribution"]')).toBeVisible()
-  // Should show "sessions" label
-  const distText = await page.getByTestId('progress-allocation').textContent()
-  expect(distText).toMatch(/sessions/)
-
-  await expect(page).toHaveScreenshot('05-dist-counts.png')
-})
-
-test('6. Priority subject ordering', async ({ page }) => {
+test('4. Topic breakdown filters switch the table ordering lens', async ({ page }) => {
   await openProgress(page, progressMixedStatuses(), FROZEN_DATE)
 
-  const chips = page.locator('[data-testid="progress-status-chip"]')
-  await expect(chips).toHaveCount(5)
-  // Expected order: At risk soon → Needs attention → Improving → Not started → On track
-  await expect(chips.nth(0)).toHaveText('At risk soon')
-  await expect(chips.nth(1)).toHaveText('Needs attention')
-  await expect(chips.nth(2)).toHaveText('Improving')
-  await expect(chips.nth(3)).toHaveText('Not started')
-  await expect(chips.nth(4)).toHaveText('On track')
+  const firstRowBefore = (await page.getByTestId('progress-topic-row').first().textContent()) ?? ''
+  await expect(page.getByTestId('progress-filter-priority-now')).toBeVisible()
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toBeVisible()
 
-  await expect(page).toHaveScreenshot('06-priority-order.png')
+  await page.getByTestId('progress-filter-recently-reviewed').click()
+  const firstRowAfterRecent = (await page.getByTestId('progress-topic-row').first().textContent()) ?? ''
+  const tableTextAfterRecent = (await page.getByTestId('progress-topic-table').textContent()) ?? ''
+
+  expect(firstRowAfterRecent).not.toEqual(firstRowBefore)
+  expect(firstRowAfterRecent).toContain('Yesterday')
+  expect(tableTextAfterRecent).not.toContain('Not yet reviewed')
+
+  await page.getByTestId('progress-filter-priority-now').click()
+  const firstRowAfterPriority = (await page.getByTestId('progress-topic-row').first().textContent()) ?? ''
+  expect(firstRowAfterPriority).toEqual(firstRowBefore)
 })
 
-test('7. Expanded subject row', async ({ page }) => {
-  await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
-
-  // Click to expand the CS row
-  const subjectRow = page.locator('[data-testid="progress-subject-row"]').first()
-  await subjectRow.locator('button').first().click()
-
-  // Should show average result with hybrid label
-  await expect(subjectRow).toContainText("This week's session result")
-  // Should show confidence gap message (overconfident)
-  await expect(subjectRow).toContainText('confidence is ahead')
-  // Should show 3 notes (first 3 of 5)
-  const notes = subjectRow.locator('.bg-gray-50')
-  await expect(notes).toHaveCount(3)
-  // "Show all notes" button visible
-  await expect(page.locator('[data-testid="progress-show-all-notes"]')).toBeVisible()
-
-  await expect(page).toHaveScreenshot('07-expanded-row.png')
-  await expect(subjectRow).toHaveScreenshot('07-expanded-row-detail.png')
-})
-
-test('8. Show all notes interaction', async ({ page }) => {
-  await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
-
-  // Expand
-  const subjectRow = page.locator('[data-testid="progress-subject-row"]').first()
-  await subjectRow.locator('button').first().click()
-
-  // Click "Show all notes"
-  await page.locator('[data-testid="progress-show-all-notes"]').click()
-
-  // All 5 notes should be visible
-  const notes = subjectRow.locator('.bg-gray-50')
-  await expect(notes).toHaveCount(5)
-
-  await expect(page).toHaveScreenshot('08-all-notes.png', { maxDiffPixelRatio: 0.03 })
-  await expect(subjectRow).toHaveScreenshot('08-all-notes-detail.png', { maxDiffPixelRatio: 0.03 })
-})
-
-test('9. Best next focus visible', async ({ page }) => {
+test('5. Calendar keeps a single selected day when switching between dates', async ({ page }) => {
   await openProgress(page, progressStreak(), FROZEN_DATE)
 
-  await expect(page.locator('[data-testid="progress-best-next-focus"]')).toBeVisible()
-  await expect(page.locator('[data-testid="progress-best-next-focus"]')).toContainText('Next best focus')
+  const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
+  const selectedDays = calendar.locator('button[aria-pressed="true"]')
 
-  await expect(page).toHaveScreenshot('09-best-next-focus.png')
+  await calendar.getByRole('button', { name: '15' }).click()
+  await expect(selectedDays).toHaveCount(1)
+  await expect(calendar.getByRole('button', { name: '15' })).toHaveAttribute('aria-pressed', 'true')
+
+  await calendar.getByRole('button', { name: '14' }).click()
+  await expect(selectedDays).toHaveCount(1)
+  await expect(calendar.getByRole('button', { name: '15' })).toHaveAttribute('aria-pressed', 'false')
+  await expect(calendar.getByRole('button', { name: '14' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(calendar.getByRole('button', { name: '15' })).not.toHaveClass(/ring-gray-200/)
 })
 
-test('10. No weak spots message', async ({ page }) => {
-  await openProgress(page, progressNoWeakSpots(), FROZEN_DATE)
+test('6. Exam dates in the progress calendar preserve the browse flow', async ({ page }) => {
+  await openProgress(page, progressMixedStatuses(), FROZEN_DATE)
 
-  await expect(page.locator('[data-testid="progress-best-next-focus"]')).toBeVisible()
-  await expect(page.locator('[data-testid="progress-best-next-focus"]')).toContainText('Nice work')
+  const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
+  await calendar.getByLabel('Next month').click()
+  await calendar.getByRole('button', { name: '5', exact: true }).click()
+  await calendar.getByRole('button', { name: /Computer Science/i }).first().click()
 
-  await expect(page).toHaveScreenshot('10-no-weak-spots.png')
+  await expect(page.getByRole('heading', { name: /Computer Science/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Back' })).toBeVisible()
 })
 
-test('11. Not started expanded panel', async ({ page }) => {
-  await openProgress(page, progressNotStartedExpanded(), FROZEN_DATE)
-
-  // Should show "Not started" chip
-  const chip = page.locator('[data-testid="progress-status-chip"]').first()
-  await expect(chip).toHaveText('Not started')
-
-  // Expand the subject row
-  const subjectRow = page.locator('[data-testid="progress-subject-row"]').first()
-  await subjectRow.locator('button').first().click()
-
-  // Should show "not started" message, not "Nice work"
-  await expect(page.locator('[data-testid="progress-not-started-msg"]')).toBeVisible()
-  await expect(page.locator('[data-testid="progress-not-started-msg"]')).toContainText("haven't started this subject")
-  // Should show 3 starter topic cards
-  const topicCards = page.locator('[data-testid="progress-not-started-msg"] .rounded-lg.bg-white')
-  await expect(topicCards).toHaveCount(3)
-  // Should NOT show "Nice work"
-  await expect(subjectRow).not.toContainText('Nice work')
-
-  await expect(page).toHaveScreenshot('11-not-started-expanded.png')
-  await expect(subjectRow).toHaveScreenshot('11-not-started-expanded-detail.png')
-})
-
-test('12. No future exams', async ({ page }) => {
+test('7. No future exams state shows the informational banner and hides analytics', async ({ page }) => {
   await openProgress(page, progressNoFutureExams(), FROZEN_DATE)
 
-  await expect(page.locator('[data-testid="progress-no-upcoming"]')).toBeVisible()
-  await expect(page.locator('[data-testid="progress-no-upcoming"]')).toContainText('No upcoming exams')
-  // No subject rows
-  await expect(page.locator('[data-testid="progress-subject-row"]')).toHaveCount(0)
-  // No best next focus
-  await expect(page.locator('[data-testid="progress-best-next-focus"]')).not.toBeVisible()
-
-  await expect(page).toHaveScreenshot('12-no-future-exams.png')
+  await expect(page.getByTestId('progress-no-upcoming')).toBeVisible()
+  await expect(page.getByTestId('progress-no-upcoming')).toContainText('No upcoming exams in your selected subjects.')
+  await expect(page.getByTestId('progress-daily-streak-card')).toHaveCount(0)
+  await expect(page.getByTestId('progress-last-session-card')).toHaveCount(0)
+  await expect(page.getByTestId('progress-study-velocity-card')).toHaveCount(0)
+  await expect(page.getByTestId('progress-calendar-card')).toHaveCount(0)
+  await expect(page.getByTestId('progress-topic-table')).toHaveCount(0)
 })
 
-test('13. Hero CTA navigation', async ({ page }) => {
+test('8. Hero CTA still navigates back to Today', async ({ page }) => {
   await openProgress(page, progressEmpty(), FROZEN_DATE)
 
   await page.getByTestId('progress-hero-cta').click()
 
-  // Should navigate to Today page — Today tab should be active
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Today' })).toBeVisible()
 })
 
+test('9. Calendar remains visible on tablet-sized progress layout', async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 1200 })
+  await openProgress(page, progressStreak(), FROZEN_DATE)
+
+  await expect(page.locator('[data-testid="progress-calendar-card"]:visible').first()).toBeVisible()
+})
+
+test('10. Mobile progress shows topic mastery before the calendar', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openProgress(page, progressStreak(), FROZEN_DATE)
+
+  const breakdown = page.getByText('Topic Mastery').first()
+  const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
+
+  await expect(breakdown).toBeVisible()
+  await expect(calendar).toBeVisible()
+
+  const breakdownBox = await breakdown.boundingBox()
+  const calendarBox = await calendar.boundingBox()
+
+  expect(breakdownBox).not.toBeNull()
+  expect(calendarBox).not.toBeNull()
+  expect((breakdownBox?.y ?? 0) + (breakdownBox?.height ?? 0)).toBeLessThan(calendarBox?.y ?? Number.MAX_SAFE_INTEGER)
+})
