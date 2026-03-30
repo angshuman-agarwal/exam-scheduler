@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import LandingPage from './components/LandingPage'
 import { useLocalAccountApi } from './lib/api/local/useAccountApi'
+import { useLocalPlansApi } from './lib/api/local/usePlansApi'
 import { getPathForPage } from './lib/navigation'
 import { useAppBootstrap } from './hooks/useAppBootstrap'
 import { useAppNavigation } from './hooks/useAppNavigation'
@@ -12,13 +13,51 @@ import ProgressScreen from './screens/ProgressScreen'
 import AppOverlays from './screens/AppOverlays'
 import StudyAssistantPresence from './features/study-assistant/StudyAssistantPresence'
 import { useStudyAssistant } from './features/study-assistant/useStudyAssistant'
+import { useAppStore } from './stores/app.store'
 
 function App() {
   const account = useLocalAccountApi()
+  const plansApi = useLocalPlansApi()
   const { recoveryDone, recoveredSession } = useAppBootstrap()
   const { page, navigateTo } = useAppNavigation()
   const shell = useAppShell({ recoveredSession, navigateTo })
   const assistant = useStudyAssistant()
+  const getTopicsForOffering = useAppStore((state) => state.getTopicsForOffering)
+  const selectedOfferingIds = useAppStore((state) => state.selectedOfferingIds)
+
+  const handleProgressPlanNow = (topicId: string) => {
+    const today = new Date()
+    const planItems = plansApi.getPlanItems(today)
+    const topicScoreMap = new Map<string, number>()
+
+    for (const offeringId of selectedOfferingIds) {
+      for (const scored of getTopicsForOffering(offeringId, today)) {
+        topicScoreMap.set(scored.topic.id, scored.score)
+      }
+    }
+
+    const swapCandidate = [...planItems]
+      .map((item) => ({ item, score: topicScoreMap.get(item.topicId) ?? 0 }))
+      .sort((a, b) => {
+        if (a.item.source === 'auto' && b.item.source !== 'auto') return -1
+        if (a.item.source !== 'auto' && b.item.source === 'auto') return 1
+        return a.score - b.score
+      })[0]
+
+    if (planItems.length >= 4 && swapCandidate) {
+      plansApi.removeFromPlan(swapCandidate.item.id)
+      setTimeout(() => {
+        plansApi.addToPlan(topicId, 'manual', today)
+        shell.markRecentlySwappedTopic(topicId)
+        shell.goToToday()
+      }, 0)
+      return
+    }
+
+    plansApi.addToPlan(topicId, 'manual', today)
+    shell.markRecentlySwappedTopic(topicId)
+    shell.goToToday()
+  }
 
   if (!account.initialized || !recoveryDone) {
     return (
@@ -38,6 +77,7 @@ function App() {
         activeOffering={shell.activeOffering}
         activeSubject={shell.activeSubject}
         activePaper={shell.activePaper}
+        activeSubjectBrowseContext={shell.activeSubjectBrowseContext}
         onCompleteOnboarding={shell.completeOnboarding}
         onBackToHome={shell.closeOnboarding}
         onCompleteEdit={shell.completeEditSetup}
@@ -45,6 +85,7 @@ function App() {
         onCloseSession={shell.closeSession}
         onGoToProgress={shell.goToProgress}
         onCloseSubjectPicker={shell.closeSubjectPicker}
+        onCompletePlanNowSwap={shell.completePlanNowSwap}
         onStartSession={shell.startSession}
       />
     )
@@ -96,14 +137,24 @@ function App() {
           element={(
             <TodayScreen
               onStartSession={shell.startSession}
-              onBrowseOffering={shell.startSubjectBrowse}
+              onBrowseOffering={(offering, subject, paper) => shell.startSubjectBrowse(offering, subject, paper, { originPage: 'today' })}
               onEditSubjects={shell.openEditSetup}
+              recentlySwappedTopicId={shell.recentlySwappedTopicId}
+              onClearRecentlySwappedTopic={shell.clearRecentlySwappedTopic}
             />
           )}
         />
         <Route
           path="/progress"
-          element={<ProgressScreen onGoToToday={shell.goToToday} onBrowseOffering={shell.startSubjectBrowse} />}
+          element={(
+            <ProgressScreen
+              onGoToToday={shell.goToToday}
+              onBrowseOffering={(offering, subject, paper) => shell.startSubjectBrowse(offering, subject, paper, { originPage: 'progress' })}
+              onPlanNowTopic={(_offering, _subject, topicId) => {
+                handleProgressPlanNow(topicId)
+              }}
+            />
+          )}
         />
         <Route path="*" element={<Navigate to={getPathForPage('today')} replace />} />
       </Routes>

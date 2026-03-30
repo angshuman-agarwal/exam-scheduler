@@ -52,6 +52,26 @@ export interface ProgressCalendarDayMeta {
   subjects: Subject[]
 }
 
+export interface StudyVelocityPoint {
+  dateKey: string
+  shortLabel: string
+  dayNumber: string
+  value: number
+  heightPercent: number
+  segments: Array<{
+    subjectId: string
+    subjectName: string
+    color: string
+    sharePercent: number
+    value: number
+  }>
+}
+
+export interface StudyVelocitySeries {
+  unitLabel: 'Minutes studied' | 'Sessions'
+  points: StudyVelocityPoint[]
+}
+
 export type TopicTableStatus = 'Complete' | 'Revision Ready' | 'Priority Now' | 'Needs Focus' | 'Scheduled' | 'Not Started'
 
 export interface TopicTableRow {
@@ -181,6 +201,90 @@ export function studyVelocityBars(sessions: Session[], today: Date, days = 6): n
 
   if (maxValue === 0) return values.map(() => 0)
   return values.map((value) => Math.max(18, Math.round((value / maxValue) * 100)))
+}
+
+export function buildStudyVelocitySeries(
+  sessions: Session[],
+  today: Date,
+  days = 14,
+  topics: Topic[] = [],
+  offerings: Offering[] = [],
+  subjects: Subject[] = [],
+): StudyVelocitySeries {
+  const useDuration = sessions.some((session) => session.durationSeconds !== undefined)
+  const dailyTotals = new Map<string, number>()
+  const dailySubjectTotals = new Map<
+    string,
+    Map<string, { subjectName: string; color: string; value: number }>
+  >()
+  const orderedDateKeys: string[] = []
+  const topicMap = new Map(topics.map((topic) => [topic.id, topic]))
+  const offeringMap = new Map(offerings.map((offering) => [offering.id, offering]))
+  const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]))
+
+  for (let offset = days - 1; offset >= 0; offset--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - offset)
+    const dateKey = getLocalDayKey(date)
+    orderedDateKeys.push(dateKey)
+    dailyTotals.set(dateKey, 0)
+    dailySubjectTotals.set(dateKey, new Map())
+  }
+
+  for (const session of sessions) {
+    if (!dailyTotals.has(session.date)) continue
+    const nextRawValue = useDuration ? (session.durationSeconds ?? 0) / 60 : 1
+    dailyTotals.set(session.date, (dailyTotals.get(session.date) ?? 0) + nextRawValue)
+
+    const topic = topicMap.get(session.topicId)
+    const offering = topic ? offeringMap.get(topic.offeringId) : undefined
+    const subject = offering ? subjectMap.get(offering.subjectId) : undefined
+    if (!subject) continue
+
+    const subjectTotals = dailySubjectTotals.get(session.date)
+    if (!subjectTotals) continue
+    const existing = subjectTotals.get(subject.id)
+    if (existing) {
+      existing.value += nextRawValue
+    } else {
+      subjectTotals.set(subject.id, {
+        subjectName: subject.name,
+        color: subject.color,
+        value: nextRawValue,
+      })
+    }
+  }
+
+  const values = orderedDateKeys.map((dateKey) => dailyTotals.get(dateKey) ?? 0)
+  const maxValue = Math.max(...values, 0)
+
+  return {
+    unitLabel: useDuration ? 'Minutes studied' : 'Sessions',
+    points: orderedDateKeys.map((dateKey, index) => {
+      const date = new Date(`${dateKey}T00:00:00`)
+      const value = Math.round(values[index] * 10) / 10
+      return {
+        dateKey,
+        shortLabel: date.toLocaleDateString('en-GB', { weekday: 'short' }).slice(0, 1),
+        dayNumber: String(date.getDate()),
+        value,
+        heightPercent: maxValue === 0 ? 0 : Math.max(10, Math.round((value / maxValue) * 100)),
+        segments: (() => {
+          const subjectTotals = dailySubjectTotals.get(dateKey)
+          if (!subjectTotals || subjectTotals.size === 0 || value === 0) return []
+          return [...subjectTotals.entries()]
+            .map(([subjectId, segment]) => ({
+              subjectId,
+              subjectName: segment.subjectName,
+              color: segment.color,
+              value: Math.round(segment.value * 10) / 10,
+              sharePercent: (segment.value / value) * 100,
+            }))
+            .sort((a, b) => b.value - a.value || a.subjectName.localeCompare(b.subjectName))
+        })(),
+      }
+    }),
+  }
 }
 
 export function nearestExamDaysForPapers(papers: Paper[], today: Date): number | null {

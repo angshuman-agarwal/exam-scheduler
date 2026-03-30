@@ -267,6 +267,34 @@ export function progressExpandedNotes(): PersistedState {
   return s
 }
 
+// 8b. Future exam day with study activity on the same day
+export function progressExamAndActivitySameDay(): PersistedState {
+  const s = baseState(['cs-aqa'])
+  setOfferingExamDate(s, 'cs-aqa', EXAM_NEAR)
+  s.sessions = [
+    makeSession('cs-003', '2026-05-05', 0.72, 1500),
+    makeSession('cs-002', '2026-04-14', 0.55, 900),
+  ]
+  setTopicFields(s, 'cs-003', { lastReviewed: '2026-05-05', performanceScore: 0.72, confidence: 4 })
+  setTopicFields(s, 'cs-002', { lastReviewed: '2026-04-14', performanceScore: 0.55, confidence: 3 })
+  s.notes = [
+    { id: 'same-day-note', topicId: 'cs-011', date: '2026-05-05', text: 'Recheck the TCP/IP layers before the exam.' },
+  ]
+  return s
+}
+
+export function progressPlanNowSwap(): PersistedState {
+  const s = progressMixedStatuses()
+  s.dailyPlan = [
+    { id: 'plan-1', topicId: 'cs-001', source: 'auto', addedAt: new Date('2026-04-15T08:00:00').getTime(), dayKey: '2026-04-15' },
+    { id: 'plan-2', topicId: 'bio-001', source: 'auto', addedAt: new Date('2026-04-15T08:05:00').getTime(), dayKey: '2026-04-15' },
+    { id: 'plan-3', topicId: 'maths-001', source: 'suggested', addedAt: new Date('2026-04-15T08:10:00').getTime(), dayKey: '2026-04-15' },
+    { id: 'plan-4', topicId: 'eng-lit-001', source: 'suggested', addedAt: new Date('2026-04-15T08:15:00').getTime(), dayKey: '2026-04-15' },
+  ]
+  s.planDay = '2026-04-15'
+  return s
+}
+
 // 8. No weak spots — all topics have high perf, future exams exist
 export function progressNoWeakSpots(): PersistedState {
   const s = baseState(['cs-aqa'])

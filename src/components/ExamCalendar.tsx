@@ -1,5 +1,6 @@
 import { useState, useMemo, type ReactNode } from 'react'
 import type { Paper, Subject, Offering } from '../types'
+import { ExamDaySelectionPanel } from './ExamDaySelectionPanel'
 
 export type PaperWithSubject = { paper: Paper; subject: Subject; offering: Offering }
 export interface CalendarDateMeta {
@@ -17,6 +18,7 @@ interface ExamCalendarProps {
   onSelectedDayChange?: (selectedDay: string | null) => void
   showInlineDetail?: boolean
   showTodayOutline?: boolean
+  selectedDay?: string | null
   className?: string
 }
 
@@ -64,6 +66,7 @@ export default function ExamCalendar({
   onSelectedDayChange,
   showInlineDetail = true,
   showTodayOutline = true,
+  selectedDay: controlledSelectedDay,
   className = '',
 }: ExamCalendarProps) {
   const { firstExamMonth, lastExamMonth } = useMemo(() => {
@@ -89,7 +92,8 @@ export default function ExamCalendar({
     if (isAfterMonth(todayMonth, lastExamMonth)) return lastExamMonth
     return todayMonth
   })
-  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [uncontrolledSelectedDay, setUncontrolledSelectedDay] = useState<string | null>(null)
+  const selectedDay = controlledSelectedDay !== undefined ? controlledSelectedDay : uncontrolledSelectedDay
   const currentMonth = useMemo(() => {
     if (isBeforeMonth(rawCurrentMonth, firstExamMonth)) return firstExamMonth
     if (isAfterMonth(rawCurrentMonth, lastExamMonth)) return lastExamMonth
@@ -105,14 +109,14 @@ export default function ExamCalendar({
   function goPrev() {
     if (!canGoPrev) return
     setCurrentMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-    setSelectedDay(null)
+    if (controlledSelectedDay === undefined) setUncontrolledSelectedDay(null)
     onSelectedDayChange?.(null)
   }
 
   function goNext() {
     if (!canGoNext) return
     setCurrentMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
-    setSelectedDay(null)
+    if (controlledSelectedDay === undefined) setUncontrolledSelectedDay(null)
     onSelectedDayChange?.(null)
   }
 
@@ -193,10 +197,11 @@ export default function ExamCalendar({
             return (
               <button
                 key={cell.key}
+                data-date-key={cell.key}
                 onClick={() => {
                   if (!hasPapers && !hasMeta) return
                   const nextSelectedDay = isSelected ? null : cell.key
-                  setSelectedDay(nextSelectedDay)
+                  if (controlledSelectedDay === undefined) setUncontrolledSelectedDay(nextSelectedDay)
                   onSelectedDayChange?.(nextSelectedDay)
                 }}
                 disabled={!hasPapers && !hasMeta}
@@ -243,39 +248,8 @@ export default function ExamCalendar({
       {/* Inline detail sheet — liquid glass effect */}
       {showInlineDetail && selectedDay && (selectedPapers.length > 0 || selectedMeta || renderSelectedDayContent) && (
         <div className="border-t border-black/[0.08] bg-gradient-to-br from-white/[0.85] to-white/[0.72] backdrop-blur-xl px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400 mb-3">
-            {new Date(selectedDay + 'T00:00:00').toLocaleDateString('default', {
-              weekday: 'long',
-              month: 'short',
-              day: 'numeric',
-            })}
-          </p>
           {selectedPapers.length > 0 && (
-            <div className="flex flex-col gap-2.5">
-              {selectedPapers.map((pw) => (
-              <button
-                key={pw.paper.id}
-                onClick={() => onSelectPaper(pw.offering, pw.subject, pw.paper)}
-                className="flex items-stretch rounded-xl bg-white/[0.7] border border-white/40 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_0_rgba(255,255,255,0.6)_inset] backdrop-blur-sm overflow-hidden text-left transition-all active:scale-[0.98] hover:bg-white/80"
-              >
-                <div className="w-1.5 shrink-0" style={{ backgroundColor: pw.subject.color }} />
-                <div className="flex-1 px-3.5 py-3 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{pw.subject.name}</p>
-                  <p className="text-xs text-gray-600 mt-0.5">
-                    {pw.paper.name}
-                    <span className="text-gray-300 mx-1.5">{'\u00B7'}</span>
-                    {pw.offering.label}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">{pw.paper.examTime ?? 'Time TBC'}</p>
-                </div>
-                <div className="flex items-center pr-3">
-                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-              ))}
-            </div>
+            <ExamDaySelectionPanel selectedDay={selectedDay} papers={selectedPapers} onSelectPaper={onSelectPaper} className="border-0 bg-transparent p-0 shadow-none" />
           )}
           {renderSelectedDayContent?.(selectedDay)}
         </div>

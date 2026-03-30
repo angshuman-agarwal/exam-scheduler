@@ -54,21 +54,9 @@ export default function Layout({
     <div className="min-h-screen flex flex-col lg:pl-[15rem]">
       <aside
         data-testid="desktop-left-rail"
-        className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[15rem] lg:flex-col lg:border-r lg:border-slate-200/90 lg:bg-[linear-gradient(180deg,rgba(252,253,255,0.98),rgba(246,249,255,0.98))] lg:px-4 lg:py-5 lg:backdrop-blur"
+        className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[15rem] lg:flex-col lg:border-r lg:border-slate-200/90 lg:bg-[linear-gradient(180deg,rgba(252,253,255,0.98),rgba(246,249,255,0.98))] lg:pl-4 lg:pr-0 lg:py-4 lg:backdrop-blur"
       >
-        <div className="mb-7 px-2">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#305dff,#1325ec)] text-white shadow-[0_12px_22px_rgba(48,93,255,0.2)]">
-              <span className="text-base font-bold">S</span>
-            </div>
-            <div>
-              <p className="text-[1.05rem] font-bold tracking-tight text-slate-900">StudyHour</p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">Revision OS</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="grid gap-1.5 px-1" aria-label="Desktop navigation">
+        <nav className="grid gap-1.5 pl-1 pr-0 pt-1" aria-label="Desktop navigation">
           {NAV_ITEMS.map((item) => {
             const active = currentPage === item.page
             return (
@@ -78,10 +66,10 @@ export default function Layout({
                 data-testid={`desktop-nav-${item.page}`}
                 aria-current={active ? 'page' : undefined}
                 onClick={() => onNavigate(item.page)}
-                className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[0.92rem] font-semibold transition ${
+                className={`flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[0.92rem] font-semibold transition ${
                   active
-                    ? 'bg-blue-50/90 text-blue-700 shadow-[inset_3px_0_0_#305dff,0_10px_18px_rgba(48,93,255,0.08)]'
-                    : 'text-slate-500 hover:bg-white/90 hover:text-slate-800'
+                    ? 'mr-[-1rem] rounded-l-xl rounded-r-none bg-[linear-gradient(90deg,rgba(48,93,255,0.14),rgba(48,93,255,0.035)_82%,rgba(48,93,255,0.01)_100%)] text-blue-700 shadow-[inset_3px_0_0_#305dff]'
+                    : 'mr-[-1rem] rounded-l-xl rounded-r-none text-slate-500 hover:bg-[linear-gradient(90deg,rgba(255,255,255,0.92),rgba(255,255,255,0.58)_82%,rgba(255,255,255,0.2)_100%)] hover:text-slate-800'
                 }`}
               >
                 <span className={active ? 'text-blue-600' : 'text-slate-400'}>{item.icon}</span>

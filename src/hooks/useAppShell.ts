@@ -15,12 +15,19 @@ interface UseAppShellOptions {
   navigateTo: (page: AppPage) => void
 }
 
+export interface SubjectBrowseContext {
+  originPage: AppPage
+  planNowTopicId?: string | null
+}
+
 export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions) {
   const [sessionOverride, setSessionOverride] = useState<ActiveSessionState | null>()
   const [activeOffering, setActiveOffering] = useState<Offering | null>(null)
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null)
   const [activePaper, setActivePaper] = useState<Paper | null>(null)
+  const [activeSubjectBrowseContext, setActiveSubjectBrowseContext] = useState<SubjectBrowseContext | null>(null)
   const [editingSetup, setEditingSetup] = useState(false)
+  const [recentlySwappedTopicId, setRecentlySwappedTopicId] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const activeSession = sessionOverride === undefined ? recoveredSession : sessionOverride
@@ -60,11 +67,16 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
     activePaper,
     activeSession,
     activeSubject,
+    activeSubjectBrowseContext,
     editingSetup,
     nearestUserExam,
+    recentlySwappedTopicId,
     selectedSubjectDetails,
     showFeedback,
     showOnboarding,
+    clearRecentlySwappedTopic() {
+      setRecentlySwappedTopicId(null)
+    },
     closeFeedback() {
       setShowFeedback(false)
     },
@@ -74,10 +86,20 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
     closeSession() {
       setSessionOverride(null)
     },
-    closeSubjectPicker() {
+    closeSubjectPicker(destination?: AppPage) {
+      const nextPage = destination ?? activeSubjectBrowseContext?.originPage ?? 'today'
       setActiveOffering(null)
       setActiveSubject(null)
       setActivePaper(null)
+      setActiveSubjectBrowseContext(null)
+      navigateTo(nextPage)
+    },
+    completePlanNowSwap() {
+      setActiveOffering(null)
+      setActiveSubject(null)
+      setActivePaper(null)
+      setActiveSubjectBrowseContext(null)
+      navigateTo('today')
     },
     completeEditSetup() {
       setEditingSetup(false)
@@ -101,6 +123,9 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
     openOnboarding() {
       setShowOnboarding(true)
     },
+    markRecentlySwappedTopic(topicId: string | null) {
+      setRecentlySwappedTopicId(topicId)
+    },
     shouldShowOverlay(onboarded: boolean) {
       return (
         (!onboarded && showOnboarding)
@@ -112,10 +137,11 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
     startSession(scored: ScoredTopic, source: ScheduleSource, scheduleItemId?: string) {
       setSessionOverride({ scored, source, scheduleItemId })
     },
-    startSubjectBrowse(offering: Offering, subject: Subject, paper?: Paper | null) {
+    startSubjectBrowse(offering: Offering, subject: Subject, paper?: Paper | null, context?: SubjectBrowseContext) {
       setActiveOffering(offering)
       setActiveSubject(subject)
       setActivePaper(paper ?? null)
+      setActiveSubjectBrowseContext(context ?? { originPage: 'today' })
     },
   }
 }

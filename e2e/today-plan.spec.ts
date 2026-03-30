@@ -131,3 +131,16 @@ test('Exam calendar navigates from May into June when selected exams span both m
   await expect(page.locator('h2:visible', { hasText: 'June 2026' }).first()).toBeVisible()
   await expect(page.locator('button:visible').filter({ hasText: /^8$/ }).first()).toBeVisible()
 })
+
+test('Back from a Today-opened subject picker returns to Today', async ({ page }) => {
+  await openToday(page, todayPlanState())
+
+  await page.locator('[data-date-key="2026-05-13"]:visible').first().click()
+  await page.getByTestId('progress-exam-day-panel').getByRole('button', { name: /Computer Science/i }).click()
+  await expect(page.getByRole('heading', { name: 'Computer Science' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Back' }).click()
+
+  await expect(page).toHaveURL(/#today$/)
+  await expect(page.getByText('Study Planner')).toBeVisible()
+})

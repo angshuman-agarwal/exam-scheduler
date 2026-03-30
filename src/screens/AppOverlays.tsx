@@ -1,6 +1,7 @@
 import Onboarding from '../components/Onboarding'
 import SubjectPicker from '../components/SubjectPicker'
 import SessionLogger from '../components/SessionLogger'
+import type { SubjectBrowseContext } from '../hooks/useAppShell'
 import type { Offering, Paper, ScheduleSource, ScoredTopic, Subject } from '../types'
 
 interface ActiveSessionState {
@@ -17,6 +18,7 @@ interface AppOverlaysProps {
   activeOffering: Offering | null
   activeSubject: Subject | null
   activePaper: Paper | null
+  activeSubjectBrowseContext: SubjectBrowseContext | null
   onCompleteOnboarding: () => void
   onBackToHome: () => void
   onCompleteEdit: () => void
@@ -24,6 +26,7 @@ interface AppOverlaysProps {
   onCloseSession: () => void
   onGoToProgress: () => void
   onCloseSubjectPicker: () => void
+  onCompletePlanNowSwap: () => void
   onStartSession: (
     scored: ScoredTopic,
     source: ScheduleSource,
@@ -39,6 +42,7 @@ export default function AppOverlays({
   activeOffering,
   activeSubject,
   activePaper,
+  activeSubjectBrowseContext,
   onCompleteOnboarding,
   onBackToHome,
   onCompleteEdit,
@@ -46,6 +50,7 @@ export default function AppOverlays({
   onCloseSession,
   onGoToProgress,
   onCloseSubjectPicker,
+  onCompletePlanNowSwap,
   onStartSession,
 }: AppOverlaysProps) {
   if (!onboarded) {
@@ -87,7 +92,9 @@ export default function AppOverlays({
         offering={activeOffering}
         subject={activeSubject}
         paper={activePaper}
+        planNowTopicId={activeSubjectBrowseContext?.planNowTopicId ?? null}
         onBack={onCloseSubjectPicker}
+        onCompletePlanNowSwap={onCompletePlanNowSwap}
         onStartSession={onStartSession}
       />
     )

@@ -2,9 +2,11 @@ import { expect, test } from '@playwright/test'
 import { openProgress } from './helpers/seedAppState'
 import {
   progressEmpty,
+  progressExamAndActivitySameDay,
   progressExpandedNotes,
   progressMixedStatuses,
   progressNoFutureExams,
+  progressPlanNowSwap,
   progressStreak,
 } from './fixtures/progressState'
 
@@ -33,7 +35,8 @@ test('2. Active progress renders the analytics row and compact calendar', async 
   await expect(page.getByTestId('progress-daily-streak-card')).toContainText('Daily Streak')
   await expect(page.getByTestId('progress-last-session-card')).toContainText('Last Session')
   await expect(page.getByTestId('progress-study-velocity-card')).toContainText('Study Velocity')
-  await expect(page.getByTestId('progress-study-velocity-card').getByTestId('progress-velocity-bar')).toHaveCount(6)
+  await expect(page.getByText(/min logged/i)).toHaveCount(0)
+  await expect(page.getByTestId('progress-study-velocity-card').getByTestId('progress-velocity-bar')).toHaveCount(14)
   await expect(calendar).toBeVisible()
   await expect(page.getByTestId('progress-day-detail')).toHaveCount(0)
 })
@@ -97,18 +100,47 @@ test('5. Calendar keeps a single selected day when switching between dates', asy
   await expect(calendar.getByRole('button', { name: '15' })).not.toHaveClass(/ring-gray-200/)
 })
 
-test('6. Exam dates in the progress calendar apply the reviewed-date lens without expanding the calendar', async ({ page }) => {
+test('6. Future exam-only dates show the Today-style exam card and hide topic mastery', async ({ page }) => {
   await openProgress(page, progressMixedStatuses(), FROZEN_DATE)
 
   const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
   await calendar.getByLabel('Next month').click()
-  await calendar.getByRole('button', { name: '5', exact: true }).click()
+  await calendar.locator('[data-date-key="2026-05-05"]').click()
   await expect(page.getByTestId('progress-day-detail')).toHaveCount(0)
-  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 5 Jun')
-  await expect(page.getByTestId('progress-filter-priority-now')).toBeDisabled()
+  await expect(page.getByTestId('progress-exam-day-panel')).toBeVisible()
+  await expect(page.getByTestId('progress-exam-day-panel')).toContainText('Computer Science')
+  await expect(page.locator('[data-testid="progress-topic-table"]:visible')).toHaveCount(0)
+  await expect(page.locator('[data-testid="progress-topic-breakdown-mobile"]:visible')).toHaveCount(0)
 })
 
-test('7. No future exams state shows the informational banner and hides analytics', async ({ page }) => {
+test('7. Future exam dates with activity show both the exam card and the filtered topic grid', async ({ page }) => {
+  await openProgress(page, progressExamAndActivitySameDay(), FROZEN_DATE)
+
+  const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
+  await calendar.getByLabel('Next month').click()
+  await calendar.locator('[data-date-key="2026-05-05"]').click()
+
+  await expect(page.getByTestId('progress-exam-day-panel')).toBeVisible()
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 5 May')
+  await expect(page.getByTestId('progress-topic-row')).toHaveCount(2)
+  await expect(page.getByTestId('progress-topic-table')).toContainText('Flowcharts')
+  await expect(page.getByTestId('progress-topic-table')).toContainText('Networks')
+})
+
+test('8. Clicking a Study Velocity bar syncs the selection back into the calendar and grid', async ({ page }) => {
+  await openProgress(page, progressStreak(), FROZEN_DATE)
+
+  const velocityBar = page.getByTestId('progress-study-velocity-card').locator('[data-date-key="2026-04-14"]').first()
+  const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
+
+  await velocityBar.click()
+
+  await expect(velocityBar).toHaveAttribute('aria-pressed', 'true')
+  await expect(calendar.getByRole('button', { name: '14' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 14 Apr')
+})
+
+test('9. No future exams state shows the informational banner and hides analytics', async ({ page }) => {
   await openProgress(page, progressNoFutureExams(), FROZEN_DATE)
 
   await expect(page.getByTestId('progress-no-upcoming')).toBeVisible()
@@ -120,7 +152,22 @@ test('7. No future exams state shows the informational banner and hides analytic
   await expect(page.getByTestId('progress-topic-table')).toHaveCount(0)
 })
 
-test('8. Hero CTA still navigates back to Today', async ({ page }) => {
+test('10. Plan Now swaps directly into the Today plan without opening the picker', async ({ page }) => {
+  await openProgress(page, progressPlanNowSwap(), FROZEN_DATE)
+
+  await expect(page.getByTestId('progress-plan-now').first()).toBeVisible()
+  await page.getByTestId('progress-plan-now').first().click()
+
+  await expect(page).toHaveURL(/#today$/)
+  await expect(page.getByText('Study Planner')).toBeVisible()
+  await expect(page.getByTestId('subject-picker-primary-swap')).toHaveCount(0)
+  await expect(page.getByTestId('today-plan-item')).toHaveCount(4)
+  await expect(page.getByTestId('today-plan-item').filter({ hasText: 'Arrays' })).toHaveCount(1)
+  await expect(page.getByTestId('today-plan-swapped-indicator')).toHaveCount(1)
+  await expect(page.getByTestId('today-plan-item').filter({ hasText: 'Arrays' })).toContainText('Swapped in')
+})
+
+test('11. Hero CTA still navigates back to Today', async ({ page }) => {
   await openProgress(page, progressEmpty(), FROZEN_DATE)
 
   await page.getByTestId('progress-hero-cta').click()
@@ -128,27 +175,68 @@ test('8. Hero CTA still navigates back to Today', async ({ page }) => {
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Today' })).toBeVisible()
 })
 
-test('9. Calendar remains visible on tablet-sized progress layout', async ({ page }) => {
+test('12. Hero pills reset to Recently Reviewed and navigate to Today with normal history', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 740 })
+  await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
+
+  await page.getByTestId('progress-study-velocity-card').locator('[data-date-key="2026-04-15"]').first().click()
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 15 Apr')
+  await expect(page.getByTestId('progress-filter-priority-now')).toBeDisabled()
+
+  await page.getByTestId('progress-hero-recent-pill').click()
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Recently Reviewed')
+  await expect(page.getByTestId('progress-filter-priority-now')).toBeEnabled()
+  await expect(page.getByTestId('progress-clear-reviewed-date')).toHaveCount(0)
+
+  const breakdownBox = await page.getByTestId('progress-topic-breakdown-anchor').boundingBox()
+  expect((breakdownBox?.y ?? Number.MAX_SAFE_INTEGER)).toBeLessThan(560)
+
+  await page.getByTestId('progress-hero-next-exam-pill').click()
+  await expect(page).toHaveURL(/#today$/)
+  await page.goBack()
+  await expect(page).toHaveURL(/#progress$/)
+})
+
+test('13. Calendar remains visible on tablet-sized progress layout', async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 1200 })
   await openProgress(page, progressStreak(), FROZEN_DATE)
 
   await expect(page.locator('[data-testid="progress-calendar-card"]:visible').first()).toBeVisible()
 })
 
-test('10. Mobile progress shows topic mastery before the calendar', async ({ page }) => {
+test('14. Mobile progress hides the calendar and keeps Topic Mastery as the primary section', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await openProgress(page, progressStreak(), FROZEN_DATE)
 
   const breakdown = page.getByText('Topic Mastery').first()
-  const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
+  const mobileBreakdown = page.locator('[data-testid="progress-topic-breakdown-mobile"]:visible').first()
+  const visibleDesktopTable = page.locator('[data-testid="progress-topic-table"]:visible')
 
   await expect(breakdown).toBeVisible()
-  await expect(calendar).toBeVisible()
+  await expect(mobileBreakdown).toBeVisible()
+  await expect(visibleDesktopTable).toHaveCount(0)
+  await expect(page.locator('[data-testid="progress-calendar-card"]:visible')).toHaveCount(0)
+  await expect(page.getByTestId('progress-open-calendar-mobile')).toHaveCount(0)
+  await expect(mobileBreakdown).toContainText('Biology')
+  await expect(mobileBreakdown).toContainText('Computer Science')
+  await expect(mobileBreakdown).toContainText('Today')
+})
 
-  const breakdownBox = await breakdown.boundingBox()
-  const calendarBox = await calendar.boundingBox()
+test('15. Mobile Study Velocity applies and clears the reviewed-date lens without a calendar', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
 
-  expect(breakdownBox).not.toBeNull()
-  expect(calendarBox).not.toBeNull()
-  expect((breakdownBox?.y ?? 0) + (breakdownBox?.height ?? 0)).toBeLessThan(calendarBox?.y ?? Number.MAX_SAFE_INTEGER)
+  const velocityBar = page.getByTestId('progress-study-velocity-card').locator('[data-date-key="2026-04-15"]').first()
+
+  await velocityBar.click()
+
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 15 Apr')
+  await expect(page.getByTestId('progress-topic-row-mobile')).toHaveCount(2)
+  await expect(page.getByTestId('progress-filter-priority-now')).toBeDisabled()
+
+  await page.getByTestId('progress-filter-recently-reviewed').click()
+
+  await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Recently Reviewed')
+  await expect(page.getByTestId('progress-clear-reviewed-date')).toHaveCount(0)
+  await expect(page.getByTestId('progress-filter-priority-now')).toBeEnabled()
 })

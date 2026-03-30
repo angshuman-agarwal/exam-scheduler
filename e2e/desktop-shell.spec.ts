@@ -101,7 +101,8 @@ test.describe('desktop shell', () => {
     await expect(rail).toBeVisible()
     await expect(page.getByTestId('mobile-bottom-nav')).toHaveCount(0)
     await expect(page.getByTestId('desktop-nav-home')).toBeVisible()
-    await expect(rail.getByText('StudyHour')).toBeVisible()
+    await expect(rail.getByRole('navigation', { name: 'Desktop navigation' })).toBeVisible()
+    await expect(page.getByTestId('desktop-nav-home')).toHaveAttribute('aria-current', 'page')
   })
 
   test('desktop left rail navigates between home, today, and progress', async ({ page }) => {

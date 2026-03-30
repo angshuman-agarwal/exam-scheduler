@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildAnalyticsMetrics,
+  buildStudyVelocitySeries,
   coveragePercent,
   freshnessRatio,
   masteryPercent,
@@ -8,7 +9,7 @@ import {
   studyVelocityBars,
   studyVelocityDeltaPercent,
 } from './analytics'
-import type { Session, Topic } from '../../types'
+import type { Offering, Session, Subject, Topic } from '../../types'
 
 function topic(partial: Partial<Topic>): Topic {
   return {
@@ -31,6 +32,25 @@ function session(partial: Partial<Session>): Session {
     durationSeconds: partial.durationSeconds,
     timestamp: partial.timestamp,
     source: partial.source,
+  }
+}
+
+function offering(partial: Partial<Offering>): Offering {
+  return {
+    id: partial.id ?? 'offering-1',
+    subjectId: partial.subjectId ?? 'subject-1',
+    boardId: partial.boardId ?? 'aqa',
+    spec: partial.spec ?? '8525',
+    label: partial.label ?? 'AQA 8525',
+    qualificationId: partial.qualificationId ?? 'gcse',
+  }
+}
+
+function subject(partial: Partial<Subject>): Subject {
+  return {
+    id: partial.id ?? 'subject-1',
+    name: partial.name ?? 'Computer Science',
+    color: partial.color ?? '#2563eb',
   }
 }
 
@@ -89,6 +109,58 @@ describe('progress analytics helpers', () => {
     ]
 
     expect(studyVelocityBars(sessions, today)).toEqual([25, 18, 50, 18, 75, 100])
+  })
+
+  it('builds a 14-day interactive study velocity series with real units', () => {
+    const today = new Date('2026-04-15T12:00:00')
+    const sessions = [
+      session({ id: 'a', date: '2026-04-02', durationSeconds: 1200 }),
+      session({ id: 'b', date: '2026-04-10', durationSeconds: 600 }),
+      session({ id: 'c', date: '2026-04-12', durationSeconds: 1200 }),
+      session({ id: 'd', date: '2026-04-14', durationSeconds: 1800 }),
+      session({ id: 'e', date: '2026-04-15', durationSeconds: 2400 }),
+    ]
+
+    const series = buildStudyVelocitySeries(sessions, today)
+    expect(series.unitLabel).toBe('Minutes studied')
+    expect(series.points).toHaveLength(14)
+    expect(series.points[0]).toEqual(expect.objectContaining({ dateKey: '2026-04-02', value: 20 }))
+    expect(series.points.at(-1)).toEqual(expect.objectContaining({ dateKey: '2026-04-15', value: 40, heightPercent: 100 }))
+  })
+
+  it('builds stacked subject segments for velocity bars when study spans multiple subjects', () => {
+    const today = new Date('2026-04-15T12:00:00')
+    const topics = [
+      topic({ id: 'cs-topic', offeringId: 'cs-offering' }),
+      topic({ id: 'bio-topic', offeringId: 'bio-offering' }),
+    ]
+    const offerings = [
+      offering({ id: 'cs-offering', subjectId: 'cs-subject' }),
+      offering({ id: 'bio-offering', subjectId: 'bio-subject' }),
+    ]
+    const subjects = [
+      subject({ id: 'cs-subject', name: 'Computer Science', color: '#2563eb' }),
+      subject({ id: 'bio-subject', name: 'Biology', color: '#10b981' }),
+    ]
+    const sessions = [
+      session({ id: 'a', topicId: 'cs-topic', date: '2026-04-15', durationSeconds: 1200 }),
+      session({ id: 'b', topicId: 'bio-topic', date: '2026-04-15', durationSeconds: 1800 }),
+    ]
+
+    const series = buildStudyVelocitySeries(sessions, today, 14, topics, offerings, subjects)
+    const selectedPoint = series.points.at(-1)
+
+    expect(selectedPoint).toEqual(
+      expect.objectContaining({
+        dateKey: '2026-04-15',
+        value: 50,
+      }),
+    )
+    expect(selectedPoint?.segments).toEqual([
+      expect.objectContaining({ subjectId: 'bio-subject', subjectName: 'Biology', color: '#10b981', value: 30 }),
+      expect.objectContaining({ subjectId: 'cs-subject', subjectName: 'Computer Science', color: '#2563eb', value: 20 }),
+    ])
+    expect(Math.round((selectedPoint?.segments[0]?.sharePercent ?? 0) + (selectedPoint?.segments[1]?.sharePercent ?? 0))).toBe(100)
   })
 
   it('builds the four top-level analytics metrics', () => {

@@ -1,15 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { getLocalDayKey } from '../lib/date'
 import { useLocalProgressApi } from '../lib/api/local/useProgressApi'
+import { ExamDaySelectionPanel } from './ExamDaySelectionPanel'
 import QualificationChip from './QualificationChip'
 import type { Offering, Paper, Session, Subject } from '../types'
 import {
+  buildStudyVelocitySeries,
   buildLastSessionSummary,
   buildProgressCalendarDayMeta,
   buildTopicTableRows,
   nearestExamDaysForPapers,
   sortTopicTableRows,
-  studyVelocityBars,
   studyVelocityDeltaPercent,
   type ProgressTableFilter,
 } from './progress/analytics'
@@ -20,6 +21,7 @@ import { ProgressTopicBreakdown } from './progress/ProgressTopicBreakdown'
 interface ProgressProps {
   onGoToToday: () => void
   onBrowseOffering: (offering: Offering, subject: Subject, paper?: Paper | null) => void
+  onPlanNowTopic: (offering: Offering, subject: Subject, topicId: string) => void
 }
 
 function studyStreak(sessions: Session[], today: Date): number {
@@ -44,10 +46,6 @@ function sessionsInWindow(sessions: Session[], today: Date, daysBack: number): S
   cutoff.setDate(cutoff.getDate() - daysBack)
   const cutoffISO = getLocalDayKey(cutoff)
   return sessions.filter((session) => session.date > cutoffISO)
-}
-
-function totalDurationSeconds(sessions: Session[]): number {
-  return sessions.reduce((sum, session) => sum + (session.durationSeconds ?? 0), 0)
 }
 
 function streakDeltaText(sessions: Session[], today: Date): string {
@@ -103,10 +101,11 @@ function formatSelectedDateLabel(dateKey: string) {
   })}`
 }
 
-export default function Progress({ onGoToToday, onBrowseOffering }: ProgressProps) {
+export default function Progress({ onGoToToday, onBrowseOffering, onPlanNowTopic }: ProgressProps) {
   const { studyMode, topics, sessions, subjects, papers, offerings, selectedOfferingIds, notes } = useLocalProgressApi()
   const [filter, setFilter] = useState<ProgressTableFilter>('priority-now')
-  const [selectedCalendarDay, setSelectedCalendarDay] = useState<string | null>(null)
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const topicBreakdownRef = useRef<HTMLDivElement | null>(null)
 
   const today = useMemo(() => new Date(), [])
   const selectedOfferingSet = useMemo(() => new Set(selectedOfferingIds), [selectedOfferingIds])
@@ -147,7 +146,10 @@ export default function Progress({ onGoToToday, onBrowseOffering }: ProgressProp
     () => buildLastSessionSummary(selectedSessions, selectedTopics, selectedOfferings, subjects),
     [selectedSessions, selectedTopics, selectedOfferings, subjects],
   )
-  const velocityBars = useMemo(() => studyVelocityBars(selectedSessions, today), [selectedSessions, today])
+  const velocitySeries = useMemo(
+    () => buildStudyVelocitySeries(selectedSessions, today, 14, selectedTopics, selectedOfferings, subjects),
+    [selectedOfferings, selectedSessions, selectedTopics, subjects, today],
+  )
   const velocityDelta = useMemo(() => studyVelocityDeltaPercent(selectedSessions, today), [selectedSessions, today])
   const topicRows = useMemo(
     () => buildTopicTableRows(selectedTopics, selectedOfferings, subjects, selectedPapers, today),
@@ -164,7 +166,9 @@ export default function Progress({ onGoToToday, onBrowseOffering }: ProgressProp
     [selectedSessions, selectedTopics, selectedOfferings, subjects, selectedNotes],
   )
   const nearestExamDays = useMemo(() => nearestExamDaysForPapers(futurePapers, today), [futurePapers, today])
-  const weeklyDuration = useMemo(() => totalDurationSeconds(thisWeekSessions), [thisWeekSessions])
+  const todayKey = getLocalDayKey(today)
+  const selectedDayPapers = useMemo(() => (selectedDay ? examDateMap.get(selectedDay) ?? [] : []), [examDateMap, selectedDay])
+  const selectedDayHasFutureExam = !!selectedDay && selectedDay > todayKey && selectedDayPapers.length > 0
   const activityTopicIdsByDate = useMemo(() => {
     const byDate = new Map<string, Set<string>>()
 
@@ -184,8 +188,8 @@ export default function Progress({ onGoToToday, onBrowseOffering }: ProgressProp
   }, [selectedNotes, selectedSessions])
 
   const displayedRows = useMemo(() => {
-    if (!selectedCalendarDay) return sortedRows
-    const activeTopicIds = activityTopicIdsByDate.get(selectedCalendarDay)
+    if (!selectedDay) return sortedRows
+    const activeTopicIds = activityTopicIdsByDate.get(selectedDay)
     if (!activeTopicIds || activeTopicIds.size === 0) return []
     return topicRows
       .filter((row) => activeTopicIds.has(row.topic.id))
@@ -193,34 +197,44 @@ export default function Progress({ onGoToToday, onBrowseOffering }: ProgressProp
         if (a.subject.name !== b.subject.name) return a.subject.name.localeCompare(b.subject.name)
         return a.topic.name.localeCompare(b.topic.name)
       })
-  }, [activityTopicIdsByDate, selectedCalendarDay, sortedRows, topicRows])
+  }, [activityTopicIdsByDate, selectedDay, sortedRows, topicRows])
 
-  const recentlyReviewedLabel = selectedCalendarDay ? formatSelectedDateLabel(selectedCalendarDay) : 'Recently Reviewed'
+  const showTopicBreakdown = !selectedDay || displayedRows.length > 0 || !selectedDayHasFutureExam
+  const recentlyReviewedLabel = selectedDay && displayedRows.length > 0 ? formatSelectedDateLabel(selectedDay) : 'Recently Reviewed'
 
   const showEmpty = !hasStudyActivity
   const showAnalytics = hasUpcomingExams && !showEmpty
+
+  const handleSelectedDayChange = (nextSelectedDay: string | null) => {
+    setSelectedDay(nextSelectedDay)
+    if (nextSelectedDay) {
+      setFilter('recently-reviewed')
+    }
+  }
+
+  const focusRecentlyReviewed = () => {
+    setSelectedDay(null)
+    setFilter('recently-reviewed')
+    topicBreakdownRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' })
+  }
 
   const calendarNode = (
     <ProgressCalendarCard
       examDateMap={examDateMap}
       dateMetaMap={calendarDayMeta}
       onSelectPaper={({ offering, subject, paper }) => onBrowseOffering(offering, subject, paper)}
-      onSelectedDayChange={(nextSelectedDay) => {
-        setSelectedCalendarDay(nextSelectedDay)
-        if (nextSelectedDay) {
-          setFilter('recently-reviewed')
-        }
-      }}
+      selectedDay={selectedDay}
+      onSelectedDayChange={handleSelectedDayChange}
     />
   )
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f7f8fc_0%,#f3f5fa_100%)] px-4 pb-8 pt-6">
-      <div className={`grid gap-4 ${showAnalytics ? 'xl:grid-cols-[minmax(0,1fr)_20rem]' : ''}`}>
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f7f8fc_0%,#f3f5fa_100%)] px-4 pb-6 pt-5">
+      <div className={`grid gap-3.5 ${showAnalytics ? 'xl:grid-cols-[minmax(0,1fr)_20rem]' : ''}`}>
         <div className="min-w-0">
           <section
             data-testid="progress-hero"
-            className="mb-5 rounded-[1.4rem] border border-black/[0.055] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_rgba(0,0,0,0.055)] sm:px-6"
+            className="mb-4 rounded-[1.4rem] border border-black/[0.055] bg-white px-5 py-4.5 shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_rgba(0,0,0,0.055)] sm:px-6"
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
@@ -249,17 +263,24 @@ export default function Progress({ onGoToToday, onBrowseOffering }: ProgressProp
             </div>
 
             {!showEmpty && (
-              <div className="mt-4 flex flex-wrap items-center gap-2 text-[12px] font-medium text-gray-600">
-                <span className="inline-flex items-center rounded-full bg-black/[0.04] px-3 py-1.5 border border-black/[0.06]">
+              <div className="mt-3.5 flex flex-wrap items-center gap-2 text-[12px] font-medium text-gray-600">
+                <button
+                  type="button"
+                  data-testid="progress-hero-recent-pill"
+                  onClick={focusRecentlyReviewed}
+                  className="inline-flex items-center rounded-full border border-[#2f7cff]/15 bg-[linear-gradient(180deg,#f2f7ff_0%,#e8f0ff_100%)] px-3 py-1.5 text-[#1f63d8] shadow-[0_6px_16px_rgba(37,95,216,0.12)] transition-transform hover:translate-y-[-1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f7cff]/25"
+                >
                   {thisWeekSessions.length} session{thisWeekSessions.length === 1 ? '' : 's'} this week
-                </span>
-                <span className="inline-flex items-center rounded-full bg-black/[0.04] px-3 py-1.5 border border-black/[0.06]">
-                  {weeklyDuration > 0 ? `${Math.round(weeklyDuration / 60)} min logged` : 'No timed sessions yet'}
-                </span>
+                </button>
                 {nearestExamDays !== null && (
-                  <span className="inline-flex items-center rounded-full bg-black/[0.04] px-3 py-1.5 border border-black/[0.06]">
+                  <button
+                    type="button"
+                    data-testid="progress-hero-next-exam-pill"
+                    onClick={onGoToToday}
+                    className="inline-flex items-center rounded-full border border-[#f59e0b]/20 bg-[linear-gradient(180deg,#fff8ea_0%,#fff1cf_100%)] px-3 py-1.5 text-[#b86a00] shadow-[0_6px_16px_rgba(217,119,6,0.12)] transition-transform hover:translate-y-[-1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f59e0b]/25"
+                  >
                     Next exam in {nearestExamDays} day{nearestExamDays === 1 ? '' : 's'}
-                  </span>
+                  </button>
                 )}
               </div>
             )}
@@ -291,20 +312,40 @@ export default function Progress({ onGoToToday, onBrowseOffering }: ProgressProp
                 lastSession={lastSession}
                 today={today}
                 velocityValue={velocityDelta === null ? '0%' : `${velocityDelta > 0 ? '+' : ''}${velocityDelta}%`}
-                velocityBars={velocityBars}
+                velocitySeries={velocitySeries}
+                selectedDay={selectedDay}
+                onSelectVelocityDay={(dateKey) => {
+                  setSelectedDay((current) => (current === dateKey ? null : dateKey))
+                  setFilter('recently-reviewed')
+                }}
               />
 
-              <div className="mt-4">
-                <ProgressTopicBreakdown
-                  rows={displayedRows}
-                  filter={filter}
-                  onFilterChange={setFilter}
-                  recentlyReviewedLabel={recentlyReviewedLabel}
-                  priorityDisabled={selectedCalendarDay !== null}
-                />
-              </div>
+              {selectedDayHasFutureExam && selectedDay && (
+                <div className="mt-3.5">
+                  <ExamDaySelectionPanel
+                    selectedDay={selectedDay}
+                    papers={selectedDayPapers}
+                    onSelectPaper={(offering, subject, paper) => onBrowseOffering(offering, subject, paper)}
+                    className="rounded-[1.4rem] border border-black/[0.055] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_rgba(0,0,0,0.055)]"
+                  />
+                </div>
+              )}
 
-              <div className="mt-4 xl:hidden">
+              {showTopicBreakdown && (
+                <div ref={topicBreakdownRef} className="mt-3" data-testid="progress-topic-breakdown-anchor">
+                  <ProgressTopicBreakdown
+                    rows={displayedRows}
+                    filter={filter}
+                    onFilterChange={setFilter}
+                    onPlanNow={(row) => onPlanNowTopic(row.offering, row.subject, row.topic.id)}
+                    recentlyReviewedLabel={recentlyReviewedLabel}
+                    priorityDisabled={selectedDay !== null}
+                    onClearReviewedDate={() => setSelectedDay(null)}
+                  />
+                </div>
+              )}
+
+              <div className="mt-3 hidden sm:block xl:hidden">
                 {calendarNode}
               </div>
             </>

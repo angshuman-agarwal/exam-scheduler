@@ -18,7 +18,7 @@ export default defineConfig({
   },
   plugins: [react(), tailwindcss(), VitePWA({
     registerType: 'prompt',
-    includeAssets: ['icon.svg', 'favicon.ico', 'apple-touch-icon-180x180.png'],
+    includeAssets: ['pwa-64x64.png', 'apple-touch-icon-180x180.png'],
     manifest: {
       name: 'Study Hour',
       short_name: 'StudyHour',

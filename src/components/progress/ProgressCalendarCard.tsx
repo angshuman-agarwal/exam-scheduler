@@ -4,11 +4,13 @@ import { type ProgressCalendarDayMeta } from './analytics'
 export function ProgressCalendarCard({
   examDateMap,
   dateMetaMap,
+  selectedDay,
   onSelectPaper,
   onSelectedDayChange,
 }: {
   examDateMap: Map<string, PaperWithSubject[]>
   dateMetaMap: Map<string, ProgressCalendarDayMeta>
+  selectedDay: string | null
   onSelectPaper: (paper: PaperWithSubject) => void
   onSelectedDayChange: (selectedDay: string | null) => void
 }) {
@@ -24,6 +26,7 @@ export function ProgressCalendarCard({
         className="space-y-0"
         examDateMap={examDateMap}
         dateMetaMap={calendarMeta}
+        selectedDay={selectedDay}
         onSelectPaper={(offering, subject, paper) => onSelectPaper({ offering, subject, paper })}
         onSelectedDayChange={onSelectedDayChange}
         showInlineDetail={false}

@@ -44,3 +44,4 @@ public/version.json
 !.dev.vars.example
 .env*
 !.env.example
+.gstack/
