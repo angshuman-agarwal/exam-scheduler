@@ -15,6 +15,29 @@ function cardClassName() {
   ].join(' ')
 }
 
+function sessionScoreEmoji(score: number): string {
+  if (score >= 0.8) return '🤩'
+  if (score >= 0.6) return '🙂'
+  return '😕'
+}
+
+function velocityDisplayMeta(series: StudyVelocitySeries) {
+  const maxRawValue = Math.max(...series.points.map((point) => point.value), 0)
+  const useHours = series.unitLabel === 'Minutes studied' && maxRawValue >= 60
+  const formatValue = (value: number) => {
+    if (series.unitLabel === 'Sessions') return String(value)
+    if (useHours) return value === 0 ? '0' : `${Math.round((value / 60) * 10) / 10}`
+    return String(Math.round(value))
+  }
+
+  return {
+    maxRawValue,
+    midRawValue: maxRawValue > 0 ? maxRawValue / 2 : 0,
+    unitLabel: series.unitLabel === 'Sessions' ? 'Sessions' : useHours ? 'Hours studied' : 'Minutes studied',
+    formatValue,
+  }
+}
+
 export function DailyStreakCard({
   streak,
   deltaText,
@@ -107,13 +130,26 @@ export function LastSessionCard({
   return (
     <article data-testid="progress-last-session-card" className={cardClassName()}>
       <div className="flex items-start justify-between">
-        <div className="grid h-10 w-10 place-items-center rounded-[14px] bg-[linear-gradient(180deg,#eef5ff_0%,#dfeaff_100%)] text-[#1b74ff] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_10px_22px_rgba(27,116,255,0.12)]">
-          <svg className="h-[1.3rem] w-[1.3rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
-            <circle cx="12" cy="13" r="6.75" />
-            <path d="M12 3.75v2.5" strokeLinecap="round" />
-            <path d="M9.5 3.75h5" strokeLinecap="round" />
-            <path d="M12 13V9.6" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M12 13l2.55 1.55" strokeLinecap="round" strokeLinejoin="round" />
+        <div className="grid h-12 w-12 place-items-center rounded-[16px] bg-[linear-gradient(180deg,#f3f8ff_0%,#e3efff_100%)] text-[#2a76e8] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_12px_26px_rgba(52,120,226,0.12)]">
+          <svg className="h-[1.65rem] w-[1.65rem]" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="lastSessionBoltOuter" x1="32" y1="6" x2="32" y2="58" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#4D9BFF" />
+                <stop offset="1" stopColor="#296FE0" />
+              </linearGradient>
+              <linearGradient id="lastSessionBoltInner" x1="32" y1="20" x2="32" y2="44" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#CFE5FF" />
+                <stop offset="1" stopColor="#88B8FF" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M24.028 58H22.065c-.688 0-1.318-.347-1.688-.927-.369-.582-.416-1.302-.123-1.926L27.011 40H16c-1.188 0-2.232-.673-2.726-1.757-.494-1.086-.313-2.32.471-3.219L38.468 6.684C38.848 6.249 39.396 6 39.971 6h1.964c.687 0 1.316.346 1.686.926.371.581.417 1.302.126 1.926L36.667 24h11.335c1.188 0 2.232.673 2.726 1.757.494 1.086.313 2.32-.471 3.219L25.531 57.316c-.378.434-.926.684-1.503.684Z"
+              fill="url(#lastSessionBoltOuter)"
+            />
+            <path
+              d="m31.226 43.457 4.006-8.011c.332-.664-.151-1.446-.894-1.446H23.093c-.849 0-1.313-.99-.769-1.642l9.974-11.968c.393-.472 1.128.038.823.571l-4.311 7.545c-.382.665.099 1.494.866 1.494h11.231c.833 0 1.302.958.79 1.616l-9.625 12.375c-.372.479-1.118.01-.846-.534Z"
+              fill="url(#lastSessionBoltInner)"
+            />
           </svg>
         </div>
         <span className="text-[11px] font-semibold text-[#007AFF]">
@@ -124,11 +160,14 @@ export function LastSessionCard({
       <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400">Last Session</p>
       {summary.session && summary.topic && summary.subject ? (
         <>
-          <div className="mt-0.5 flex items-baseline gap-0.5">
+          <div className="mt-0.5 flex items-baseline gap-1.5">
             <strong className="text-[2.6rem] font-bold leading-none tracking-[-0.04em] text-gray-900">
               {Math.round(summary.session.score * 100)}
             </strong>
             <span className="text-[13px] font-medium text-gray-400">%</span>
+            <span className="translate-y-[-1px] text-[1.05rem]" aria-hidden="true">
+              {sessionScoreEmoji(summary.session.score)}
+            </span>
           </div>
           <p className="mt-auto line-clamp-2 pt-2 text-[12px] leading-5 text-gray-500">
             {summary.subject.name}: {summary.topic.name}
@@ -152,8 +191,7 @@ export function StudyVelocityCard({
   selectedDay: string | null
   onSelectDay: (dateKey: string) => void
 }) {
-  const maxValue = Math.max(...series.points.map((point) => point.value), 0)
-  const midValue = maxValue > 0 ? Math.round((maxValue / 2) * 10) / 10 : 0
+  const { maxRawValue, midRawValue, unitLabel, formatValue } = velocityDisplayMeta(series)
   const activePointCount = series.points.filter((point) => point.value > 0).length
 
   return (
@@ -161,7 +199,7 @@ export function StudyVelocityCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400">Study Velocity</p>
-          <p className="mt-1 text-[11px] font-medium text-gray-500">{series.unitLabel}</p>
+          <p className="mt-1 text-[11px] font-medium text-gray-500">{unitLabel}</p>
           <p className="mt-1 text-[10px] font-medium text-[#1f63d8] sm:text-[11px]">Tap a day to filter Topic Mastery</p>
         </div>
         <div className="text-right">
@@ -178,8 +216,8 @@ export function StudyVelocityCard({
 
       <div className="mt-2.5 grid flex-1 grid-cols-[2rem_minmax(0,1fr)] gap-2 sm:grid-cols-[2.15rem_minmax(0,1fr)]">
         <div className="flex flex-col justify-between pb-7 text-[10px] font-medium text-gray-400">
-          <span>{maxValue > 0 ? maxValue : 0}</span>
-          <span>{midValue > 0 ? midValue : ''}</span>
+          <span>{maxRawValue > 0 ? formatValue(maxRawValue) : '0'}</span>
+          <span>{midRawValue > 0 ? formatValue(midRawValue) : ''}</span>
           <span>0</span>
         </div>
         <div className="grid min-w-0 grid-cols-14 gap-1.5 sm:gap-1">
@@ -214,9 +252,9 @@ export function StudyVelocityCard({
                         weekday: 'short',
                         day: 'numeric',
                         month: 'short',
-                      })}: ${point.value} ${series.unitLabel.toLowerCase()}${
+                      })}: ${formatValue(point.value)} ${unitLabel.toLowerCase()}${
                         point.segments.length > 0
-                          ? ` • ${point.segments.map((segment) => `${segment.subjectName} ${segment.value}`).join(', ')}`
+                          ? ` • ${point.segments.map((segment) => `${segment.subjectName} ${formatValue(segment.value)}`).join(', ')}`
                           : ''
                       }`
                     : undefined

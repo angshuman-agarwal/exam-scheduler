@@ -1,4 +1,4 @@
-import { daysRemaining, recencyFactor as engineRecencyFactor, scoreAllTopics } from '../../lib/engine'
+import { MS_PER_DAY, daysRemaining, daysSince, recencyFactor as engineRecencyFactor, scoreAllTopics, toMidnightUTC } from '../../lib/engine'
 import { getLocalDayKey } from '../../lib/date'
 import type { Note, Offering, Paper, Session, Subject, Topic } from '../../types'
 
@@ -79,6 +79,10 @@ export interface TopicTableRow {
   subject: Subject
   offering: Offering
   masteryPercent: number
+  lastSessionScore: number | null
+  sessionTrend: 'up' | 'flat' | 'down' | null
+  actionLabel: string
+  actionReason: string | null
   freshnessRatio: number
   recencyLabel: string
   status: TopicTableStatus
@@ -358,6 +362,56 @@ export function latestSessionForTopics(topicIds: Set<string>, sessions: Session[
   )
 }
 
+function latestSessionForTopic(topicId: string, sessions: Session[]): Session | null {
+  let best: Session | null = null
+  for (const session of sessions) {
+    if (session.topicId !== topicId) continue
+    if (!best || (session.timestamp ?? 0) > (best.timestamp ?? 0)) {
+      best = session
+    }
+  }
+  return best
+}
+
+function actionLabelFor(status: TopicTableStatus): string {
+  switch (status) {
+    case 'Not Started':
+      return 'Begin this topic'
+    case 'Priority Now':
+      return 'Study today'
+    case 'Needs Focus':
+      return 'Keep practising'
+    case 'Revision Ready':
+      return 'Ready to revise'
+    case 'Complete':
+      return 'Well covered'
+    case 'Scheduled':
+      return 'On track'
+  }
+}
+
+function actionReasonFor(
+  status: TopicTableStatus,
+  topic: Topic,
+  examDaysAway: number | null,
+  today: Date,
+): string | null {
+  switch (status) {
+    case 'Not Started':
+      return 'not studied yet'
+    case 'Priority Now':
+      return examDaysAway !== null ? `exam in ${examDaysAway} day${examDaysAway === 1 ? '' : 's'}` : null
+    case 'Needs Focus':
+      return daysSince(topic.lastReviewed, today) > 14 ? 'not studied in a while' : 'still needs work'
+    case 'Revision Ready':
+      return 'solid and recently practised'
+    case 'Complete':
+      return 'reviewed recently'
+    case 'Scheduled':
+      return 'no urgent changes needed'
+  }
+}
+
 export function statusForTopic(topic: Topic, priorityScore: number, today: Date): TopicTableStatus {
   const mastery = masteryPercent(topic)
   const freshness = freshnessRatio(topic.lastReviewed, today)
@@ -376,6 +430,7 @@ export function buildTopicTableRows(
   subjects: Subject[],
   papers: Paper[],
   today: Date,
+  sessions: Session[] = [],
 ): TopicTableRow[] {
   const scored = scoreAllTopics(topics, papers, offerings, subjects, today)
   const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]))
@@ -390,14 +445,31 @@ export function buildTopicTableRows(
       if (!scoredTopic || !offering || !subject) return null
 
       const priorityScore = scoredTopic.score
+      const status = statusForTopic(topic, priorityScore, today)
+      const latestSession = latestSessionForTopic(topic.id, sessions)
+      const lastSessionScore = latestSession?.score ?? null
+      const diff = lastSessionScore !== null ? lastSessionScore - topic.performanceScore : null
+      const sessionTrend = diff === null ? null : diff > 0.05 ? 'up' : diff < -0.05 ? 'down' : 'flat'
+      const paper = papers.find((candidate) => candidate.id === topic.paperId)
+      const rawDiff = paper?.examDate
+        ? Math.ceil((toMidnightUTC(new Date(paper.examDate)).getTime() - toMidnightUTC(today).getTime()) / MS_PER_DAY)
+        : null
+      const examDaysAway = rawDiff !== null && rawDiff > 0 ? rawDiff : null
+      const actionLabel = actionLabelFor(status)
+      const actionReason = actionReasonFor(status, topic, examDaysAway, today)
+
       return {
         topic,
         subject,
         offering,
         masteryPercent: masteryPercent(topic),
+        lastSessionScore,
+        sessionTrend,
+        actionLabel,
+        actionReason,
         freshnessRatio: freshnessRatio(topic.lastReviewed, today),
         recencyLabel: recencyLabel(topic.lastReviewed, today),
-        status: statusForTopic(topic, priorityScore, today),
+        status,
         priorityScore,
       } satisfies TopicTableRow
     })

@@ -1,6 +1,6 @@
 import type { Topic, Paper, Subject, Offering, ScoredTopic, DayPlan, UserState, ScheduleItem } from '../types'
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24
+export const MS_PER_DAY = 1000 * 60 * 60 * 24
 export const TOTAL_BLOCKS = 4
 export const CRUNCH_DAYS_THRESHOLD = 21
 

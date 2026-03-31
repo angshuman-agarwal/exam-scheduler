@@ -295,6 +295,25 @@ export function progressPlanNowSwap(): PersistedState {
   return s
 }
 
+export function progressSessionContext(): PersistedState {
+  const s = baseState(['cs-aqa', 'bio-aqa'])
+  setOfferingExamDate(s, 'cs-aqa', '2026-04-17')
+  setOfferingExamDate(s, 'bio-aqa', EXAM_FAR)
+
+  s.sessions = [
+    makeSession('cs-001', '2026-04-10', 0.4, 900, new Date('2026-04-10T12:00:00').getTime()),
+    makeSession('cs-001', '2026-04-15', 0.75, 1200, new Date('2026-04-15T12:00:00').getTime()),
+    makeSession('bio-001', '2026-04-14', 0.54, 800, new Date('2026-04-14T12:00:00').getTime()),
+  ]
+
+  setTopicFields(s, 'cs-001', { lastReviewed: '2026-04-15', performanceScore: 0.5, confidence: 3 })
+  setTopicFields(s, 'bio-001', { lastReviewed: '2026-03-01', performanceScore: 0.55, confidence: 2 })
+  setTopicFields(s, 'cs-003', { lastReviewed: null, performanceScore: 0.35, confidence: 2 })
+  setTopicFields(s, 'bio-002', { lastReviewed: '2026-04-12', performanceScore: 0.65, confidence: 3 })
+
+  return s
+}
+
 // 8. No weak spots — all topics have high perf, future exams exist
 export function progressNoWeakSpots(): PersistedState {
   const s = baseState(['cs-aqa'])

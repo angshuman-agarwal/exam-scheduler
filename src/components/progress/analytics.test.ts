@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildAnalyticsMetrics,
+  buildTopicTableRows,
   buildStudyVelocitySeries,
   coveragePercent,
   freshnessRatio,
@@ -51,6 +52,15 @@ function subject(partial: Partial<Subject>): Subject {
     id: partial.id ?? 'subject-1',
     name: partial.name ?? 'Computer Science',
     color: partial.color ?? '#2563eb',
+  }
+}
+
+function paper(partial: { id?: string; offeringId?: string; name?: string; examDate?: string }) {
+  return {
+    id: partial.id ?? 'paper-1',
+    offeringId: partial.offeringId ?? 'offering-1',
+    name: partial.name ?? 'Paper 1',
+    examDate: partial.examDate ?? '2026-05-20',
   }
 }
 
@@ -161,6 +171,107 @@ describe('progress analytics helpers', () => {
       expect.objectContaining({ subjectId: 'cs-subject', subjectName: 'Computer Science', color: '#2563eb', value: 20 }),
     ])
     expect(Math.round((selectedPoint?.segments[0]?.sharePercent ?? 0) + (selectedPoint?.segments[1]?.sharePercent ?? 0))).toBe(100)
+  })
+
+  it('adds latest session context and classifies session trend for topic rows', () => {
+    const today = new Date('2026-04-15T12:00:00')
+    const topics = [
+      topic({ id: 'up-topic', offeringId: 'offering-1', performanceScore: 0.5, confidence: 3, lastReviewed: '2026-04-15' }),
+      topic({ id: 'flat-topic', offeringId: 'offering-1', performanceScore: 0.5, confidence: 3, lastReviewed: '2026-04-14' }),
+      topic({ id: 'down-topic', offeringId: 'offering-1', performanceScore: 0.8, confidence: 4, lastReviewed: '2026-04-13' }),
+      topic({ id: 'no-session-topic', offeringId: 'offering-1', performanceScore: 0.65, confidence: 3, lastReviewed: null }),
+    ]
+    const offerings = [offering({ id: 'offering-1', subjectId: 'subject-1' })]
+    const subjects = [subject({ id: 'subject-1' })]
+    const papers = [{ id: 'paper-1', offeringId: 'offering-1', name: 'Paper 1', examDate: '2026-05-20' }]
+    const sessions = [
+      session({ id: 'up-old', topicId: 'up-topic', score: 0.4, timestamp: 1 }),
+      session({ id: 'up-new', topicId: 'up-topic', score: 0.75, timestamp: 2 }),
+      session({ id: 'flat-topic-session', topicId: 'flat-topic', score: 0.54, timestamp: 3 }),
+      session({ id: 'down-topic-session', topicId: 'down-topic', score: 0.7, timestamp: 4 }),
+    ]
+
+    const rows = buildTopicTableRows(topics, offerings, subjects, papers, today, sessions)
+    const rowByTopicId = new Map(rows.map((row) => [row.topic.id, row]))
+
+    expect(rowByTopicId.get('up-topic')).toEqual(expect.objectContaining({ lastSessionScore: 0.75, sessionTrend: 'up' }))
+    expect(rowByTopicId.get('flat-topic')).toEqual(expect.objectContaining({ lastSessionScore: 0.54, sessionTrend: 'flat' }))
+    expect(rowByTopicId.get('down-topic')).toEqual(expect.objectContaining({ lastSessionScore: 0.7, sessionTrend: 'down' }))
+    expect(rowByTopicId.get('no-session-topic')).toEqual(expect.objectContaining({ lastSessionScore: null, sessionTrend: null }))
+  })
+
+  it('keeps buildTopicTableRows backward compatible when sessions are omitted', () => {
+    const today = new Date('2026-04-15T12:00:00')
+    const topics = [topic({ id: 'topic-1', offeringId: 'offering-1', performanceScore: 0.6, confidence: 3, lastReviewed: '2026-04-15' })]
+    const offerings = [offering({ id: 'offering-1', subjectId: 'subject-1' })]
+    const subjects = [subject({ id: 'subject-1' })]
+    const papers = [{ id: 'paper-1', offeringId: 'offering-1', name: 'Paper 1', examDate: '2026-05-20' }]
+
+    const rows = buildTopicTableRows(topics, offerings, subjects, papers, today)
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        topic: expect.objectContaining({ id: 'topic-1' }),
+        lastSessionScore: null,
+        sessionTrend: null,
+      }),
+    ])
+  })
+
+  it('maps internal statuses to student-facing action labels and reasons', () => {
+    const today = new Date('2026-04-15T12:00:00')
+    const topics = [
+      topic({ id: 'not-started', paperId: 'paper-not-started', lastReviewed: null }),
+      topic({ id: 'priority-now', paperId: 'paper-priority', performanceScore: 0.5, confidence: 2, lastReviewed: '2026-04-15' }),
+      topic({ id: 'needs-focus', paperId: 'paper-needs-focus', performanceScore: 0.55, confidence: 2, lastReviewed: '2026-03-01' }),
+      topic({ id: 'revision-ready', paperId: 'paper-revision-ready', performanceScore: 0.75, confidence: 4, lastReviewed: '2026-04-14' }),
+      topic({ id: 'complete', paperId: 'paper-complete', performanceScore: 0.85, confidence: 4, lastReviewed: '2026-04-15' }),
+      topic({ id: 'scheduled', paperId: 'paper-scheduled', performanceScore: 0.65, confidence: 3, lastReviewed: '2026-04-12' }),
+    ]
+    const offerings = [offering({ id: 'offering-1', subjectId: 'subject-1' })]
+    const subjects = [subject({ id: 'subject-1' })]
+    const papers = [
+      paper({ id: 'paper-not-started', examDate: '2026-06-30' }),
+      paper({ id: 'paper-priority', examDate: '2026-04-17' }),
+      paper({ id: 'paper-needs-focus', examDate: '2026-06-30' }),
+      paper({ id: 'paper-revision-ready', examDate: '2026-06-30' }),
+      paper({ id: 'paper-complete', examDate: '2026-06-30' }),
+      paper({ id: 'paper-scheduled', examDate: '2026-06-30' }),
+    ]
+
+    const rows = buildTopicTableRows(topics, offerings, subjects, papers, today)
+    const rowByTopicId = new Map(rows.map((row) => [row.topic.id, row]))
+
+    expect(rowByTopicId.get('not-started')).toEqual(expect.objectContaining({
+      status: 'Not Started',
+      actionLabel: 'Begin this topic',
+      actionReason: 'not studied yet',
+    }))
+    expect(rowByTopicId.get('priority-now')).toEqual(expect.objectContaining({
+      status: 'Priority Now',
+      actionLabel: 'Study today',
+      actionReason: 'exam in 2 days',
+    }))
+    expect(rowByTopicId.get('needs-focus')).toEqual(expect.objectContaining({
+      status: 'Needs Focus',
+      actionLabel: 'Keep practising',
+      actionReason: 'not studied in a while',
+    }))
+    expect(rowByTopicId.get('revision-ready')).toEqual(expect.objectContaining({
+      status: 'Revision Ready',
+      actionLabel: 'Ready to revise',
+      actionReason: 'solid and recently practised',
+    }))
+    expect(rowByTopicId.get('complete')).toEqual(expect.objectContaining({
+      status: 'Complete',
+      actionLabel: 'Well covered',
+      actionReason: 'reviewed recently',
+    }))
+    expect(rowByTopicId.get('scheduled')).toEqual(expect.objectContaining({
+      status: 'Scheduled',
+      actionLabel: 'On track',
+      actionReason: 'no urgent changes needed',
+    }))
   })
 
   it('builds the four top-level analytics metrics', () => {

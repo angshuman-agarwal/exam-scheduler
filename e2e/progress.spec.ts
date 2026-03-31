@@ -6,6 +6,7 @@ import {
   progressExpandedNotes,
   progressMixedStatuses,
   progressNoFutureExams,
+  progressSessionContext,
   progressPlanNowSwap,
   progressStreak,
 } from './fixtures/progressState'
@@ -29,12 +30,16 @@ test('1. Empty progress state keeps the CTA path and hides analytics sections', 
 test('2. Active progress renders the analytics row and compact calendar', async ({ page }) => {
   await openProgress(page, progressStreak(), FROZEN_DATE)
   const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
+  const velocityCard = page.getByTestId('progress-study-velocity-card')
 
   await expect(page.getByTestId('progress-hero')).toContainText('3 day streak')
   await expect(page.getByTestId('progress-hero-cta')).toHaveCount(0)
   await expect(page.getByTestId('progress-daily-streak-card')).toContainText('Daily Streak')
   await expect(page.getByTestId('progress-last-session-card')).toContainText('Last Session')
   await expect(page.getByTestId('progress-study-velocity-card')).toContainText('Study Velocity')
+  await expect(velocityCard).toContainText('Minutes studied')
+  await expect(velocityCard).toContainText('20')
+  await expect(velocityCard).toContainText('10')
   await expect(page.getByText(/min logged/i)).toHaveCount(0)
   await expect(page.getByTestId('progress-study-velocity-card').getByTestId('progress-velocity-bar')).toHaveCount(14)
   await expect(calendar).toBeVisible()
@@ -65,10 +70,14 @@ test('3. Clicking a studied date filters the topic grid and toggles the reviewed
 
 test('4. Topic breakdown filters switch the table ordering lens', async ({ page }) => {
   await openProgress(page, progressMixedStatuses(), FROZEN_DATE)
+  const velocityCard = page.getByTestId('progress-study-velocity-card')
 
   const firstRowBefore = (await page.getByTestId('progress-topic-row').first().textContent()) ?? ''
   await expect(page.getByTestId('progress-filter-priority-now')).toBeVisible()
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toBeVisible()
+  await expect(velocityCard).toContainText('Hours studied')
+  await expect(velocityCard).toContainText('1.3')
+  await expect(velocityCard).toContainText('0.7')
 
   await page.getByTestId('progress-filter-recently-reviewed').click()
   const firstRowAfterRecent = (await page.getByTestId('progress-topic-row').first().textContent()) ?? ''
@@ -219,7 +228,8 @@ test('14. Mobile progress hides the calendar and keeps Topic Mastery as the prim
   await expect(page.getByTestId('progress-open-calendar-mobile')).toHaveCount(0)
   await expect(mobileBreakdown).toContainText('Biology')
   await expect(mobileBreakdown).toContainText('Computer Science')
-  await expect(mobileBreakdown).toContainText('Today')
+  await expect(mobileBreakdown).toContainText('Action')
+  await expect(mobileBreakdown).toContainText('What to do now')
 })
 
 test('15. Mobile Study Velocity applies and clears the reviewed-date lens without a calendar', async ({ page }) => {
@@ -239,4 +249,56 @@ test('15. Mobile Study Velocity applies and clears the reviewed-date lens withou
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Recently Reviewed')
   await expect(page.getByTestId('progress-clear-reviewed-date')).toHaveCount(0)
   await expect(page.getByTestId('progress-filter-priority-now')).toBeEnabled()
+})
+
+test('16. Topic Mastery shows overall confidence, action guidance, and reason lines', async ({ page }) => {
+  await openProgress(page, progressSessionContext(), FROZEN_DATE)
+
+  const table = page.getByTestId('progress-topic-table')
+  const sortingRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Sorting and searching algorithms' })
+  const cellsRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Cells tissues organs' })
+  const flowchartsRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Flowcharts' })
+
+  await expect(table).toContainText('Overall Confidence')
+  await expect(table).toContainText('How well you know it')
+  await expect(table).toContainText('Action')
+  await expect(table).toContainText('What to do now')
+  await expect(sortingRow).toContainText('Last: 75%')
+  await expect(sortingRow).toContainText('↑')
+  await expect(sortingRow).toContainText('53% mastery')
+  await expect(sortingRow).toContainText('Study today')
+  await expect(sortingRow).toContainText('exam in 2 days')
+  await expect(cellsRow).toContainText('Last: 54%')
+  await expect(cellsRow).toContainText('Keep practising')
+  await expect(cellsRow).toContainText('not studied in a while')
+  await expect(flowchartsRow).toContainText('37% mastery')
+  await expect(flowchartsRow).toContainText('Begin this topic')
+  await expect(flowchartsRow).toContainText('not studied yet')
+  await expect(flowchartsRow.getByTestId('progress-session-trend-pill')).toHaveCount(0)
+})
+
+test('17. Mobile Topic Mastery shows the same confidence and action context', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openProgress(page, progressSessionContext(), FROZEN_DATE)
+
+  const mobileBreakdown = page.locator('[data-testid="progress-topic-breakdown-mobile"]:visible').first()
+  const sortingRow = page.getByTestId('progress-topic-row-mobile').filter({ hasText: 'Sorting and searching algorithms' })
+  const cellsRow = page.getByTestId('progress-topic-row-mobile').filter({ hasText: 'Cells tissues organs' })
+  const flowchartsRow = page.getByTestId('progress-topic-row-mobile').filter({ hasText: 'Flowcharts' })
+
+  await expect(mobileBreakdown).toContainText('Overall Confidence')
+  await expect(mobileBreakdown).toContainText('How well you know it')
+  await expect(mobileBreakdown).toContainText('Action')
+  await expect(mobileBreakdown).toContainText('What to do now')
+  await expect(sortingRow).toContainText('Last: 75%')
+  await expect(sortingRow).toContainText('↑')
+  await expect(sortingRow).toContainText('53% mastery')
+  await expect(sortingRow).toContainText('Study today')
+  await expect(sortingRow).toContainText('exam in 2 days')
+  await expect(cellsRow).toContainText('Keep practising')
+  await expect(cellsRow).toContainText('not studied in a while')
+  await expect(flowchartsRow).toContainText('37% mastery')
+  await expect(flowchartsRow).toContainText('Begin this topic')
+  await expect(flowchartsRow).toContainText('not studied yet')
+  await expect(flowchartsRow.getByTestId('progress-session-trend-pill')).toHaveCount(0)
 })
