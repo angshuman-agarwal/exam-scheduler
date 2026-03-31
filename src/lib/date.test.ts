@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getLocalDayKey } from './date'
+import { getLocalDayKey, msUntilNextLocalMidnight } from './date'
 
 describe('getLocalDayKey', () => {
   it('formats a standard date', () => {
@@ -20,5 +20,17 @@ describe('getLocalDayKey', () => {
   it('handles first day of year', () => {
     const date = new Date(2026, 0, 1, 0, 0, 0)
     expect(getLocalDayKey(date)).toBe('2026-01-01')
+  })
+})
+
+describe('msUntilNextLocalMidnight', () => {
+  it('returns the remaining milliseconds until the next local midnight', () => {
+    const date = new Date(2026, 2, 31, 23, 59, 30, 0)
+    expect(msUntilNextLocalMidnight(date)).toBe(30000)
+  })
+
+  it('returns a full day at local midnight', () => {
+    const date = new Date(2026, 2, 31, 0, 0, 0, 0)
+    expect(msUntilNextLocalMidnight(date)).toBe(24 * 60 * 60 * 1000)
   })
 })

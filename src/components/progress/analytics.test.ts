@@ -5,6 +5,7 @@ import {
   buildStudyVelocitySeries,
   coveragePercent,
   freshnessRatio,
+  recencyLabel,
   masteryPercent,
   readinessPercent,
   studyVelocityBars,
@@ -77,6 +78,13 @@ describe('progress analytics helpers', () => {
     expect(freshnessRatio('2026-04-10', today)).toBe(0.65)
     expect(freshnessRatio('2026-04-06', today)).toBe(0.5)
     expect(freshnessRatio('2026-03-20', today)).toBe(0)
+  })
+
+  it('calculates recency labels using calendar days across DST changes', () => {
+    const today = new Date('2026-03-31T11:41:00')
+    expect(recencyLabel('2026-03-31', today)).toBe('Today')
+    expect(recencyLabel('2026-03-30', today)).toBe('Yesterday')
+    expect(recencyLabel('2026-03-29', today)).toBe('2 days ago')
   })
 
   it('calculates coverage percent from reviewed topics', () => {
@@ -216,6 +224,33 @@ describe('progress analytics helpers', () => {
         sessionTrend: null,
       }),
     ])
+  })
+
+  it('prefers the latest session date for recency labels when session history and lastReviewed diverge', () => {
+    const today = new Date('2026-03-31T11:41:00')
+    const topics = [
+      topic({
+        id: 'topic-1',
+        offeringId: 'offering-1',
+        paperId: 'paper-1',
+        performanceScore: 0.7,
+        confidence: 4,
+        lastReviewed: '2026-03-30',
+      }),
+    ]
+    const offerings = [offering({ id: 'offering-1', subjectId: 'subject-1' })]
+    const subjects = [subject({ id: 'subject-1' })]
+    const papers = [paper({ id: 'paper-1', offeringId: 'offering-1', examDate: '2026-05-20' })]
+    const sessions = [
+      session({ id: 'latest', topicId: 'topic-1', date: '2026-03-29', score: 0.75, timestamp: 1 }),
+    ]
+
+    const [row] = buildTopicTableRows(topics, offerings, subjects, papers, today, sessions)
+
+    expect(row).toEqual(expect.objectContaining({
+      recencyLabel: '2 days ago',
+      lastSessionScore: 0.75,
+    }))
   })
 
   it('maps internal statuses to student-facing action labels and reasons', () => {

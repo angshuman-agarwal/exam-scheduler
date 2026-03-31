@@ -308,9 +308,9 @@ export function recencyLabel(lastReviewed: string | null, today: Date): string {
 
   const [ly, lm, ld] = lastReviewed.split('-').map(Number)
   const todayParts = todayISO.split('-').map(Number)
-  const lastDate = new Date(ly, lm - 1, ld)
-  const todayDate = new Date(todayParts[0], todayParts[1] - 1, todayParts[2])
-  const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / 86400000)
+  const lastDateUTC = Date.UTC(ly, lm - 1, ld)
+  const todayDateUTC = Date.UTC(todayParts[0], todayParts[1] - 1, todayParts[2])
+  const diffDays = Math.floor((todayDateUTC - lastDateUTC) / 86400000)
 
   if (diffDays === 1) return 'Yesterday'
   if (diffDays <= 7) return `${diffDays} days ago`
@@ -371,6 +371,11 @@ function latestSessionForTopic(topicId: string, sessions: Session[]): Session | 
     }
   }
   return best
+}
+
+function recencySourceDate(topic: Topic, sessions: Session[]): string | null {
+  const latestSession = latestSessionForTopic(topic.id, sessions)
+  return latestSession?.date ?? topic.lastReviewed
 }
 
 function actionLabelFor(status: TopicTableStatus): string {
@@ -447,6 +452,7 @@ export function buildTopicTableRows(
       const priorityScore = scoredTopic.score
       const status = statusForTopic(topic, priorityScore, today)
       const latestSession = latestSessionForTopic(topic.id, sessions)
+      const recencyDate = recencySourceDate(topic, sessions)
       const lastSessionScore = latestSession?.score ?? null
       const diff = lastSessionScore !== null ? lastSessionScore - topic.performanceScore : null
       const sessionTrend = diff === null ? null : diff > 0.05 ? 'up' : diff < -0.05 ? 'down' : 'flat'
@@ -468,7 +474,7 @@ export function buildTopicTableRows(
         actionLabel,
         actionReason,
         freshnessRatio: freshnessRatio(topic.lastReviewed, today),
-        recencyLabel: recencyLabel(topic.lastReviewed, today),
+        recencyLabel: recencyLabel(recencyDate, today),
         status,
         priorityScore,
       } satisfies TopicTableRow

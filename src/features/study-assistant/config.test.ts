@@ -10,12 +10,12 @@ afterEach(() => {
 })
 
 describe('getStudyAssistantAvailability', () => {
-  it('defaults to enabled while tutoring is not ready without an api base url', () => {
+  it('defaults to disabled while tutoring is not ready without an api base url', () => {
     import.meta.env.VITE_STUDY_ASSISTANT_ENABLED = undefined
     import.meta.env.VITE_TUTORING_API_BASE_URL = ''
 
     expect(getStudyAssistantAvailability()).toEqual({
-      enabled: true,
+      enabled: false,
       tutoringReady: false,
     })
   })

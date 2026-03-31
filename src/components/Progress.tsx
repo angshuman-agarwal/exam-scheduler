@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react'
-import { getLocalDayKey } from '../lib/date'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { getLocalDayKey, msUntilNextLocalMidnight } from '../lib/date'
 import { useLocalProgressApi } from '../lib/api/local/useProgressApi'
 import { ExamDaySelectionPanel } from './ExamDaySelectionPanel'
 import QualificationChip from './QualificationChip'
@@ -106,8 +106,16 @@ export default function Progress({ onGoToToday, onBrowseOffering, onPlanNowTopic
   const [filter, setFilter] = useState<ProgressTableFilter>('priority-now')
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const topicBreakdownRef = useRef<HTMLDivElement | null>(null)
+  const [today, setToday] = useState(() => new Date())
 
-  const today = useMemo(() => new Date(), [])
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setToday(new Date())
+    }, msUntilNextLocalMidnight(today))
+
+    return () => window.clearTimeout(timeoutId)
+  }, [today])
+
   const selectedOfferingSet = useMemo(() => new Set(selectedOfferingIds), [selectedOfferingIds])
 
   const selectedOfferings = useMemo(

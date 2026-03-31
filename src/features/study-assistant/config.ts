@@ -14,7 +14,7 @@ function readBooleanEnv(value: string | undefined, fallback: boolean) {
 }
 
 export function getStudyAssistantAvailability(): StudyAssistantAvailability {
-  const enabled = readBooleanEnv(import.meta.env.VITE_STUDY_ASSISTANT_ENABLED, true)
+  const enabled = readBooleanEnv(import.meta.env.VITE_STUDY_ASSISTANT_ENABLED, false)
   const tutoringReady = Boolean(import.meta.env.VITE_TUTORING_API_BASE_URL?.trim())
 
   return {
