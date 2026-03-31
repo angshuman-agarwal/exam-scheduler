@@ -1,113 +1,65 @@
-import { useState, useEffect, useRef } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import LandingPage from './components/LandingPage'
-import FeedbackSheet from './components/FeedbackSheet'
-import { useAppStore } from './stores/app.store'
-import { useTimerStore } from './stores/timer.store'
-import { scoreSingleTopic } from './lib/engine'
+import { useLocalAccountApi } from './lib/api/local/useAccountApi'
+import { useLocalPlansApi } from './lib/api/local/usePlansApi'
+import { getPathForPage } from './lib/navigation'
+import { useAppBootstrap } from './hooks/useAppBootstrap'
+import { useAppNavigation } from './hooks/useAppNavigation'
+import { useAppShell } from './hooks/useAppShell'
 import Layout from './components/Layout'
-import Onboarding from './components/Onboarding'
-import TodayPlan from './components/TodayPlan'
-import SubjectPicker from './components/SubjectPicker'
-import SessionLogger from './components/SessionLogger'
-import Progress from './components/Progress'
-import type { ScoredTopic, Offering, Subject, Paper, ScheduleSource } from './types'
-
-const PAGES = ['home', 'today', 'progress'] as const
-type Page = (typeof PAGES)[number]
-
-function isPageHash(value: string): value is Page {
-  return (PAGES as readonly string[]).includes(value)
-}
-
-function getPageFromHash(): Page {
-  const h = window.location.hash.slice(1)
-  return isPageHash(h) ? h : 'home'
-}
-
-function recoverActiveSession(): { scored: ScoredTopic; source: ScheduleSource; scheduleItemId?: string } | null {
-  const timerSession = useTimerStore.getState().session
-  if (!timerSession) return null
-
-  const state = useAppStore.getState()
-  const topic = state.topics.find((t) => t.id === timerSession.topicId)
-  if (!topic) { useTimerStore.getState().discard(); return null }
-  const paper = state.papers.find((p) => p.id === topic.paperId)
-  if (!paper) { useTimerStore.getState().discard(); return null }
-  const offering = state.offerings.find((o) => o.id === topic.offeringId)
-  if (!offering) { useTimerStore.getState().discard(); return null }
-  const subject = state.subjects.find((s) => s.id === offering.subjectId)
-  if (!subject) { useTimerStore.getState().discard(); return null }
-
-  const scored = scoreSingleTopic(topic, paper, offering, subject, new Date())
-  return { scored, source: timerSession.source, scheduleItemId: timerSession.scheduleItemId }
-}
+import HomeScreen from './screens/HomeScreen'
+import TodayScreen from './screens/TodayScreen'
+import ProgressScreen from './screens/ProgressScreen'
+import AppOverlays from './screens/AppOverlays'
+import StudyAssistantPresence from './features/study-assistant/StudyAssistantPresence'
+import { useStudyAssistant } from './features/study-assistant/useStudyAssistant'
+import { useAppStore } from './stores/app.store'
 
 function App() {
-  const init = useAppStore((s) => s.init)
-  const initialized = useAppStore((s) => s.initialized)
-  const onboarded = useAppStore((s) => s.onboarded)
+  const account = useLocalAccountApi()
+  const plansApi = useLocalPlansApi()
+  const { recoveryDone, recoveredSession } = useAppBootstrap()
+  const { page, navigateTo } = useAppNavigation()
+  const shell = useAppShell({ recoveredSession, navigateTo })
+  const assistant = useStudyAssistant()
+  const getTopicsForOffering = useAppStore((state) => state.getTopicsForOffering)
+  const selectedOfferingIds = useAppStore((state) => state.selectedOfferingIds)
 
-  const initTimer = useTimerStore((s) => s.initTimer)
+  const handleProgressPlanNow = (topicId: string) => {
+    const today = new Date()
+    const planItems = plansApi.getPlanItems(today)
+    const topicScoreMap = new Map<string, number>()
 
-  const [page, setPage] = useState<Page>(getPageFromHash)
-  const [activeSession, setActiveSession] = useState<{
-    scored: ScoredTopic
-    source: ScheduleSource
-    scheduleItemId?: string
-  } | null>(null)
-  const [activeOffering, setActiveOffering] = useState<Offering | null>(null)
-  const [activeSubject, setActiveSubject] = useState<Subject | null>(null)
-  const [activePaper, setActivePaper] = useState<Paper | null>(null)
-  const [editingSetup, setEditingSetup] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(false)
-  const [showFeedback, setShowFeedback] = useState(false)
-  const [recoveryDone, setRecoveryDone] = useState(false)
-  const recoveryRan = useRef(false)
+    for (const offeringId of selectedOfferingIds) {
+      for (const scored of getTopicsForOffering(offeringId, today)) {
+        topicScoreMap.set(scored.topic.id, scored.score)
+      }
+    }
 
-  function navigateTo(p: Page) {
-    // Same-hash guard: no hashchange fires, so sync state directly as a
-    // defensive recovery in case React state drifted from the URL.
-    if (window.location.hash === '#' + p) {
-      setPage(p)
+    const swapCandidate = [...planItems]
+      .map((item) => ({ item, score: topicScoreMap.get(item.topicId) ?? 0 }))
+      .sort((a, b) => {
+        if (a.item.source === 'auto' && b.item.source !== 'auto') return -1
+        if (a.item.source !== 'auto' && b.item.source === 'auto') return 1
+        return a.score - b.score
+      })[0]
+
+    if (planItems.length >= 4 && swapCandidate) {
+      plansApi.removeFromPlan(swapCandidate.item.id)
+      setTimeout(() => {
+        plansApi.addToPlan(topicId, 'manual', today)
+        shell.markRecentlySwappedTopic(topicId)
+        shell.goToToday()
+      }, 0)
       return
     }
-    // URL-driven: setting hash fires hashchange, whose listener calls setPage.
-    window.location.hash = '#' + p
+
+    plansApi.addToPlan(topicId, 'manual', today)
+    shell.markRecentlySwappedTopic(topicId)
+    shell.goToToday()
   }
 
-  useEffect(() => {
-    if (!isPageHash(window.location.hash.slice(1))) {
-      window.history.replaceState(null, '', '#home')
-    }
-    const onHashChange = () => setPage(getPageFromHash())
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
-
-  const papers = useAppStore((s) => s.papers)
-  const offerings = useAppStore((s) => s.offerings)
-  const subjects = useAppStore((s) => s.subjects)
-  const boards = useAppStore((s) => s.boards)
-  const selectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
-
-  useEffect(() => {
-    const doInit = async () => {
-      await init()
-      await initTimer()
-      // Recover timer session synchronously after both stores are ready
-      if (!recoveryRan.current) {
-        recoveryRan.current = true
-        const recovered = recoverActiveSession()
-        if (recovered) {
-          setActiveSession(recovered)
-        }
-      }
-      setRecoveryDone(true)
-    }
-    doInit()
-  }, [init, initTimer])
-
-  if (!initialized || !recoveryDone) {
+  if (!account.initialized || !recoveryDone) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-400">Loading...</p>
@@ -115,139 +67,104 @@ function App() {
     )
   }
 
-  // ── Pre-app surfaces (no bottom nav) ──
-
-  // Non-onboarded: marketing landing or initial onboarding
-  if (!onboarded) {
-    if (showOnboarding) {
-      return (
-        <Onboarding
-          onComplete={() => navigateTo('today')}
-          onBackToHome={() => setShowOnboarding(false)}
-        />
-      )
-    }
-    return <LandingPage onboarded={false} onGetStarted={() => setShowOnboarding(true)} />
-  }
-
-  // Edit subjects mode (full-screen, no bottom nav)
-  if (editingSetup) {
+  if (shell.shouldShowOverlay(account.onboarded)) {
     return (
-      <Onboarding
-        mode="edit"
-        onComplete={() => setEditingSetup(false)}
-        onCancel={() => setEditingSetup(false)}
+      <AppOverlays
+        onboarded={account.onboarded}
+        showOnboarding={shell.showOnboarding}
+        editingSetup={shell.editingSetup}
+        activeSession={shell.activeSession}
+        activeOffering={shell.activeOffering}
+        activeSubject={shell.activeSubject}
+        activePaper={shell.activePaper}
+        activeSubjectBrowseContext={shell.activeSubjectBrowseContext}
+        onCompleteOnboarding={shell.completeOnboarding}
+        onBackToHome={shell.closeOnboarding}
+        onCompleteEdit={shell.completeEditSetup}
+        onCancelEdit={shell.completeEditSetup}
+        onCloseSession={shell.closeSession}
+        onGoToProgress={shell.goToProgress}
+        onCloseSubjectPicker={shell.closeSubjectPicker}
+        onCompletePlanNowSwap={shell.completePlanNowSwap}
+        onStartSession={shell.startSession}
       />
     )
   }
 
-  // Session logger (full-screen, bypasses everything including Home)
-  if (activeSession) {
-    return (
-      <SessionLogger
-        scored={activeSession.scored}
-        source={activeSession.source}
-        scheduleItemId={activeSession.scheduleItemId}
-        onBack={() => setActiveSession(null)}
-        onGoToProgress={() => { setActiveSession(null); navigateTo('progress') }}
-      />
-    )
-  }
-
-  // Subject picker (full-screen)
-  if (activeOffering && activeSubject) {
-    return (
-      <SubjectPicker
-        offering={activeOffering}
-        subject={activeSubject}
-        paper={activePaper}
-        onBack={() => { setActiveOffering(null); setActiveSubject(null); setActivePaper(null) }}
-        onStartSession={(scored, source, scheduleItemId) => {
-          setActiveSession({ scored, source, scheduleItemId })
-        }}
-      />
-    )
+  if (!account.onboarded) {
+    return <LandingPage onboarded={false} onGetStarted={shell.openOnboarding} />
   }
 
   // ── App shell (bottom nav visible) ──
 
-  // Compute returning-user data for app Home
-  const selectedIds = new Set(selectedOfferingIds)
-
-  const nearestUserExam = (() => {
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    let nearest: { days: number; subjectName: string; paperName: string; board: string } | null = null
-    for (const p of papers) {
-      if (!selectedIds.has(p.offeringId)) continue
-      const exam = new Date(p.examDate + 'T00:00:00')
-      const diff = Math.ceil((exam.getTime() - today.getTime()) / 86_400_000)
-      if (diff > 0 && (!nearest || diff < nearest.days)) {
-        const offering = offerings.find((o) => o.id === p.offeringId)
-        const subject = offering ? subjects.find((s) => s.id === offering.subjectId) : null
-        const board = offering ? boards.find((b) => b.id === offering.boardId) : null
-        nearest = { days: diff, subjectName: subject?.name ?? '', paperName: p.name, board: board?.name ?? '' }
-      }
-    }
-    return nearest
-  })()
-
-  // Build deduplicated selected subject details
-  const selectedSubjectDetails = (() => {
-    const seen = new Set<string>()
-    const result: { name: string; board: string }[] = []
-    for (const oid of selectedOfferingIds) {
-      const offering = offerings.find((o) => o.id === oid)
-      if (!offering) continue
-      const key = `${offering.subjectId}|${offering.boardId}`
-      if (seen.has(key)) continue
-      seen.add(key)
-      const subject = subjects.find((s) => s.id === offering.subjectId)
-      const board = boards.find((b) => b.id === offering.boardId)
-      if (subject && board) result.push({ name: subject.name, board: board.name })
-    }
-    result.sort((a, b) => a.name.localeCompare(b.name))
-    return result
-  })()
-
   // Returning-user Home: full-screen front door, no bottom nav
   if (page === 'home') {
     return (
-      <>
-        <LandingPage
-          onboarded={true}
-          onGetStarted={() => {}}
-          onContinuePlanning={() => navigateTo('today')}
-          onViewProgress={() => navigateTo('progress')}
-          onEditSubjects={() => setEditingSetup(true)}
-          onOpenFeedback={() => setShowFeedback(true)}
-          nearestUserExam={nearestUserExam}
-          selectedSubjectDetails={selectedSubjectDetails}
+      <Layout
+        assistantDocked={assistant.isEnabled && assistant.isOpen}
+        currentPage={page}
+        onNavigate={navigateTo}
+        showMobileBottomNav={false}
+      >
+        <HomeScreen
+          showFeedback={shell.showFeedback}
+          onContinuePlanning={shell.goToToday}
+          onViewProgress={shell.goToProgress}
+          onEditSubjects={shell.openEditSetup}
+          onOpenFeedback={shell.openFeedback}
+          onCloseFeedback={shell.closeFeedback}
+          nearestUserExam={shell.nearestUserExam}
+          selectedSubjectDetails={shell.selectedSubjectDetails}
         />
-        {showFeedback && <FeedbackSheet onClose={() => setShowFeedback(false)} />}
-      </>
+        <StudyAssistantPresence
+          assistant={assistant}
+          currentPage="home"
+          subjectCount={shell.selectedSubjectDetails.length}
+        />
+      </Layout>
     )
   }
 
   return (
-    <Layout currentPage={page} onNavigate={navigateTo}>
-      {page === 'today' && (
-        <TodayPlan
-          onStartSession={(scored, source, scheduleItemId) =>
-            setActiveSession({ scored, source, scheduleItemId })
-          }
-          onBrowseOffering={(offering, subject, paper) => {
-            setActiveOffering(offering)
-            setActiveSubject(subject)
-            setActivePaper(paper ?? null)
-          }}
-          onEditSubjects={() => setEditingSetup(true)}
+    <Layout
+      assistantDocked={assistant.isEnabled && assistant.isOpen}
+      currentPage={page}
+      onNavigate={navigateTo}
+    >
+      <Routes>
+        <Route
+          path="/today"
+          element={(
+            <TodayScreen
+              onStartSession={shell.startSession}
+              onBrowseOffering={(offering, subject, paper) => shell.startSubjectBrowse(offering, subject, paper, { originPage: 'today' })}
+              onEditSubjects={shell.openEditSetup}
+              recentlySwappedTopicId={shell.recentlySwappedTopicId}
+              onClearRecentlySwappedTopic={shell.clearRecentlySwappedTopic}
+            />
+          )}
         />
-      )}
-      {page === 'progress' && <Progress onGoToToday={() => navigateTo('today')} />}
+        <Route
+          path="/progress"
+          element={(
+            <ProgressScreen
+              onGoToToday={shell.goToToday}
+              onBrowseOffering={(offering, subject, paper) => shell.startSubjectBrowse(offering, subject, paper, { originPage: 'progress' })}
+              onPlanNowTopic={(_offering, _subject, topicId) => {
+                handleProgressPlanNow(topicId)
+              }}
+            />
+          )}
+        />
+        <Route path="*" element={<Navigate to={getPathForPage('today')} replace />} />
+      </Routes>
+      <StudyAssistantPresence
+        assistant={assistant}
+        currentPage={page}
+        subjectCount={shell.selectedSubjectDetails.length}
+      />
     </Layout>
   )
 }
 
 export default App
-

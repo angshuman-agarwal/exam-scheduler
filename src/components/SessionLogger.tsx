@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { useTimerStore } from '../stores/timer.store'
+import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
+import { useLocalPlansApi } from '../lib/api/local/usePlansApi'
 import { useWakeLock } from '../lib/useWakeLock'
 import QualificationChip from './QualificationChip'
 import type { ScoredTopic, ScheduleSource } from '../types'
@@ -223,10 +225,10 @@ function ConfidenceDots({ value }: { value: number }) {
 
 export default function SessionLogger({ scored, source, scheduleItemId, onBack, onGoToProgress }: SessionLoggerProps) {
   const { topic, subject, offering } = scored
-  const studyMode = useAppStore((s) => s.studyMode)
   const logSession = useAppStore((s) => s.logSession)
   const addNote = useAppStore((s) => s.addNote)
-  const removeFromPlan = useAppStore((s) => s.removeFromPlan)
+  const { studyMode } = useLocalAccountApi()
+  const plansApi = useLocalPlansApi()
 
   const session = useTimerStore((s) => s.session)
   const settings = useTimerStore((s) => s.settings)
@@ -350,7 +352,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
       setNoteText('')
     }
     if (scheduleItemId) {
-      removeFromPlan(scheduleItemId)
+      plansApi.removeFromPlan(scheduleItemId)
     }
     setSubmitted(true)
   }

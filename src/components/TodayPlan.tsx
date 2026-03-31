@@ -1,7 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, scoreAllTopics, autoFillPlanItems, getPlanningMode, nearestExamDays as calcNearestExamDays } from '../lib/engine'
+import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
 import { getLocalDayKey } from '../lib/date'
+import { useLocalPlansApi } from '../lib/api/local/usePlansApi'
 import NudgeBanner from './NudgeBanner'
 import ExamCalendar from './ExamCalendar'
 import QualificationChip from './QualificationChip'
@@ -11,6 +13,8 @@ interface TodayPlanProps {
   onStartSession: (scored: ScoredTopic, source: ScheduleSource, scheduleItemId?: string) => void
   onBrowseOffering: (offering: Offering, subject: Subject, paper?: Paper) => void
   onEditSubjects: () => void
+  recentlySwappedTopicId: string | null
+  onClearRecentlySwappedTopic: () => void
 }
 
 const CONFIDENCE_COLORS = ['#ef4444', '#f59e0b', '#84cc16', '#16a34a', '#0d9488'] as const
@@ -30,22 +34,21 @@ function ConfidenceDots({ level }: { level: number; color: string }) {
   )
 }
 
-export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubjects }: TodayPlanProps) {
+export default function TodayPlan({
+  onStartSession,
+  onBrowseOffering,
+  onEditSubjects,
+  recentlySwappedTopicId,
+  onClearRecentlySwappedTopic,
+}: TodayPlanProps) {
   const topics = useAppStore((s) => s.topics)
   const papers = useAppStore((s) => s.papers)
   const subjects = useAppStore((s) => s.subjects)
   const allOfferings = useAppStore((s) => s.offerings)
   const selectedOfferingIds = useAppStore((s) => s.selectedOfferingIds)
-  const initialized = useAppStore((s) => s.initialized)
   const resetAll = useAppStore((s) => s.resetAll)
-  const dailyPlan = useAppStore((s) => s.dailyPlan)
-  const planDay = useAppStore((s) => s.planDay)
-  const addToPlan = useAppStore((s) => s.addToPlan)
-  const removeFromPlan = useAppStore((s) => s.removeFromPlan)
-  const autoFillPlan = useAppStore((s) => s.autoFillPlan)
-  const clearPlan = useAppStore((s) => s.clearPlan)
-
-  const studyMode = useAppStore((s) => s.studyMode)
+  const { initialized, studyMode } = useLocalAccountApi()
+  const plansApi = useLocalPlansApi()
   const [expanded, setExpanded] = useState<string | null>(null)
 
   const today = new Date()
@@ -117,8 +120,8 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scored, subjects, todayKey])
 
-  const planItems = planDay === todayKey ? dailyPlan : []
-  const planTopicIds = new Set(planItems.map((i) => i.topicId))
+  const planItems = plansApi.getPlanItems(today)
+  const planTopicIds = useMemo(() => new Set(planItems.map((i) => i.topicId)), [planItems])
   const planFull = planItems.length >= 4
   const hasUserItems = planItems.some((i) => i.source !== 'auto')
   const planLabel = planItems.length === 0 || !hasUserItems ? 'Suggested plan' : 'Your plan'
@@ -136,6 +139,12 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
       return a.scored.score - b.scored.score
     })[0]
   }, [resolvedPlan])
+
+  useEffect(() => {
+    if (recentlySwappedTopicId && !planTopicIds.has(recentlySwappedTopicId)) {
+      onClearRecentlySwappedTopic()
+    }
+  }, [onClearRecentlySwappedTopic, planTopicIds, recentlySwappedTopicId])
 
   const canAutoFill = useMemo(() => {
     if (planFull) return false
@@ -202,7 +211,11 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
               </div>
               {hasUserItems && (
                 <button
-                  onClick={() => { clearPlan(); autoFillPlan(today) }}
+                  onClick={() => {
+                    onClearRecentlySwappedTopic()
+                    plansApi.clearPlan()
+                    plansApi.autoFillPlan(today)
+                  }}
                   className="flex items-center gap-1 text-[11px] text-gray-400 font-medium transition-colors hover:text-system-blue"
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -218,9 +231,11 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
               <div className="border-t border-gray-100 divide-y divide-gray-50">
                 {resolvedPlan.map(({ item, scored: s }) => {
                   const days = daysRemaining(s.paper.examDate, today)
+                  const isRecentlySwapped = recentlySwappedTopicId === item.topicId
                   return (
                     <div
                       key={item.id}
+                      data-testid="today-plan-item"
                       role="button"
                       tabIndex={0}
                       onClick={() => onStartSession(s, item.source, item.id)}
@@ -241,10 +256,26 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                           <span className={days <= 3 ? 'text-red-500' : days <= 7 ? 'text-amber-500' : planningMode === 'crunch' && days <= 21 ? 'text-amber-400' : ''}>
                             Exam in {days} {days === 1 ? 'day' : 'days'}
                           </span>
+                          {isRecentlySwapped && (
+                            <>
+                              <span className="text-gray-300 mx-1">{'\u00B7'}</span>
+                              <span
+                                data-testid="today-plan-swapped-indicator"
+                                className="font-medium text-system-blue"
+                              >
+                                Swapped in
+                              </span>
+                            </>
+                          )}
                         </p>
                       </div>
                       <button
-                        onClick={(e) => { e.stopPropagation(); removeFromPlan(item.id) }}
+                        data-testid="today-plan-remove"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (isRecentlySwapped) onClearRecentlySwappedTopic()
+                          plansApi.removeFromPlan(item.id)
+                        }}
                         className="shrink-0 p-1 text-red-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
                         aria-label="Remove from plan"
                       >
@@ -266,7 +297,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                     <>
                       <button
                         type="button"
-                        onClick={() => autoFillPlan(today)}
+                        onClick={() => plansApi.autoFillPlan(today)}
                         className="w-full py-2.5 ios-button text-sm"
                       >
                         Create suggested plan
@@ -277,7 +308,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                     <>
                       <button
                         type="button"
-                        onClick={() => autoFillPlan(today)}
+                        onClick={() => plansApi.autoFillPlan(today)}
                         className="w-full py-2.5 border border-dashed border-gray-300 text-sm text-system-blue font-medium rounded-xl transition-colors hover:border-black/20 hover:bg-black/5"
                       >
                         Complete plan
@@ -371,7 +402,7 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                                     <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 shrink-0">In plan</span>
                                   ) : !planFull ? (
                                     <button
-                                      onClick={() => addToPlan(s.topic.id, 'suggested', new Date())}
+                                      onClick={() => plansApi.addToPlan(s.topic.id, 'suggested', new Date())}
                                       className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-500 transition-colors hover:bg-blue-100 hover:border-blue-400 hover:text-blue-600"
                                       aria-label={`Add ${s.topic.name} to plan`}
                                     >
@@ -382,8 +413,8 @@ export default function TodayPlan({ onStartSession, onBrowseOffering, onEditSubj
                                   ) : swapCandidate ? (
                                     <button
                                       onClick={() => {
-                                        removeFromPlan(swapCandidate.item.id)
-                                        setTimeout(() => addToPlan(s.topic.id, 'suggested', new Date()), 0)
+                                        plansApi.removeFromPlan(swapCandidate.item.id)
+                                        setTimeout(() => plansApi.addToPlan(s.topic.id, 'suggested', new Date()), 0)
                                       }}
                                       className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-amber-600 bg-amber-50 border border-amber-200 transition-colors hover:bg-amber-100"
                                       aria-label={`Swap ${swapCandidate.scored.topic.name} for ${s.topic.name}`}

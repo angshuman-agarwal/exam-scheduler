@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, daysSince } from '../lib/engine'
-import { getLocalDayKey } from '../lib/date'
+import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
+import { useLocalPlansApi } from '../lib/api/local/usePlansApi'
 import QualificationChip from './QualificationChip'
 import type { ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../types'
 
@@ -9,7 +9,9 @@ interface SubjectPickerProps {
   offering: Offering
   subject: Subject
   paper?: Paper | null
+  planNowTopicId?: string | null
   onBack: () => void
+  onCompletePlanNowSwap?: () => void
   onStartSession: (scored: ScoredTopic, source: ScheduleSource, scheduleItemId?: string) => void
 }
 
@@ -62,7 +64,9 @@ function SuggestedCard({
   planFull,
   onAdd,
   onSwap,
+  onPrimarySwap,
   swapName,
+  highlighted = false,
   today,
 }: {
   scored: ScoredTopic
@@ -70,20 +74,44 @@ function SuggestedCard({
   planFull: boolean
   onAdd: () => void
   onSwap?: () => void
+  onPrimarySwap?: () => void
   swapName?: string
+  highlighted?: boolean
   today: Date
 }) {
   const { topic, paper, subject } = scored
   const days = daysRemaining(paper.examDate, today)
 
   return (
-    <div className="w-full flex items-stretch rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+    <div
+      className={`w-full flex items-stretch overflow-hidden rounded-2xl border bg-white shadow-sm ${
+        highlighted
+          ? 'border-blue-200 shadow-[0_14px_32px_rgba(37,95,216,0.14)] ring-1 ring-blue-100'
+          : 'border-gray-100'
+      }`}
+    >
       <div className="w-1.5 shrink-0" style={{ backgroundColor: subject.color }} />
       <div className="flex-1 p-4 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-base font-semibold text-gray-900 truncate">{topic.name}</p>
+          <div className="min-w-0">
+            <p className="text-base font-semibold text-gray-900 truncate">{topic.name}</p>
+            {highlighted && (
+              <span className="mt-1 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-blue-700">
+                Plan Now
+              </span>
+            )}
+          </div>
           {inPlan ? (
             <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 shrink-0 mt-0.5">In plan</span>
+          ) : onPrimarySwap ? (
+            <button
+              onClick={onPrimarySwap}
+              data-testid="subject-picker-primary-swap"
+              className="shrink-0 rounded-xl bg-[linear-gradient(180deg,#2f7cff,#1f63d8)] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(37,95,216,0.22)] transition-transform hover:translate-y-[-1px]"
+              aria-label={`Swap ${swapName} for ${topic.name}`}
+            >
+              Swap into plan
+            </button>
           ) : !planFull ? (
             <button
               onClick={onAdd}
@@ -116,7 +144,9 @@ function CompactRow({
   planFull,
   onAdd,
   onSwap,
+  onPrimarySwap,
   swapName,
+  highlighted = false,
   today,
 }: {
   scored: ScoredTopic
@@ -124,14 +154,21 @@ function CompactRow({
   planFull: boolean
   onAdd: () => void
   onSwap?: () => void
+  onPrimarySwap?: () => void
   swapName?: string
+  highlighted?: boolean
   today: Date
 }) {
   const { topic, subject } = scored
   return (
-    <div className="flex items-center justify-between py-3 px-1 gap-2">
+    <div className={`flex items-center justify-between gap-2 rounded-xl px-2 py-3 ${highlighted ? 'bg-blue-50/70 ring-1 ring-blue-100' : ''}`}>
       <div className="flex-1 min-w-0">
         <span className="text-sm text-gray-900 truncate block">{topic.name}</span>
+        {highlighted && (
+          <span className="mt-1 inline-flex rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-blue-700">
+            Plan Now
+          </span>
+        )}
         <div className="flex items-center gap-2 mt-1">
           <ConfidenceDots level={topic.confidence} color={subject.color} />
           <LastStudiedLabel lastReviewed={topic.lastReviewed} today={today} />
@@ -139,6 +176,15 @@ function CompactRow({
       </div>
       {inPlan ? (
         <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 shrink-0">In plan</span>
+      ) : onPrimarySwap ? (
+        <button
+          onClick={onPrimarySwap}
+          data-testid="subject-picker-primary-swap"
+          className="shrink-0 rounded-xl bg-[linear-gradient(180deg,#2f7cff,#1f63d8)] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(37,95,216,0.22)] transition-transform hover:translate-y-[-1px]"
+          aria-label={`Swap ${swapName} for ${topic.name}`}
+        >
+          Swap into plan
+        </button>
       ) : !planFull ? (
         <button
           onClick={onAdd}
@@ -156,21 +202,25 @@ function CompactRow({
   )
 }
 
-export default function SubjectPicker({ offering, subject, paper, onBack, onStartSession }: SubjectPickerProps) {
-  const studyMode = useAppStore((s) => s.studyMode)
+export default function SubjectPicker({
+  offering,
+  subject,
+  paper,
+  planNowTopicId = null,
+  onBack,
+  onCompletePlanNowSwap,
+  onStartSession,
+}: SubjectPickerProps) {
   const getTopicsForOffering = useAppStore((s) => s.getTopicsForOffering)
-  const dailyPlan = useAppStore((s) => s.dailyPlan)
-  const planDay = useAppStore((s) => s.planDay)
-  const addToPlan = useAppStore((s) => s.addToPlan)
-  const removeFromPlan = useAppStore((s) => s.removeFromPlan)
   const topics = useAppStore((s) => s.topics)
   const papers = useAppStore((s) => s.papers)
   const allOfferings = useAppStore((s) => s.offerings)
   const subjects = useAppStore((s) => s.subjects)
+  const { studyMode } = useLocalAccountApi()
+  const plansApi = useLocalPlansApi()
 
   const today = new Date()
-  const todayKey = getLocalDayKey(today)
-  const planItems = planDay === todayKey ? dailyPlan : []
+  const planItems = plansApi.getPlanItems(today)
   const planTopicIds = new Set(planItems.map((i) => i.topicId))
   const planFull = planItems.length >= 4
 
@@ -197,19 +247,28 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
     })
     .filter(Boolean) as { item: typeof planItems[number]; scored: ScoredTopic }[]
 
-  const swapCandidate = useMemo(() => {
+  const swapCandidate = (() => {
     if (resolvedPlan.length === 0) return null
     return [...resolvedPlan].sort((a, b) => {
       if (a.item.source === 'auto' && b.item.source !== 'auto') return -1
       if (a.item.source !== 'auto' && b.item.source === 'auto') return 1
       return a.scored.score - b.scored.score
     })[0]
-  }, [resolvedPlan])
+  })()
 
   const handleSwap = (topicId: string) => {
     if (!swapCandidate) return
-    removeFromPlan(swapCandidate.item.id)
-    setTimeout(() => addToPlan(topicId, 'manual', new Date()), 0)
+    plansApi.removeFromPlan(swapCandidate.item.id)
+    setTimeout(() => plansApi.addToPlan(topicId, 'manual', new Date()), 0)
+  }
+
+  const handlePlanNowSwap = (topicId: string) => {
+    if (!swapCandidate) return
+    plansApi.removeFromPlan(swapCandidate.item.id)
+    setTimeout(() => {
+      plansApi.addToPlan(topicId, 'manual', new Date())
+      onCompletePlanNowSwap?.()
+    }, 0)
   }
 
   const offeringScored = getTopicsForOffering(offering.id, today)
@@ -221,7 +280,7 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
     <div className="px-4 pt-6 pb-8 min-h-screen bg-[#faf9f7]">
       {/* Back button */}
       <button
-        onClick={onBack}
+        onClick={() => onBack()}
         className="flex items-center gap-1.5 text-sm text-gray-500 mb-6 -ml-1 py-1 px-1.5 rounded-lg transition-colors hover:bg-white hover:text-gray-700"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -277,7 +336,7 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
                 />
                 <span className="text-sm text-gray-800 truncate flex-1">{s.topic.name}</span>
                 <button
-                  onClick={(e) => { e.stopPropagation(); removeFromPlan(item.id) }}
+                  onClick={(e) => { e.stopPropagation(); plansApi.removeFromPlan(item.id) }}
                   className="shrink-0 p-1 text-red-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
                   aria-label="Remove from plan"
                 >
@@ -303,18 +362,23 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
             Suggested
           </p>
           <div className="flex flex-col gap-3 mb-8">
-            {suggested.map((scored) => (
+            {suggested.map((scored) => {
+              const isPlanNowTarget = scored.topic.id === planNowTopicId
+              return (
               <SuggestedCard
                 key={scored.topic.id}
                 scored={scored}
                 inPlan={planTopicIds.has(scored.topic.id)}
                 planFull={planFull}
-                onAdd={() => addToPlan(scored.topic.id, 'manual', new Date())}
+                onAdd={() => plansApi.addToPlan(scored.topic.id, 'manual', new Date())}
                 onSwap={swapCandidate ? () => handleSwap(scored.topic.id) : undefined}
                 swapName={swapCandidate?.scored.topic.name}
+                onPrimarySwap={isPlanNowTarget && swapCandidate ? () => handlePlanNowSwap(scored.topic.id) : undefined}
+                highlighted={isPlanNowTarget}
                 today={today}
               />
-            ))}
+              )
+            })}
           </div>
 
           {/* Divider */}
@@ -325,18 +389,23 @@ export default function SubjectPicker({ offering, subject, paper, onBack, onStar
                 All topics
               </p>
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100 px-3 mb-8">
-                {rest.map((scored) => (
+                {rest.map((scored) => {
+                  const isPlanNowTarget = scored.topic.id === planNowTopicId
+                  return (
                   <CompactRow
                     key={scored.topic.id}
                     scored={scored}
                     inPlan={planTopicIds.has(scored.topic.id)}
                     planFull={planFull}
-                    onAdd={() => addToPlan(scored.topic.id, 'manual', new Date())}
+                    onAdd={() => plansApi.addToPlan(scored.topic.id, 'manual', new Date())}
                     onSwap={swapCandidate ? () => handleSwap(scored.topic.id) : undefined}
                     swapName={swapCandidate?.scored.topic.name}
+                    onPrimarySwap={isPlanNowTarget && swapCandidate ? () => handlePlanNowSwap(scored.topic.id) : undefined}
+                    highlighted={isPlanNowTarget}
                     today={today}
                   />
-                ))}
+                  )
+                })}
               </div>
             </>
           )}
