@@ -14,11 +14,13 @@ export function ExamDaySelectionPanel({
   selectedDay,
   papers,
   onSelectPaper,
+  onStartPaper,
   className = '',
 }: {
   selectedDay: string
   papers: ExamDayPaperWithSubject[]
   onSelectPaper: (offering: Offering, subject: Subject, paper: Paper) => void
+  onStartPaper: (offering: Offering, subject: Subject, paper: Paper) => void
   className?: string
 }) {
   if (papers.length === 0) return null
@@ -33,11 +35,11 @@ export function ExamDaySelectionPanel({
       </p>
       <div className="flex flex-col gap-2.5">
         {papers.map((pw) => (
-          <button
+          <div
             key={pw.paper.id}
-            onClick={() => onSelectPaper(pw.offering, pw.subject, pw.paper)}
-            className="flex items-stretch overflow-hidden rounded-xl border border-white/40 bg-white/[0.7] text-left shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_0_rgba(255,255,255,0.6)_inset] backdrop-blur-sm transition-all hover:bg-white/80 active:scale-[0.98]"
+            className="overflow-hidden rounded-xl border border-white/40 bg-white/[0.7] text-left shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_0_rgba(255,255,255,0.6)_inset] backdrop-blur-sm"
           >
+            <div className="flex items-stretch">
             <div className="w-1.5 shrink-0" style={{ backgroundColor: pw.subject.color }} />
             <div className="min-w-0 flex-1 px-3.5 py-3">
               <p className="text-sm font-semibold text-gray-900">{pw.subject.name}</p>
@@ -48,12 +50,22 @@ export function ExamDaySelectionPanel({
               </p>
               <p className="mt-0.5 text-xs text-gray-500">{pw.paper.examTime ?? 'Time TBC'}</p>
             </div>
-            <div className="flex items-center pr-3">
-              <svg className="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
             </div>
-          </button>
+            <div className="flex gap-2 border-t border-black/[0.06] px-3.5 py-3">
+              <button
+                onClick={() => onStartPaper(pw.offering, pw.subject, pw.paper)}
+                className="rounded-lg bg-[linear-gradient(180deg,#2f7cff,#1f63d8)] px-3 py-2 text-xs font-semibold text-white"
+              >
+                Start full paper
+              </button>
+              <button
+                onClick={() => onSelectPaper(pw.offering, pw.subject, pw.paper)}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700"
+              >
+                Browse topics
+              </button>
+            </div>
+          </div>
         ))}
       </div>
     </div>

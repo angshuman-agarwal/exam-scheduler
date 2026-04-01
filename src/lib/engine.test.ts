@@ -22,6 +22,8 @@ import {
   crunchTopicScore,
   OVERDUE_RECENCY_THRESHOLD,
   OVERDUE_WEAKNESS_THRESHOLD,
+  examDayDiff,
+  formatExamCountdown,
 } from './engine'
 import type { Topic, Paper, Subject, Offering, ScoredTopic, ScheduleItem } from '../types'
 
@@ -79,6 +81,26 @@ describe('recencyFactor', () => {
 describe('daysRemaining', () => {
   it('exam today → 1', () => {
     expect(daysRemaining('2026-05-01', TODAY)).toBe(1)
+  })
+})
+
+describe('examDayDiff', () => {
+  it('exam today → 0', () => {
+    expect(examDayDiff('2026-05-01', TODAY)).toBe(0)
+  })
+
+  it('past exam preserves the negative day offset', () => {
+    expect(examDayDiff('2026-04-01', TODAY)).toBe(-30)
+  })
+})
+
+describe('formatExamCountdown', () => {
+  it('past exam → Exam passed', () => {
+    expect(formatExamCountdown('2026-04-01', TODAY)).toBe('Exam passed')
+  })
+
+  it('future exam → Exam in X days', () => {
+    expect(formatExamCountdown('2026-05-03', TODAY)).toBe('Exam in 2 days')
   })
 })
 

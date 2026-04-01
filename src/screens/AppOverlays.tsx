@@ -1,14 +1,10 @@
 import Onboarding from '../components/Onboarding'
 import SubjectPicker from '../components/SubjectPicker'
 import SessionLogger from '../components/SessionLogger'
+import PaperSessionLogger from '../components/PaperSessionLogger'
 import type { SubjectBrowseContext } from '../hooks/useAppShell'
-import type { Offering, Paper, ScheduleSource, ScoredTopic, Subject } from '../types'
-
-interface ActiveSessionState {
-  scored: ScoredTopic
-  source: ScheduleSource
-  scheduleItemId?: string
-}
+import type { Offering, Paper, PaperAttemptSource, ScheduleSource, ScoredTopic, Subject } from '../types'
+import type { ActiveSessionState } from '../types/active-session'
 
 interface AppOverlaysProps {
   onboarded: boolean
@@ -27,10 +23,18 @@ interface AppOverlaysProps {
   onGoToProgress: () => void
   onCloseSubjectPicker: () => void
   onCompletePlanNowSwap: () => void
+  onBrowsePaperTopics: (offering: Offering, subject: Subject, paper: Paper) => void
   onStartSession: (
     scored: ScoredTopic,
     source: ScheduleSource,
     scheduleItemId?: string,
+  ) => void
+  onStartPaperSession: (
+    paper: Paper,
+    offering: Offering,
+    subject: Subject,
+    source: PaperAttemptSource,
+    options?: { selectionRequired?: boolean },
   ) => void
 }
 
@@ -51,7 +55,9 @@ export default function AppOverlays({
   onGoToProgress,
   onCloseSubjectPicker,
   onCompletePlanNowSwap,
+  onBrowsePaperTopics,
   onStartSession,
+  onStartPaperSession,
 }: AppOverlaysProps) {
   if (!onboarded) {
     if (!showOnboarding) return null
@@ -75,6 +81,22 @@ export default function AppOverlays({
   }
 
   if (activeSession) {
+    if (activeSession.kind === 'paper') {
+      return (
+        <PaperSessionLogger
+          paper={activeSession.paper}
+          offering={activeSession.offering}
+          subject={activeSession.subject}
+          source={activeSession.source}
+          selectionRequired={activeSession.selectionRequired}
+          restored={activeSession.restored}
+          onBack={onCloseSession}
+          onGoToProgress={onGoToProgress}
+          onBrowseTopics={(paper) => onBrowsePaperTopics(activeSession.offering, activeSession.subject, paper)}
+        />
+      )
+    }
+
     return (
       <SessionLogger
         scored={activeSession.scored}
@@ -96,6 +118,7 @@ export default function AppOverlays({
         onBack={onCloseSubjectPicker}
         onCompletePlanNowSwap={onCompletePlanNowSwap}
         onStartSession={onStartSession}
+        onStartPaperSession={onStartPaperSession}
       />
     )
   }

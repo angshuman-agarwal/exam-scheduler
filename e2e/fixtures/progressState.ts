@@ -24,7 +24,7 @@ function requireTopic(id: string) {
 }
 
 // Validate all offerings/topics used in fixtures
-;['cs-aqa', 'bio-aqa', 'maths-edexcel', 'eng-lit-aqa', 'phys-aqa'].forEach(requireOffering)
+;['cs-aqa', 'bio-aqa', 'maths-edexcel', 'eng-lit-aqa', 'phys-aqa', 'geo-aqa'].forEach(requireOffering)
 ;['cs-001', 'cs-002', 'cs-003', 'cs-004', 'cs-005', 'cs-006', 'cs-007', 'cs-008',
   'cs-009', 'cs-010', 'cs-011', 'cs-012', 'cs-013', 'cs-014',
   'bio-001', 'bio-002', 'bio-003', 'bio-004', 'bio-005', 'bio-006', 'bio-007',
@@ -45,6 +45,7 @@ function baseState(offeringIds: string[]): PersistedState {
     papers: JSON.parse(JSON.stringify(seed.papers)),
     topics: JSON.parse(JSON.stringify(seed.topics)),
     sessions: [],
+    paperAttempts: [],
     notes: [],
     userState: { energyLevel: 3, stress: 2 },
     onboarded: true,
@@ -83,6 +84,20 @@ function setOfferingExamDate(state: PersistedState, offeringId: string, newDate:
   const papers = state.papers as { id: string; offeringId: string; examDate: string }[]
   for (const p of papers) {
     if (p.offeringId === offeringId) p.examDate = newDate
+  }
+}
+
+function makePaperAttempt(paperId: string, date: string, confidence: number, durationSeconds: number, rawMark?: number, totalMarks?: number) {
+  return {
+    id: `${paperId}-${date}-${Math.random().toString(36).slice(2, 8)}`,
+    paperId,
+    date,
+    timestamp: new Date(date + 'T18:00:00').getTime(),
+    durationSeconds,
+    confidence,
+    ...(rawMark !== undefined ? { rawMark } : {}),
+    ...(totalMarks !== undefined ? { totalMarks } : {}),
+    source: 'calendar' as const,
   }
 }
 
@@ -310,6 +325,32 @@ export function progressSessionContext(): PersistedState {
   setTopicFields(s, 'bio-001', { lastReviewed: '2026-03-01', performanceScore: 0.55, confidence: 2 })
   setTopicFields(s, 'cs-003', { lastReviewed: null, performanceScore: 0.35, confidence: 2 })
   setTopicFields(s, 'bio-002', { lastReviewed: '2026-04-12', performanceScore: 0.65, confidence: 3 })
+
+  return s
+}
+
+export function progressPaperPractice(): PersistedState {
+  const s = baseState(['geo-aqa', 'cs-aqa'])
+  setOfferingExamDate(s, 'geo-aqa', '2026-04-20')
+  setOfferingExamDate(s, 'cs-aqa', EXAM_FAR)
+
+  s.sessions = [
+    makeSession('cs-001', '2026-04-14', 0.66, 1200, new Date('2026-04-14T12:00:00').getTime()),
+  ]
+  s.paperAttempts = [
+    {
+      ...makePaperAttempt('geo-p1', '2026-04-15', 2, 5400, 38, 80),
+      id: 'geo-p1-morning',
+      timestamp: new Date('2026-04-15T10:00:00').getTime(),
+    },
+    {
+      ...makePaperAttempt('geo-p1', '2026-04-15', 3, 5400, 47, 80),
+      id: 'geo-p1-afternoon',
+      timestamp: new Date('2026-04-15T18:00:00').getTime(),
+    },
+  ]
+
+  setTopicFields(s, 'cs-001', { lastReviewed: '2026-04-14', performanceScore: 0.66, confidence: 3 })
 
   return s
 }

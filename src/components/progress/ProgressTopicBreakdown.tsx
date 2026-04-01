@@ -1,4 +1,4 @@
-import { type ProgressTableFilter, type TopicTableRow } from './analytics'
+import { type ProgressTableFilter, type ProgressTableRow, type TopicTableRow } from './analytics'
 import { confidenceEmojis, statusTone } from './shared'
 
 function SessionTrendPill({
@@ -26,10 +26,10 @@ function ActionCell({
   row,
   onPlanNow,
 }: {
-  row: TopicTableRow
+  row: ProgressTableRow
   onPlanNow?: (row: TopicTableRow) => void
 }) {
-  if (row.status === 'Not Started' && onPlanNow) {
+  if (row.kind === 'topic' && row.status === 'Not Started' && onPlanNow) {
     return (
       <div>
         <button
@@ -72,7 +72,7 @@ export function ProgressTopicBreakdown({
   priorityDisabled = false,
   onClearReviewedDate,
 }: {
-  rows: TopicTableRow[]
+  rows: ProgressTableRow[]
   filter: ProgressTableFilter
   onFilterChange: (next: ProgressTableFilter) => void
   onPlanNow?: (row: TopicTableRow) => void
@@ -153,23 +153,49 @@ export function ProgressTopicBreakdown({
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.topic.id} data-testid="progress-topic-row" className="border-t border-black/[0.06] align-top hover:bg-black/[0.01] transition-colors">
+              <tr key={row.kind === 'paper' ? row.attempt.id : row.topic.id} data-testid="progress-topic-row" className="border-t border-black/[0.06] align-top transition-colors hover:bg-black/[0.01]">
                 <td className="px-5 py-3.5">
                   <p className="text-[13px] font-semibold tracking-[-0.02em] text-gray-900">{row.subject.name}</p>
-                  <p className="mt-0.5 text-[13px] text-gray-500">{row.topic.name}</p>
+                  <p className="mt-0.5 text-[13px] text-gray-500">{row.kind === 'paper' ? row.paper.name : row.topic.name}</p>
                 </td>
                 <td className="px-5 py-3.5">
                   <div className="flex items-center gap-1.5 text-[1.05rem]">
-                    {confidenceEmojis(row.topic.confidence).map((item, index) => (
-                      <span key={`${row.topic.id}-${index}`} className={item.active ? '' : 'opacity-30 grayscale'}>
+                    {confidenceEmojis(row.kind === 'paper' ? row.confidence : row.topic.confidence).map((item, index) => (
+                      <span key={`${row.kind === 'paper' ? row.attempt.id : row.topic.id}-${index}`} className={item.active ? '' : 'opacity-30 grayscale'}>
                         {item.emoji}
                       </span>
                     ))}
                   </div>
-                  <SessionTrendPill score={row.lastSessionScore} trend={row.sessionTrend} />
-                  <span data-testid="progress-mastery-percent" className="mt-0.5 block text-[10px] text-gray-400">
-                    {row.masteryPercent}% mastery
-                  </span>
+                  {row.kind === 'topic' ? (
+                    <>
+                      <SessionTrendPill score={row.lastSessionScore} trend={row.sessionTrend} />
+                      <span data-testid="progress-mastery-percent" className="mt-0.5 block text-[10px] text-gray-400">
+                        {row.masteryPercent}% mastery
+                      </span>
+                    </>
+                  ) : row.lastScorePercent !== null ? (
+                    <>
+                      <span data-testid="progress-paper-score" className="mt-1 block text-[10px] text-gray-400">
+                        Last: <span className="font-medium text-gray-500">{row.lastScorePercent}%</span>
+                      </span>
+                      {row.attemptCount > 1 ? (
+                        <span data-testid="progress-paper-attempt-count" className="mt-0.5 block text-[10px] text-gray-400">
+                          {row.attemptCount} attempts {row.recencyLabel.toLowerCase()}
+                        </span>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      <span data-testid="progress-paper-score" className="mt-1 block text-[10px] text-gray-400">
+                        Full paper logged
+                      </span>
+                      {row.attemptCount > 1 ? (
+                        <span data-testid="progress-paper-attempt-count" className="mt-0.5 block text-[10px] text-gray-400">
+                          {row.attemptCount} attempts {row.recencyLabel.toLowerCase()}
+                        </span>
+                      ) : null}
+                    </>
+                  )}
                 </td>
                 <td className="px-5 py-3.5 text-[13px] text-gray-500">{row.recencyLabel}</td>
                 <td className="px-5 py-3.5">
@@ -184,10 +210,10 @@ export function ProgressTopicBreakdown({
       <div data-testid="progress-topic-breakdown-mobile" className="sm:hidden">
         <div className="divide-y divide-black/[0.06]">
           {rows.map((row) => (
-            <article key={row.topic.id} data-testid="progress-topic-row-mobile" className="px-4 py-3.5">
+            <article key={row.kind === 'paper' ? row.attempt.id : row.topic.id} data-testid="progress-topic-row-mobile" className="px-4 py-3.5">
               <div className="min-w-0">
                 <p className="text-[13px] font-semibold tracking-[-0.02em] text-gray-900">{row.subject.name}</p>
-                <p className="mt-0.5 text-[13px] leading-5 text-gray-500">{row.topic.name}</p>
+                <p className="mt-0.5 text-[13px] leading-5 text-gray-500">{row.kind === 'paper' ? row.paper.name : row.topic.name}</p>
               </div>
 
               <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2.5">
@@ -195,16 +221,42 @@ export function ProgressTopicBreakdown({
                   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">Overall Confidence</p>
                   <span className="mt-0.5 block text-[10px] text-gray-400">How well you know it</span>
                   <div className="mt-1.5 flex items-center gap-1.5 text-[1.05rem]">
-                    {confidenceEmojis(row.topic.confidence).map((item, index) => (
-                      <span key={`${row.topic.id}-mobile-${index}`} className={item.active ? '' : 'opacity-30 grayscale'}>
+                    {confidenceEmojis(row.kind === 'paper' ? row.confidence : row.topic.confidence).map((item, index) => (
+                      <span key={`${row.kind === 'paper' ? row.attempt.id : row.topic.id}-mobile-${index}`} className={item.active ? '' : 'opacity-30 grayscale'}>
                         {item.emoji}
                       </span>
                     ))}
                   </div>
-                  <SessionTrendPill score={row.lastSessionScore} trend={row.sessionTrend} />
-                  <span data-testid="progress-mastery-percent" className="mt-0.5 block text-[10px] text-gray-400">
-                    {row.masteryPercent}% mastery
-                  </span>
+                  {row.kind === 'topic' ? (
+                    <>
+                      <SessionTrendPill score={row.lastSessionScore} trend={row.sessionTrend} />
+                      <span data-testid="progress-mastery-percent" className="mt-0.5 block text-[10px] text-gray-400">
+                        {row.masteryPercent}% mastery
+                      </span>
+                    </>
+                  ) : row.lastScorePercent !== null ? (
+                    <>
+                      <span data-testid="progress-paper-score" className="mt-0.5 block text-[10px] text-gray-400">
+                        Last: {row.lastScorePercent}%
+                      </span>
+                      {row.attemptCount > 1 ? (
+                        <span data-testid="progress-paper-attempt-count" className="mt-0.5 block text-[10px] text-gray-400">
+                          {row.attemptCount} attempts {row.recencyLabel.toLowerCase()}
+                        </span>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      <span data-testid="progress-paper-score" className="mt-0.5 block text-[10px] text-gray-400">
+                        Full paper logged
+                      </span>
+                      {row.attemptCount > 1 ? (
+                        <span data-testid="progress-paper-attempt-count" className="mt-0.5 block text-[10px] text-gray-400">
+                          {row.attemptCount} attempts {row.recencyLabel.toLowerCase()}
+                        </span>
+                      ) : null}
+                    </>
+                  )}
                 </div>
 
                 <div>

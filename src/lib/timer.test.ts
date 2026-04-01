@@ -9,15 +9,17 @@ import {
   handleReturn,
   isStale,
   GRACE_MS,
-  STRICT_THRESHOLD_MS,
+  TOPIC_STRICT_THRESHOLD_MS,
+  PAPER_STRICT_THRESHOLD_MS,
   STALE_RUNNING_MS,
   STALE_STOPPED_MS,
+  strictThresholdMsFor,
 } from './timer'
 
 const T0 = 1_000_000
 
 function makeSession(overrides: Partial<ReturnType<typeof createSession>> = {}) {
-  return { ...createSession('topic-1', 'manual', T0, false), ...overrides }
+  return { ...createSession('topic', 'topic-1', 'manual', T0, false), ...overrides }
 }
 
 describe('computeElapsedMs', () => {
@@ -47,7 +49,7 @@ describe('handleReturn', () => {
   it('strict: interrupts past threshold', () => {
     let s = makeSession({ strictMode: true })
     s = handleHidden(s, T0 + 1000)
-    const gap = STRICT_THRESHOLD_MS + 1000
+    const gap = TOPIC_STRICT_THRESHOLD_MS + 1000
     const { session, banner } = handleReturn(s, T0 + 1000 + gap)
     expect(session.mode).toBe('interrupted')
     expect(banner).toBe('interrupted')
@@ -57,7 +59,7 @@ describe('handleReturn', () => {
   it('strict: restores within threshold', () => {
     let s = makeSession({ strictMode: true })
     s = handleHidden(s, T0 + 1000)
-    const gap = STRICT_THRESHOLD_MS - 1000
+    const gap = TOPIC_STRICT_THRESHOLD_MS - 1000
     const { session, banner } = handleReturn(s, T0 + 1000 + gap)
     expect(session.mode).toBe('running')
     expect(banner).toBe('restored')
@@ -168,15 +170,22 @@ describe('isStale', () => {
   it('interrupted >30min is stale', () => {
     let s = makeSession({ strictMode: true })
     s = handleHidden(s, T0 + 1000)
-    const { session } = handleReturn(s, T0 + 1000 + STRICT_THRESHOLD_MS + 1000)
+    const { session } = handleReturn(s, T0 + 1000 + TOPIC_STRICT_THRESHOLD_MS + 1000)
     expect(session.mode).toBe('interrupted')
     expect(isStale(session, session.modeChangedAt + STALE_STOPPED_MS + 1)).toBe(true)
   })
 })
 
+describe('strictThresholdMsFor', () => {
+  it('uses a longer threshold for paper sessions', () => {
+    expect(strictThresholdMsFor(makeSession())).toBe(TOPIC_STRICT_THRESHOLD_MS)
+    expect(strictThresholdMsFor(makeSession({ targetType: 'paper', targetId: 'paper-1' }))).toBe(PAPER_STRICT_THRESHOLD_MS)
+  })
+})
+
 describe('modeChangedAt', () => {
   it('stamped on creation', () => {
-    const s = createSession('t', 'manual', T0, false)
+    const s = createSession('topic', 't', 'manual', T0, false)
     expect(s.modeChangedAt).toBe(T0)
   })
 

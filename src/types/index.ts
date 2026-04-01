@@ -1,4 +1,5 @@
 export type ScheduleSource = 'auto' | 'suggested' | 'manual'
+export type PaperAttemptSource = 'today-suggestion' | 'calendar' | 'picker'
 
 export interface ScheduleItem {
   id: string
@@ -54,6 +55,20 @@ export interface Session {
   timestamp?: number // epoch ms, when session was logged
   durationSeconds?: number
   source?: ScheduleSource    // analytics only, optional for backward compat
+}
+
+export interface PaperAttempt {
+  id: string
+  paperId: string
+  date: string // ISO date
+  timestamp: number // epoch ms, when attempt was logged
+  durationSeconds: number
+  confidence: number // 1-5
+  rawMark?: number
+  totalMarks?: number
+  noteText?: string
+  taggedTopicIds?: string[]
+  source: PaperAttemptSource
 }
 
 export interface ScoredTopic {
@@ -112,4 +127,5 @@ export interface OfferingCascadeCounts {
   sessionCount: number
   noteCount: number
   planCount: number
+  paperAttemptCount: number
 }

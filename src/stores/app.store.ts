@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Topic, Paper, Subject, Board, Offering, Session, ScoredTopic, DayPlan, UserState, Note, ScheduleItem, ScheduleSource, SeedDataV2, AddOfferingData, UpdateOfferingBundleData, OfferingCascadeCounts } from '../types'
+import type { Topic, Paper, Subject, Board, Offering, Session, ScoredTopic, DayPlan, UserState, Note, ScheduleItem, ScheduleSource, SeedDataV2, AddOfferingData, UpdateOfferingBundleData, OfferingCascadeCounts, PaperAttempt, PaperAttemptSource } from '../types'
 import { scoreAllTopics, buildDayPlan, updatePerformance, adjustConfidence, autoFillPlanItems, TOTAL_BLOCKS, getPlanningMode } from '../lib/engine'
 import { getLocalDayKey } from '../lib/date'
 import { loadFromIdbRaw, saveToIdbRaw } from '../lib/idb'
@@ -29,6 +29,7 @@ interface PersistedState {
   papers: Paper[]
   topics: Topic[]
   sessions: Session[]
+  paperAttempts: PaperAttempt[]
   notes: Note[]
   userState: UserState
   onboarded: boolean
@@ -47,6 +48,17 @@ interface AppState extends PersistedState {
   initialized: boolean
   init: () => Promise<void>
   logSession: (topicId: string, rawScore: number, today: Date, durationSeconds?: number, source?: ScheduleSource) => void
+  logPaperAttempt: (
+    paperId: string,
+    today: Date,
+    durationSeconds: number,
+    confidence: number,
+    taggedTopicIds: string[],
+    source: PaperAttemptSource,
+    rawMark?: number,
+    totalMarks?: number,
+    noteText?: string,
+  ) => void
   setEnergy: (level: number) => void
   setStress: (level: number) => void
   getDayPlan: (today: Date) => DayPlan
@@ -89,6 +101,7 @@ function deepCloneSeed(): PersistedState {
     papers: JSON.parse(JSON.stringify(seed.papers)) as Paper[],
     topics: JSON.parse(JSON.stringify(seed.topics)) as Topic[],
     sessions: [],
+    paperAttempts: [],
     notes: [],
     userState: { energyLevel: 3, stress: 2 },
     onboarded: false,
@@ -163,6 +176,8 @@ function mergeWithFreshSeed(saved: PersistedState, fresh: PersistedState): Persi
   const selectedOfferingIds = saved.selectedOfferingIds.filter((id) => validOfferingIds.has(id))
   const onboarded = selectedOfferingIds.length > 0 ? saved.onboarded : false
   const sessions = saved.sessions.filter((s) => validTopicIds.has(s.topicId))
+  const validPaperIds = new Set(papers.map((paper) => paper.id))
+  const paperAttempts = (saved.paperAttempts ?? []).filter((attempt) => validPaperIds.has(attempt.paperId))
   const notes = saved.notes.filter((n) => validTopicIds.has(n.topicId))
   const dailyPlan = saved.dailyPlan.filter((i) => validTopicIds.has(i.topicId))
 
@@ -176,6 +191,7 @@ function mergeWithFreshSeed(saved: PersistedState, fresh: PersistedState): Persi
     papers,
     topics,
     sessions,
+    paperAttempts,
     notes,
     userState: saved.userState,
     onboarded,
@@ -211,6 +227,7 @@ function extractPersisted(state: AppState): PersistedState {
     papers: state.papers,
     topics: state.topics,
     sessions: state.sessions,
+    paperAttempts: state.paperAttempts,
     notes: state.notes,
     userState: state.userState,
     onboarded: state.onboarded,
@@ -419,6 +436,9 @@ function deduplicateSubjects(state: PersistedState): PersistedState {
     })
     .filter(n => !removedTopicIds.has(n.topicId) || topicIdRemap.has(n.topicId))
 
+  const validPaperIds = new Set(papers.map((paper) => paper.id))
+  const paperAttempts = (state.paperAttempts ?? []).filter((attempt) => validPaperIds.has(attempt.paperId))
+
   const dailyPlan = state.dailyPlan
     .map(i => {
       const newId = topicIdRemap.get(i.topicId)
@@ -446,6 +466,7 @@ function deduplicateSubjects(state: PersistedState): PersistedState {
     papers,
     topics,
     sessions,
+    paperAttempts,
     notes,
     dailyPlan,
     selectedOfferingIds,
@@ -472,6 +493,10 @@ function selectedOfferings(state: { offerings: Offering[]; selectedOfferingIds: 
   return state.offerings.filter((o) => ids.has(o.id))
 }
 
+function clampTopicConfidence(value: number): number {
+  return Math.max(1, Math.min(5, value))
+}
+
 export const useAppStore = create<AppState>()((set, get) => ({
   version: 2,
   boards: [],
@@ -480,6 +505,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   papers: [],
   topics: [],
   sessions: [],
+  paperAttempts: [],
   notes: [],
   userState: { energyLevel: 3, stress: 2 },
   onboarded: false,
@@ -535,6 +561,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     if (!state.dailyPlan) state.dailyPlan = []
     if (!state.planDay) state.planDay = ''
     if (!state.selectedOfferingIds) state.selectedOfferingIds = []
+    if (!state.paperAttempts) state.paperAttempts = []
 
     // Auto-detect studyMode for existing onboarded users
     if (state.studyMode === null && state.onboarded && state.selectedOfferingIds.length > 0) {
@@ -613,6 +640,61 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
     set(newState)
     saveToIdb(extractPersisted({ ...get() }))
+  },
+
+  logPaperAttempt: (
+    paperId,
+    today,
+    durationSeconds,
+    confidence,
+    taggedTopicIds,
+    source,
+    rawMark,
+    totalMarks,
+    noteText,
+  ) => {
+    const state = get()
+    const paper = state.papers.find((candidate) => candidate.id === paperId)
+    if (!paper) return
+
+    const validTopicIds = new Set(
+      state.topics
+        .filter((topic) => topic.paperId === paperId)
+        .map((topic) => topic.id),
+    )
+    const sanitizedTaggedTopicIds = [...new Set(taggedTopicIds.filter((topicId) => validTopicIds.has(topicId)))]
+    const todayISO = getLocalDayKey(today)
+
+    const updatedTopics = sanitizedTaggedTopicIds.length === 0
+      ? state.topics
+      : state.topics.map((topic) => {
+          if (!sanitizedTaggedTopicIds.includes(topic.id)) return topic
+          return {
+            ...topic,
+            confidence: clampTopicConfidence(topic.confidence - 1),
+            lastReviewed: todayISO,
+          }
+        })
+
+    const paperAttempt: PaperAttempt = {
+      id: `paper-attempt-${Date.now()}`,
+      paperId,
+      date: todayISO,
+      timestamp: Date.now(),
+      durationSeconds,
+      confidence,
+      ...(rawMark !== undefined ? { rawMark } : {}),
+      ...(totalMarks !== undefined ? { totalMarks } : {}),
+      ...(noteText ? { noteText } : {}),
+      ...(sanitizedTaggedTopicIds.length > 0 ? { taggedTopicIds: sanitizedTaggedTopicIds } : {}),
+      source,
+    }
+
+    set({
+      topics: updatedTopics,
+      paperAttempts: [...state.paperAttempts, paperAttempt],
+    })
+    saveToIdb(extractPersisted(get()))
   },
 
   setEnergy: (level: number) => {
@@ -844,6 +926,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       topics: state.topics.filter(t => !topicIds.has(t.id)),
       selectedOfferingIds: state.selectedOfferingIds.filter(id => !offeringIds.has(id)),
       sessions: state.sessions.filter(s => !topicIds.has(s.topicId)),
+      paperAttempts: state.paperAttempts.filter(a => !paperIds.has(a.paperId)),
       notes: state.notes.filter(n => !topicIds.has(n.topicId)),
       dailyPlan: state.dailyPlan.filter(i => !topicIds.has(i.topicId)),
     })
@@ -972,8 +1055,10 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const sessions = state.sessions.filter(s => !removedTopicIds.has(s.topicId))
     const notes = state.notes.filter(n => !removedTopicIds.has(n.topicId))
     const dailyPlan = state.dailyPlan.filter(i => !removedTopicIds.has(i.topicId))
+    const remainingPaperIds = new Set(papers.map((paper) => paper.id))
+    const paperAttempts = state.paperAttempts.filter((attempt) => remainingPaperIds.has(attempt.paperId))
 
-    set({ papers, topics, sessions, notes, dailyPlan })
+    set({ papers, topics, sessions, paperAttempts, notes, dailyPlan })
     saveToIdb(extractPersisted(get()))
 
     return {
@@ -996,11 +1081,13 @@ export const useAppStore = create<AppState>()((set, get) => ({
     }
 
     const topicIds = new Set(removedTopics.map(t => t.id))
+    const paperIds = new Set(state.papers.filter(p => p.offeringId === offeringId).map(p => p.id))
     return {
       topicCount: removedTopics.length,
       sessionCount: state.sessions.filter(s => topicIds.has(s.topicId)).length,
       noteCount: state.notes.filter(n => topicIds.has(n.topicId)).length,
       planCount: state.dailyPlan.filter(i => topicIds.has(i.topicId)).length,
+      paperAttemptCount: state.paperAttempts.filter(a => paperIds.has(a.paperId)).length,
     }
   },
 
@@ -1035,6 +1122,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       topics: state.topics.filter(t => !topicIds.has(t.id)),
       selectedOfferingIds: state.selectedOfferingIds.filter(id => id !== offeringId),
       sessions: state.sessions.filter(s => !topicIds.has(s.topicId)),
+      paperAttempts: state.paperAttempts.filter(a => !paperIds.has(a.paperId)),
       notes: state.notes.filter(n => !topicIds.has(n.topicId)),
       dailyPlan: state.dailyPlan.filter(i => !topicIds.has(i.topicId)),
     })

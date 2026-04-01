@@ -1,16 +1,23 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
-import { daysRemaining, scoreAllTopics, autoFillPlanItems, getPlanningMode, nearestExamDays as calcNearestExamDays } from '../lib/engine'
+import { daysRemaining, examDayDiff, formatExamCountdown, scoreAllTopics, autoFillPlanItems, getPlanningMode, nearestExamDays as calcNearestExamDays } from '../lib/engine'
 import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
 import { getLocalDayKey } from '../lib/date'
 import { useLocalPlansApi } from '../lib/api/local/usePlansApi'
 import NudgeBanner from './NudgeBanner'
 import ExamCalendar from './ExamCalendar'
 import QualificationChip from './QualificationChip'
-import type { ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../types'
+import type { ScoredTopic, Subject, Offering, Paper, PaperAttemptSource, ScheduleSource } from '../types'
 
 interface TodayPlanProps {
   onStartSession: (scored: ScoredTopic, source: ScheduleSource, scheduleItemId?: string) => void
+  onStartPaperSession: (
+    paper: Paper,
+    offering: Offering,
+    subject: Subject,
+    source: PaperAttemptSource,
+    options?: { selectionRequired?: boolean },
+  ) => void
   onBrowseOffering: (offering: Offering, subject: Subject, paper?: Paper) => void
   onEditSubjects: () => void
   recentlySwappedTopicId: string | null
@@ -18,6 +25,15 @@ interface TodayPlanProps {
 }
 
 const CONFIDENCE_COLORS = ['#ef4444', '#f59e0b', '#84cc16', '#16a34a', '#0d9488'] as const
+
+function formatShortExamDate(dateKey: string): string {
+  const parsed = new Date(`${dateKey}T12:00:00`)
+  if (Number.isNaN(parsed.getTime())) return dateKey
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  }).format(parsed)
+}
 
 function ConfidenceDots({ level }: { level: number; color: string }) {
   const fill = CONFIDENCE_COLORS[Math.max(0, Math.min(4, level - 1))]
@@ -36,6 +52,7 @@ function ConfidenceDots({ level }: { level: number; color: string }) {
 
 export default function TodayPlan({
   onStartSession,
+  onStartPaperSession,
   onBrowseOffering,
   onEditSubjects,
   recentlySwappedTopicId,
@@ -53,6 +70,7 @@ export default function TodayPlan({
 
   const today = new Date()
   const todayKey = getLocalDayKey(today)
+  const memoizedToday = useMemo(() => new Date(`${todayKey}T12:00:00`), [todayKey])
 
   // Filter to selected offerings
   const selOfferingSet = useMemo(() => new Set(selectedOfferingIds), [selectedOfferingIds])
@@ -100,25 +118,72 @@ export default function TodayPlan({
     return map
   }, [selPapers, offeringMap, subjectMap])
 
+  const suggestedPapers = useMemo(() => (
+    selPapers
+      .map((paper) => {
+        const offering = offeringMap.get(paper.offeringId)
+        if (!offering) return null
+        const subject = subjectMap.get(offering.subjectId)
+        if (!subject) return null
+        const days = examDayDiff(paper.examDate, memoizedToday)
+        if (days < 0 || days > 21) return null
+        return { paper, offering, subject, days }
+      })
+      .filter((entry): entry is { paper: Paper; offering: Offering; subject: Subject; days: number } => entry !== null)
+      .sort((a, b) => a.days - b.days || a.subject.name.localeCompare(b.subject.name))
+      .slice(0, 2)
+  ), [memoizedToday, offeringMap, selPapers, subjectMap])
+
   // Group scored topics by subject for browse section
   const subjectGroups = useMemo(() => {
-    const groups = new Map<string, { subject: Subject; offering: Offering; topics: ScoredTopic[]; nearestExamDays: number }>()
+    const groups = new Map<string, {
+      subject: Subject
+      offering: Offering
+      topics: ScoredTopic[]
+      nearestExamDays: number
+      primaryPaper: Paper | null
+      paperSummaries: { paper: Paper; days: number }[]
+    }>()
     for (const s of scored) {
       const sub = s.subject
       let group = groups.get(sub.id)
       if (!group) {
-        const days = daysRemaining(s.paper.examDate, today)
-        group = { subject: sub, offering: s.offering, topics: [], nearestExamDays: days }
+        group = {
+          subject: sub,
+          offering: s.offering,
+          topics: [],
+          nearestExamDays: Number.POSITIVE_INFINITY,
+          primaryPaper: null,
+          paperSummaries: [],
+        }
         groups.set(sub.id, group)
-      } else {
-        const days = daysRemaining(s.paper.examDate, today)
-        if (days < group.nearestExamDays) group.nearestExamDays = days
       }
       group.topics.push(s)
     }
+    for (const group of groups.values()) {
+      const offeringPapers = selPapers
+        .filter((paper) => paper.offeringId === group.offering.id)
+        .sort((a, b) => {
+          const daysA = examDayDiff(a.examDate, today)
+          const daysB = examDayDiff(b.examDate, today)
+          const normalizedA = daysA < 0 ? Number.POSITIVE_INFINITY : daysA
+          const normalizedB = daysB < 0 ? Number.POSITIVE_INFINITY : daysB
+          return normalizedA - normalizedB || a.examDate.localeCompare(b.examDate)
+        })
+      const primaryPaper = offeringPapers[0] ?? null
+      const primaryPaperDays = primaryPaper ? examDayDiff(primaryPaper.examDate, today) : Number.POSITIVE_INFINITY
+      group.primaryPaper = primaryPaper
+      group.paperSummaries = offeringPapers.map((paper) => ({
+        paper,
+        days: examDayDiff(paper.examDate, today),
+      }))
+      group.nearestExamDays = Number.isFinite(primaryPaperDays)
+        ? primaryPaperDays
+        : Math.min(...group.topics.map((topic) => daysRemaining(topic.paper.examDate, today)))
+    }
     return Array.from(groups.values()).sort((a, b) => a.nearestExamDays - b.nearestExamDays)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scored, subjects, todayKey])
+  }, [scored, selPapers, subjects, todayKey])
 
   const planItems = plansApi.getPlanItems(today)
   const planTopicIds = useMemo(() => new Set(planItems.map((i) => i.topicId)), [planItems])
@@ -158,30 +223,43 @@ export default function TodayPlan({
 
   return (
     <div className="px-4 pt-6 pb-8 min-h-screen bg-system-gray">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-2.5">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Study Planner</h1>
             {studyMode && <QualificationChip mode={studyMode} />}
           </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {planningMode === 'crunch' && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 border border-amber-200/60">
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Crunch mode
+            <span className="ios-toolbar-chip border-amber-200/70 bg-[linear-gradient(180deg,#fff8df_0%,#fff0bf_100%)] text-amber-800 shadow-[0_10px_24px_rgba(245,158,11,0.16)] hover:translate-y-0 hover:border-amber-200/70 hover:shadow-[0_10px_24px_rgba(245,158,11,0.16)]">
+              <span className="ios-toolbar-chip__icon text-amber-700">
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-600/80">Planning mode</span>
+                <span>Crunch mode</span>
+              </span>
             </span>
           )}
+          <button
+            onClick={onEditSubjects}
+            className="ios-toolbar-chip border-blue-200/70 bg-[linear-gradient(180deg,#f7fbff_0%,#edf4ff_100%)] text-blue-700 shadow-[0_10px_24px_rgba(37,95,216,0.12)] hover:border-blue-300/80 hover:shadow-[0_12px_28px_rgba(37,95,216,0.16)]"
+            aria-label="Edit subjects"
+          >
+            <span className="ios-toolbar-chip__icon border-blue-100/80 bg-white text-system-blue">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+              </svg>
+            </span>
+            <span className="flex flex-col items-start leading-tight">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-500/80">Manage setup</span>
+              <span>Edit subjects</span>
+            </span>
+          </button>
         </div>
-        <button
-          onClick={onEditSubjects}
-          className="flex items-center gap-1.5 text-xs text-gray-400 font-medium transition-colors hover:text-system-blue"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-          </svg>
-          Edit subjects
-        </button>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:gap-6">
@@ -323,64 +401,151 @@ export default function TodayPlan({
             )}
           </div>
 
+          {suggestedPapers.length > 0 && (
+            <div className="mb-6 ios-card overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3.5">
+                <div className="flex items-center gap-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+                    Full paper practice
+                  </p>
+                  <span className="text-[11px] font-semibold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-100">
+                    {suggestedPapers.length}
+                  </span>
+                </div>
+              </div>
+              <div className="border-t border-gray-100 divide-y divide-gray-50">
+                {suggestedPapers.map(({ paper, offering, subject }) => (
+                  <div key={paper.id} className="flex items-center gap-3 px-5 py-3.5">
+                    <div className="w-1.5 h-10 rounded-full shrink-0" style={{ backgroundColor: subject.color }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 sm:truncate">{subject.name} — {paper.name}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {offering.label}
+                        <span className="text-gray-300 mx-1">{'\u00B7'}</span>
+                        {formatExamCountdown(paper.examDate, memoizedToday)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => onStartPaperSession(paper, offering, subject, 'today-suggestion')}
+                      className="shrink-0 rounded-xl bg-[linear-gradient(180deg,#2f7cff,#1f63d8)] px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(37,95,216,0.22)]"
+                    >
+                      Start full paper
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 3. Browse Topics */}
           {subjectGroups.length > 0 && (
             <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
+              <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
                   Add topics to plan
                 </p>
-                <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                  {CONFIDENCE_COLORS.map((c, i) => (
-                    <span key={i} className="flex items-center gap-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: c }} />
-                      {['Struggling', 'Shaky', 'OK', 'Good', 'Nailed it'][i]}
-                    </span>
-                  ))}
+                <div className="-mx-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:px-0 sm:pb-0">
+                  <div className="inline-flex min-w-max items-center gap-1.5 text-[10px] text-gray-400">
+                    {CONFIDENCE_COLORS.map((c, i) => (
+                      <span key={i} className="flex items-center gap-0.5 whitespace-nowrap">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: c }} />
+                        {['Struggling', 'Shaky', 'OK', 'Good', 'Nailed it'][i]}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col gap-3">
-                {subjectGroups.map(({ subject, offering, topics: subjectTopics, nearestExamDays }) => {
+                {subjectGroups.map(({ subject, offering, topics: subjectTopics, primaryPaper, paperSummaries }) => {
                   const isExpanded = expanded === subject.id
-                  const urgencyColor = nearestExamDays <= 3 ? 'text-red-500'
-                    : nearestExamDays <= 7 ? 'text-amber-500'
-                    : planningMode === 'crunch' && nearestExamDays <= 21 ? 'text-amber-400'
-                    : 'text-gray-400'
                   return (
                     <div
                       key={subject.id}
                       className="ios-card overflow-hidden"
                     >
-                      <button
-                        onClick={() => setExpanded(isExpanded ? null : subject.id)}
-                        className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-gray-50/50"
-                      >
-                        <div className="w-1.5 h-5 rounded-full shrink-0" style={{ backgroundColor: subject.color }} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-base font-semibold text-gray-900 truncate">{subject.name}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {offering.label}
-                            <span className="text-gray-300 mx-1">{'\u00B7'}</span>
-                            <span className={urgencyColor}>
-                              Exam in {nearestExamDays} {nearestExamDays === 1 ? 'day' : 'days'}
-                            </span>
-                          </p>
-                        </div>
+                      <div className="flex items-center gap-3 px-5 py-4">
+                        <button
+                          onClick={() => setExpanded(isExpanded ? null : subject.id)}
+                          className="min-w-0 flex flex-1 items-center gap-3 text-left transition-colors hover:text-gray-700"
+                          aria-expanded={isExpanded}
+                          aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${subject.name} topics`}
+                        >
+                          <div className="w-1.5 h-5 rounded-full shrink-0" style={{ backgroundColor: subject.color }} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-base font-semibold leading-tight text-gray-900 sm:truncate">{subject.name}</p>
+                            <div className="mt-0.5">
+                              <span className="text-xs text-gray-400">{offering.label}</span>
+                              <div className="mt-2 space-y-2">
+                                {paperSummaries.map(({ paper, days }) => {
+                                  const paperUrgencyColor = days <= 3 ? 'text-red-500'
+                                    : days <= 7 ? 'text-amber-500'
+                                    : planningMode === 'crunch' && days <= 21 ? 'text-amber-400'
+                                    : 'text-gray-400'
+                                  const countdownLabel = formatExamCountdown(paper.examDate, today).replace('Exam in ', '')
+                                  return (
+                                    <div key={paper.id} className="flex items-start gap-2 text-xs">
+                                      <span className="mt-[0.45rem] h-1 w-1 shrink-0 rounded-full bg-gray-200" />
+                                      <div className="min-w-0">
+                                        <p className="font-medium text-gray-600">{paper.name}</p>
+                                        <p className="text-[11px] text-gray-400">
+                                          {formatShortExamDate(paper.examDate)}{' '}
+                                          <span className="text-gray-300">{'\u00B7'}</span>{' '}
+                                          <span className={paperUrgencyColor}>
+                                            {countdownLabel}
+                                          </span>
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[11px] font-semibold bg-gray-50 text-gray-500 px-2 py-0.5 rounded-full border border-gray-100">
-                            {subjectTopics.length}
-                          </span>
-                          <svg
-                            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
+                          {primaryPaper && (
+                            <button
+                              onClick={() => onStartPaperSession(
+                                primaryPaper,
+                                offering,
+                                subject,
+                                'picker',
+                                { selectionRequired: paperSummaries.length > 1 },
+                              )}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-[#2f7cff]/18 bg-[linear-gradient(180deg,#f5f9ff_0%,#eaf2ff_100%)] px-3 py-1.5 text-[11px] font-semibold text-[#1f63d8] shadow-[0_8px_18px_rgba(37,95,216,0.12)] transition-all hover:translate-y-[-1px] hover:border-[#2f7cff]/28 hover:shadow-[0_10px_20px_rgba(37,95,216,0.16)]"
+                              aria-label={`Full paper for ${subject.name}`}
+                            >
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.1}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Full paper
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setExpanded(isExpanded ? null : subject.id)}
+                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-3 py-1.5 text-left text-gray-600 shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-[1px] hover:border-gray-300 hover:text-gray-700 hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
+                            aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${subject.name}`}
                           >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                          </svg>
+                            <span className="flex flex-col leading-tight">
+                              <span className="text-[11px] font-semibold text-gray-700">
+                                {subjectTopics.length} topics
+                              </span>
+                              <span className="text-[10px] text-gray-400">
+                                Topic practice
+                              </span>
+                            </span>
+                            <svg
+                              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
                         </div>
-                      </button>
+                      </div>
                       <div
                         className="grid transition-[grid-template-rows] duration-200 ease-in-out"
                         style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}

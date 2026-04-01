@@ -394,7 +394,7 @@ export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onD
                   value={customBoardName}
                   onChange={e => setCustomBoardName(e.target.value)}
                   placeholder="Board name"
-                  className="mt-3 w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
+                  className="ios-input mt-3 w-full px-3 py-2.5 text-sm"
                 />
               )}
             </div>
@@ -492,7 +492,7 @@ export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onD
                         type="date"
                         value={p.examDate}
                         onChange={e => updatePaper(p.key, 'examDate', e.target.value)}
-                        className="w-full text-sm text-gray-700 border border-gray-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="ios-input w-full px-2.5 py-2 text-sm"
                       />
                     </div>
                     <div className="w-28">
@@ -501,7 +501,7 @@ export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onD
                         type="time"
                         value={p.examTime}
                         onChange={e => updatePaper(p.key, 'examTime', e.target.value)}
-                        className="w-full text-sm text-gray-700 border border-gray-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="ios-input w-full px-2.5 py-2 text-sm"
                       />
                     </div>
                   </div>
@@ -536,7 +536,7 @@ export default function CustomSubjectWizard({ onClose, onCreated, draftMode, onD
                 onChange={e => setTopicText(e.target.value)}
                 placeholder={"e.g.\nWWI causes\nTreaty of Versailles\nWeimar Republic\nNazi rise to power"}
                 rows={8}
-                className="w-full text-sm text-gray-700 bg-transparent resize-none focus:outline-none placeholder-gray-300 leading-relaxed"
+                className="ios-textarea w-full bg-transparent px-3 py-3 text-sm leading-relaxed"
               />
               {hasCommas && (
                 <button

@@ -1,6 +1,6 @@
 import { MS_PER_DAY, daysRemaining, daysSince, recencyFactor as engineRecencyFactor, scoreAllTopics, toMidnightUTC } from '../../lib/engine'
 import { getLocalDayKey } from '../../lib/date'
-import type { Note, Offering, Paper, Session, Subject, Topic } from '../../types'
+import type { Note, Offering, Paper, PaperAttempt, Session, Subject, Topic } from '../../types'
 
 export interface MetricExplanation {
   title: string
@@ -36,8 +36,11 @@ export interface SubjectAnalyticsSummary {
 }
 
 export interface LastSessionSummary {
+  kind: 'none' | 'topic' | 'paper'
   session: Session | null
+  attempt: PaperAttempt | null
   topic: Topic | null
+  paper: Paper | null
   subject: Subject | null
   offering: Offering | null
 }
@@ -75,6 +78,7 @@ export interface StudyVelocitySeries {
 export type TopicTableStatus = 'Complete' | 'Revision Ready' | 'Priority Now' | 'Needs Focus' | 'Scheduled' | 'Not Started'
 
 export interface TopicTableRow {
+  kind: 'topic'
   topic: Topic
   subject: Subject
   offering: Offering
@@ -84,10 +88,31 @@ export interface TopicTableRow {
   actionLabel: string
   actionReason: string | null
   freshnessRatio: number
+  recencyTimestamp: number
   recencyLabel: string
   status: TopicTableStatus
   priorityScore: number
 }
+
+export interface PaperTableRow {
+  kind: 'paper'
+  paper: Paper
+  attempt: PaperAttempt
+  attemptCount: number
+  subject: Subject
+  offering: Offering
+  confidence: number
+  lastScorePercent: number | null
+  actionLabel: string
+  actionReason: string | null
+  recencyDate: string
+  recencyTimestamp: number
+  recencyLabel: string
+  status: TopicTableStatus
+  priorityScore: number
+}
+
+export type ProgressTableRow = TopicTableRow | PaperTableRow
 
 export type ProgressTableFilter = 'recently-reviewed' | 'priority-now'
 
@@ -161,7 +186,7 @@ export function readinessPercent(topics: Topic[], today: Date): number {
   return Math.round(readinessRatio(topics, today) * 100)
 }
 
-export function studyVelocityDeltaPercent(sessions: Session[], today: Date): number | null {
+export function studyVelocityDeltaPercent(sessions: Session[], today: Date, paperAttempts: PaperAttempt[] = []): number | null {
   const todayISO = getLocalDayKey(today)
   const startRecent = new Date(today)
   startRecent.setDate(startRecent.getDate() - 7)
@@ -173,10 +198,14 @@ export function studyVelocityDeltaPercent(sessions: Session[], today: Date): num
 
   const recent = sessions.filter((session) => session.date > recentISO && session.date <= todayISO)
   const previous = sessions.filter((session) => session.date > previousISO && session.date <= recentISO)
+  const recentPaperAttempts = paperAttempts.filter((attempt) => attempt.date > recentISO && attempt.date <= todayISO)
+  const previousPaperAttempts = paperAttempts.filter((attempt) => attempt.date > previousISO && attempt.date <= recentISO)
 
-  const useDuration = [...recent, ...previous].some((session) => session.durationSeconds !== undefined)
+  const useDuration = [...recent, ...previous].some((session) => session.durationSeconds !== undefined) || recentPaperAttempts.length > 0 || previousPaperAttempts.length > 0
   const recentValue = recent.reduce((sum, session) => sum + (useDuration ? (session.durationSeconds ?? 0) : 1), 0)
+    + recentPaperAttempts.reduce((sum, attempt) => sum + (useDuration ? attempt.durationSeconds : 1), 0)
   const previousValue = previous.reduce((sum, session) => sum + (useDuration ? (session.durationSeconds ?? 0) : 1), 0)
+    + previousPaperAttempts.reduce((sum, attempt) => sum + (useDuration ? attempt.durationSeconds : 1), 0)
 
   if (recentValue === 0 && previousValue === 0) return null
   if (previousValue === 0) return 100
@@ -184,8 +213,8 @@ export function studyVelocityDeltaPercent(sessions: Session[], today: Date): num
   return Math.round(((recentValue - previousValue) / previousValue) * 100)
 }
 
-export function studyVelocityBars(sessions: Session[], today: Date, days = 6): number[] {
-  const useDuration = sessions.some((session) => session.durationSeconds !== undefined)
+export function studyVelocityBars(sessions: Session[], today: Date, days = 6, paperAttempts: PaperAttempt[] = []): number[] {
+  const useDuration = sessions.some((session) => session.durationSeconds !== undefined) || paperAttempts.length > 0
   const dailyTotals = new Map<string, number>()
 
   for (let offset = days - 1; offset >= 0; offset--) {
@@ -198,6 +227,12 @@ export function studyVelocityBars(sessions: Session[], today: Date, days = 6): n
     if (!dailyTotals.has(session.date)) continue
     const nextValue = (dailyTotals.get(session.date) ?? 0) + (useDuration ? (session.durationSeconds ?? 0) : 1)
     dailyTotals.set(session.date, nextValue)
+  }
+
+  for (const attempt of paperAttempts) {
+    if (!dailyTotals.has(attempt.date)) continue
+    const nextValue = (dailyTotals.get(attempt.date) ?? 0) + (useDuration ? attempt.durationSeconds : 1)
+    dailyTotals.set(attempt.date, nextValue)
   }
 
   const values = [...dailyTotals.values()]
@@ -214,8 +249,10 @@ export function buildStudyVelocitySeries(
   topics: Topic[] = [],
   offerings: Offering[] = [],
   subjects: Subject[] = [],
+  paperAttempts: PaperAttempt[] = [],
+  papers: Paper[] = [],
 ): StudyVelocitySeries {
-  const useDuration = sessions.some((session) => session.durationSeconds !== undefined)
+  const useDuration = sessions.some((session) => session.durationSeconds !== undefined) || paperAttempts.length > 0
   const dailyTotals = new Map<string, number>()
   const dailySubjectTotals = new Map<
     string,
@@ -225,6 +262,7 @@ export function buildStudyVelocitySeries(
   const topicMap = new Map(topics.map((topic) => [topic.id, topic]))
   const offeringMap = new Map(offerings.map((offering) => [offering.id, offering]))
   const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]))
+  const paperMap = new Map(papers.map((paper) => [paper.id, paper]))
 
   for (let offset = days - 1; offset >= 0; offset--) {
     const date = new Date(today)
@@ -246,6 +284,30 @@ export function buildStudyVelocitySeries(
     if (!subject) continue
 
     const subjectTotals = dailySubjectTotals.get(session.date)
+    if (!subjectTotals) continue
+    const existing = subjectTotals.get(subject.id)
+    if (existing) {
+      existing.value += nextRawValue
+    } else {
+      subjectTotals.set(subject.id, {
+        subjectName: subject.name,
+        color: subject.color,
+        value: nextRawValue,
+      })
+    }
+  }
+
+  for (const attempt of paperAttempts) {
+    if (!dailyTotals.has(attempt.date)) continue
+    const nextRawValue = useDuration ? attempt.durationSeconds / 60 : 1
+    dailyTotals.set(attempt.date, (dailyTotals.get(attempt.date) ?? 0) + nextRawValue)
+
+    const paper = paperMap.get(attempt.paperId)
+    const offering = paper ? offeringMap.get(paper.offeringId) : undefined
+    const subject = offering ? subjectMap.get(offering.subjectId) : undefined
+    if (!subject) continue
+
+    const subjectTotals = dailySubjectTotals.get(attempt.date)
     if (!subjectTotals) continue
     const existing = subjectTotals.get(subject.id)
     if (existing) {
@@ -378,6 +440,18 @@ function recencySourceDate(topic: Topic, sessions: Session[]): string | null {
   return latestSession?.date ?? topic.lastReviewed
 }
 
+function recencyTimestampForTopic(topic: Topic, sessions: Session[]): number {
+  const latestSession = latestSessionForTopic(topic.id, sessions)
+  if (latestSession?.timestamp) return latestSession.timestamp
+  if (!topic.lastReviewed) return 0
+  return new Date(`${topic.lastReviewed}T12:00:00`).getTime()
+}
+
+function paperPercent(attempt: PaperAttempt): number | null {
+  if (attempt.rawMark === undefined || attempt.totalMarks === undefined || attempt.totalMarks <= 0) return null
+  return Math.round((attempt.rawMark / attempt.totalMarks) * 100)
+}
+
 function actionLabelFor(status: TopicTableStatus): string {
   switch (status) {
     case 'Not Started':
@@ -465,6 +539,7 @@ export function buildTopicTableRows(
       const actionReason = actionReasonFor(status, topic, examDaysAway, today)
 
       return {
+        kind: 'topic',
         topic,
         subject,
         offering,
@@ -474,6 +549,7 @@ export function buildTopicTableRows(
         actionLabel,
         actionReason,
         freshnessRatio: freshnessRatio(topic.lastReviewed, today),
+        recencyTimestamp: recencyTimestampForTopic(topic, sessions),
         recencyLabel: recencyLabel(recencyDate, today),
         status,
         priorityScore,
@@ -482,38 +558,155 @@ export function buildTopicTableRows(
     .filter((row): row is TopicTableRow => row !== null)
 }
 
-export function sortTopicTableRows(rows: TopicTableRow[], filter: ProgressTableFilter): TopicTableRow[] {
+function paperPriorityScore(attempt: PaperAttempt, paper: Paper, today: Date): number {
+  const rawDiff = Math.ceil((toMidnightUTC(new Date(paper.examDate)).getTime() - toMidnightUTC(today).getTime()) / MS_PER_DAY)
+  const examUrgency = rawDiff > 0 ? 1 / Math.max(rawDiff, 1) : 0
+  const confidenceWeakness = 1 - (attempt.confidence / 5)
+  const staleness = 1 - freshnessRatio(attempt.date, today)
+  return clamp((0.5 * examUrgency) + (0.3 * confidenceWeakness) + (0.2 * staleness), 0, 1)
+}
+
+function paperStatusForAttempt(attempt: PaperAttempt): TopicTableStatus {
+  if (attempt.confidence <= 2) return 'Needs Focus'
+  if (attempt.confidence >= 4) return 'Revision Ready'
+  return 'Scheduled'
+}
+
+function paperActionLabelFor(status: TopicTableStatus): string {
+  switch (status) {
+    case 'Needs Focus':
+      return 'Sit another paper'
+    case 'Revision Ready':
+      return 'Keep sharp'
+    case 'Scheduled':
+      return 'On track'
+    case 'Not Started':
+      return 'Try a paper'
+    case 'Priority Now':
+    case 'Complete':
+      return 'On track'
+  }
+}
+
+function paperActionReasonFor(status: TopicTableStatus): string | null {
+  switch (status) {
+    case 'Needs Focus':
+      return null
+    case 'Revision Ready':
+      return 'strong recent paper confidence'
+    case 'Scheduled':
+      return null
+    case 'Not Started':
+      return null
+    case 'Priority Now':
+    case 'Complete':
+      return null
+  }
+}
+
+export function buildPaperTableRows(
+  paperAttempts: PaperAttempt[],
+  papers: Paper[],
+  offerings: Offering[],
+  subjects: Subject[],
+  today: Date,
+): PaperTableRow[] {
+  const paperMap = new Map(papers.map((paper) => [paper.id, paper]))
+  const offeringMap = new Map(offerings.map((offering) => [offering.id, offering]))
+  const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]))
+  const groupedAttempts = new Map<string, PaperAttempt[]>()
+
+  for (const attempt of paperAttempts) {
+    const groupKey = `${attempt.paperId}:${attempt.date}`
+    const existing = groupedAttempts.get(groupKey) ?? []
+    existing.push(attempt)
+    groupedAttempts.set(groupKey, existing)
+  }
+
+  return [...groupedAttempts.values()]
+    .map((attempts) => {
+      const attempt = [...attempts].sort((a, b) => b.timestamp - a.timestamp)[0]
+      const paper = paperMap.get(attempt.paperId)
+      const offering = paper ? offeringMap.get(paper.offeringId) : undefined
+      const subject = offering ? subjectMap.get(offering.subjectId) : undefined
+      if (!paper || !offering || !subject) return null
+
+      const status = paperStatusForAttempt(attempt)
+      return {
+        kind: 'paper',
+        paper,
+        attempt,
+        attemptCount: attempts.length,
+        subject,
+        offering,
+        confidence: attempt.confidence,
+        lastScorePercent: paperPercent(attempt),
+        actionLabel: paperActionLabelFor(status),
+        actionReason: paperActionReasonFor(status),
+        recencyDate: attempt.date,
+        recencyTimestamp: attempt.timestamp,
+        recencyLabel: recencyLabel(attempt.date, today),
+        status,
+        priorityScore: paperPriorityScore(attempt, paper, today),
+      } satisfies PaperTableRow
+    })
+    .filter((row): row is PaperTableRow => row !== null)
+}
+
+export function buildProgressTableRows(
+  topics: Topic[],
+  offerings: Offering[],
+  subjects: Subject[],
+  papers: Paper[],
+  today: Date,
+  sessions: Session[] = [],
+  paperAttempts: PaperAttempt[] = [],
+): ProgressTableRow[] {
+  return [
+    ...buildTopicTableRows(topics, offerings, subjects, papers, today, sessions),
+    ...buildPaperTableRows(paperAttempts, papers, offerings, subjects, today),
+  ]
+}
+
+export function sortProgressTableRows(rows: ProgressTableRow[], filter: ProgressTableFilter): ProgressTableRow[] {
   const sorted = [...rows]
   if (filter === 'recently-reviewed') {
     return sorted
-      .filter((row) => row.topic.lastReviewed !== null)
+      .filter((row) => row.kind === 'paper' || row.topic.lastReviewed !== null)
       .sort((a, b) => {
-        const aDate = a.topic.lastReviewed ?? ''
-        const bDate = b.topic.lastReviewed ?? ''
-        if (bDate !== aDate) return bDate.localeCompare(aDate)
-        return a.topic.name.localeCompare(b.topic.name)
+        if (b.recencyTimestamp !== a.recencyTimestamp) return b.recencyTimestamp - a.recencyTimestamp
+        const aName = a.kind === 'paper' ? a.paper.name : a.topic.name
+        const bName = b.kind === 'paper' ? b.paper.name : b.topic.name
+        return aName.localeCompare(bName)
       })
   }
 
-  return sorted.sort((a, b) => {
+  return sorted
+    .filter((row): row is TopicTableRow => row.kind === 'topic')
+    .sort((a, b) => {
     if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore
     if (a.masteryPercent !== b.masteryPercent) return a.masteryPercent - b.masteryPercent
     return a.topic.name.localeCompare(b.topic.name)
   })
 }
 
+export function sortTopicTableRows(rows: TopicTableRow[], filter: ProgressTableFilter): TopicTableRow[] {
+  return sortProgressTableRows(rows, filter).filter((row): row is TopicTableRow => row.kind === 'topic')
+}
+
 export function buildAnalyticsMetrics(
   topics: Topic[],
   sessions: Session[],
   today: Date,
+  paperAttempts: PaperAttempt[] = [],
 ): AnalyticsMetric[] {
   const mastery = topics.length > 0
     ? Math.round((topics.reduce((sum, topic) => sum + masteryPercent(topic), 0) / topics.length))
     : 0
   const readiness = readinessPercent(topics, today)
   const coverage = coveragePercent(topics)
-  const velocity = studyVelocityDeltaPercent(sessions, today)
-  const velocityBars = studyVelocityBars(sessions, today)
+  const velocity = studyVelocityDeltaPercent(sessions, today, paperAttempts)
+  const velocityBars = studyVelocityBars(sessions, today, 6, paperAttempts)
 
   return [
     {
@@ -549,11 +742,16 @@ export function buildLastSessionSummary(
   topics: Topic[],
   offerings: Offering[],
   subjects: Subject[],
+  papers: Paper[] = [],
+  paperAttempts: PaperAttempt[] = [],
 ): LastSessionSummary {
-  if (sessions.length === 0) {
+  if (sessions.length === 0 && paperAttempts.length === 0) {
     return {
+      kind: 'none',
       session: null,
+      attempt: null,
       topic: null,
+      paper: null,
       subject: null,
       offering: null,
     }
@@ -562,13 +760,36 @@ export function buildLastSessionSummary(
   const topicMap = new Map(topics.map((topic) => [topic.id, topic]))
   const offeringMap = new Map(offerings.map((offering) => [offering.id, offering]))
   const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]))
+  const paperMap = new Map(papers.map((paper) => [paper.id, paper]))
   const session = [...sessions].sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0) || b.date.localeCompare(a.date))[0] ?? null
-  if (!session) {
+  const attempt = [...paperAttempts].sort((a, b) => b.timestamp - a.timestamp || b.date.localeCompare(a.date))[0] ?? null
+  const sessionTimestamp = session?.timestamp ?? 0
+  const attemptTimestamp = attempt?.timestamp ?? 0
+
+  if (!session && !attempt) {
     return {
+      kind: 'none',
       session: null,
+      attempt: null,
       topic: null,
+      paper: null,
       subject: null,
       offering: null,
+    }
+  }
+
+  if (attempt && attemptTimestamp >= sessionTimestamp) {
+    const paper = paperMap.get(attempt.paperId) ?? null
+    const offering = paper ? offeringMap.get(paper.offeringId) ?? null : null
+    const subject = offering ? subjectMap.get(offering.subjectId) ?? null : null
+    return {
+      kind: 'paper',
+      session: null,
+      attempt,
+      topic: null,
+      paper,
+      subject,
+      offering,
     }
   }
 
@@ -576,7 +797,15 @@ export function buildLastSessionSummary(
   const offering = topic ? offeringMap.get(topic.offeringId) ?? null : null
   const subject = offering ? subjectMap.get(offering.subjectId) ?? null : null
 
-  return { session, topic, subject, offering }
+  return {
+    kind: 'topic',
+    session,
+    attempt: null,
+    topic,
+    paper: null,
+    subject,
+    offering,
+  }
 }
 
 export function buildProgressCalendarDayMeta(
@@ -585,10 +814,13 @@ export function buildProgressCalendarDayMeta(
   offerings: Offering[],
   subjects: Subject[],
   notes: Note[],
+  paperAttempts: PaperAttempt[] = [],
+  papers: Paper[] = [],
 ): Map<string, ProgressCalendarDayMeta> {
   const topicMap = new Map(topics.map((topic) => [topic.id, topic]))
   const offeringMap = new Map(offerings.map((offering) => [offering.id, offering]))
   const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]))
+  const paperMap = new Map(papers.map((paper) => [paper.id, paper]))
   const noteCountByDate = notes.reduce((map, note) => {
     map.set(note.date, (map.get(note.date) ?? 0) + 1)
     return map
@@ -621,6 +853,37 @@ export function buildProgressCalendarDayMeta(
     if (!existing.subjects.some((item) => item.id === subject.id)) existing.subjects.push(subject)
 
     dayMap.set(session.date, existing)
+  }
+
+  for (const attempt of paperAttempts) {
+    const paper = paperMap.get(attempt.paperId)
+    if (!paper) continue
+    const offering = offeringMap.get(paper.offeringId)
+    const subject = offering ? subjectMap.get(offering.subjectId) : undefined
+    if (!offering || !subject) continue
+
+    const existing = dayMap.get(attempt.date) ?? {
+      dateKey: attempt.date,
+      sessionCount: 0,
+      totalDurationSeconds: 0,
+      averageScore: null,
+      notesCount: noteCountByDate.get(attempt.date) ?? 0,
+      topicsStudied: [],
+      subjects: [],
+    }
+
+    existing.sessionCount += 1
+    existing.totalDurationSeconds += attempt.durationSeconds
+    const percent = paperPercent(attempt)
+    if (percent !== null) {
+      const normalizedPercent = percent / 100
+      existing.averageScore = existing.averageScore === null
+        ? normalizedPercent
+        : ((existing.averageScore * (existing.sessionCount - 1)) + normalizedPercent) / existing.sessionCount
+    }
+    if (!existing.subjects.some((item) => item.id === subject.id)) existing.subjects.push(subject)
+
+    dayMap.set(attempt.date, existing)
   }
 
   return dayMap

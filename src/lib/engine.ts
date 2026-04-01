@@ -19,6 +19,19 @@ export function daysRemaining(examISO: string, today: Date): number {
   return Math.max(1, diff)
 }
 
+export function examDayDiff(examISO: string, today: Date): number {
+  const exam = toMidnightUTC(new Date(examISO))
+  const now = toMidnightUTC(today)
+  return Math.ceil((exam.getTime() - now.getTime()) / MS_PER_DAY)
+}
+
+export function formatExamCountdown(examISO: string, today: Date): string {
+  const diff = examDayDiff(examISO, today)
+  if (diff < 0) return 'Exam passed'
+  if (diff === 0) return 'Exam today'
+  return `Exam in ${diff} ${diff === 1 ? 'day' : 'days'}`
+}
+
 export function daysSince(lastISO: string | null, today: Date): number {
   if (!lastISO) return 0
   const last = toMidnightUTC(new Date(lastISO))

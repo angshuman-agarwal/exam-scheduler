@@ -1,22 +1,25 @@
-import type { TimerSession, TimerBanner, TimerMode } from '../types/timer'
-import type { ScheduleSource } from '../types'
+import type { TimerSession, TimerBanner, TimerMode, TimerTargetType } from '../types/timer'
+import type { PaperAttemptSource, ScheduleSource } from '../types'
 
 // Constants
-export const STRICT_THRESHOLD_MS = 15_000
+export const TOPIC_STRICT_THRESHOLD_MS = 15_000
+export const PAPER_STRICT_THRESHOLD_MS = 60_000
 export const GRACE_MS = 3_000
 export const STALE_RUNNING_MS = 4 * 60 * 60 * 1000  // 4 hours
 export const STALE_STOPPED_MS = 30 * 60 * 1000       // 30 minutes
 
 export function createSession(
-  topicId: string,
-  source: ScheduleSource,
+  targetType: TimerTargetType,
+  targetId: string,
+  source: ScheduleSource | PaperAttemptSource,
   now: number,
   strictMode: boolean,
   scheduleItemId?: string,
 ): TimerSession {
   return {
     sessionId: `ts-${now}-${Math.random().toString(36).slice(2, 8)}`,
-    topicId,
+    targetType,
+    targetId,
     source,
     scheduleItemId,
     mode: 'running',
@@ -27,6 +30,10 @@ export function createSession(
     strictMode,
     modeChangedAt: now,
   }
+}
+
+export function strictThresholdMsFor(session: Pick<TimerSession, 'targetType'>): number {
+  return session.targetType === 'paper' ? PAPER_STRICT_THRESHOLD_MS : TOPIC_STRICT_THRESHOLD_MS
 }
 
 export function pauseTimer(session: TimerSession, now: number): TimerSession {
@@ -97,8 +104,9 @@ export function handleReturn(session: TimerSession, now: number): HandleReturnRe
   }
 
   if (session.strictMode) {
+    const strictThresholdMs = strictThresholdMsFor(session)
     // Strict: within extended threshold — still ok
-    if (gap <= STRICT_THRESHOLD_MS) {
+    if (gap <= strictThresholdMs) {
       return {
         session: { ...session, hiddenAt: null },
         banner: 'restored',

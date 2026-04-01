@@ -22,7 +22,7 @@ export default function SearchBar({ query, onChange, onAddOwn }: SearchBarProps)
           value={query}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Search subjects or boards..."
-          className="w-full pl-10 pr-9 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="ios-input w-full pl-10 pr-9 py-2.5 text-sm"
         />
         {query && (
           <button

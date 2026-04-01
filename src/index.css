@@ -22,6 +22,18 @@
   .ios-button {
     @apply bg-system-blue text-white rounded-xl font-semibold transition-all duration-200 active:scale-[0.97] active:opacity-80;
   }
+  .ios-toolbar-chip {
+    @apply inline-flex items-center gap-2 rounded-2xl border border-gray-200/80 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all duration-150 hover:-translate-y-[1px] hover:border-gray-300/80 hover:shadow-[0_10px_24px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 focus-visible:ring-offset-2;
+  }
+  .ios-toolbar-chip__icon {
+    @apply inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/80 text-current shadow-[inset_0_1px_0_rgba(255,255,255,0.8)];
+  }
+  .ios-input {
+    @apply rounded-xl border border-blue-100/80 bg-blue-50/[0.22] text-gray-700 placeholder-gray-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition-all duration-150 focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200/70;
+  }
+  .ios-textarea {
+    @apply rounded-xl border border-blue-100/80 bg-blue-50/[0.22] text-gray-700 placeholder-gray-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition-all duration-150 focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200/70 resize-none;
+  }
 }
 /* --- Analog clock animation (active timer) --- */
 .study-clock {

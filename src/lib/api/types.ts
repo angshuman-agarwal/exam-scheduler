@@ -1,4 +1,4 @@
-import type { Board, Note, Offering, Paper, ScheduleItem, Session, Subject, Topic } from '../../types'
+import type { Board, Note, Offering, Paper, PaperAttempt, ScheduleItem, Session, Subject, Topic } from '../../types'
 
 export interface NearestExamSummary {
   days: number
@@ -47,6 +47,7 @@ export interface ProgressContext {
   studyMode: 'gcse' | 'alevel' | null
   topics: Topic[]
   sessions: Session[]
+  paperAttempts: PaperAttempt[]
   subjects: Subject[]
   papers: Paper[]
   offerings: Offering[]

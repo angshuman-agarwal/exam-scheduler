@@ -15,7 +15,7 @@ interface SessionLoggerProps {
   onGoToProgress: () => void
 }
 
-const EMOJIS = ['\u{1F630}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F60E}']
+const EMOJIS = ['\u{1F630}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F929}']
 const SCORE_MAP = [15, 35, 55, 75, 95]
 
 function formatTime(seconds: number): string {
@@ -37,7 +37,7 @@ function getNextStep(score: number): string {
   return "No worries \u2014 we'll keep this in your rotation."
 }
 
-const CONFIDENCE_EMOJI = ['\u{1F630}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F60E}'] as const
+const CONFIDENCE_EMOJI = ['\u{1F630}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F929}'] as const
 
 // --- Icons (inline SVG) ---
 
@@ -435,7 +435,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
         <div>
           <div className="text-center mt-8">
             <button
-              onClick={() => start(topic.id, source, scheduleItemId)}
+              onClick={() => start('topic', topic.id, source, scheduleItemId)}
               className="w-full py-4 bg-blue-600 text-white text-lg font-semibold rounded-xl transition-colors hover:bg-blue-700 active:bg-blue-800"
             >
               Start Studying
@@ -612,7 +612,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Any notes? (optional)"
             rows={2}
-            className="w-full p-3 bg-white rounded-xl border border-gray-200 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="ios-textarea w-full p-3 text-sm"
           />
 
           <button
@@ -647,7 +647,7 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Add a note? (optional)"
             rows={2}
-            className="w-full p-3 bg-white rounded-xl border border-gray-200 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="ios-textarea w-full p-3 text-sm"
           />
 
           <p className="text-xs text-gray-400 text-center mt-4 mb-3">Your progress has been updated</p>
