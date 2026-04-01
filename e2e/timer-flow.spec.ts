@@ -158,6 +158,7 @@ async function openFirstPlannedSession(page: Page) {
 
 test('starting a planned session enters running timer mode', async ({ page }) => {
   await openFirstPlannedSession(page)
+  await expect(page.getByText('Keep screen awake')).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Start Studying' }).click()
 
@@ -307,6 +308,7 @@ test('starting a full paper from Today opens the paper timer and saves the revie
   await expect(fullPaperPracticeCard).toBeVisible()
   await fullPaperPracticeCard.getByRole('button', { name: 'Start full paper' }).click()
   await expect(page.getByRole('button', { name: 'Browse topics instead' })).toBeVisible()
+  await expect(page.getByText('Keep screen awake')).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Start full paper' }).click()
   await expect(page.getByText('Full paper in progress')).toBeVisible()

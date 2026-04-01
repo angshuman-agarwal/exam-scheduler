@@ -240,8 +240,8 @@ export default function PaperSessionLogger({
     [selectedPaper.id, topics],
   )
 
-  const wakeLockEnabled = mode === 'running' && settings.wakeLockEnabled
-  const { supported: wakeLockSupported, active: wakeLockActive } = useWakeLock(wakeLockEnabled)
+  const wakeLockEnabled = mode === 'running'
+  const { active: wakeLockActive } = useWakeLock(wakeLockEnabled)
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -455,21 +455,6 @@ export default function PaperSessionLogger({
                 accentTrack="bg-amber-500"
                 accentChipBg="bg-amber-100"
                 accentChipText="text-amber-600"
-              />
-              <SettingsToggleRow
-                icon={<SunIcon className="h-4 w-4" />}
-                title="Keep screen awake"
-                helper={wakeLockSupported
-                  ? 'Keeps the display awake while the paper session is running'
-                  : 'Not supported on this browser'}
-                checked={settings.wakeLockEnabled}
-                onChange={(value) => updateSettings({ wakeLockEnabled: value })}
-                disabled={!wakeLockSupported}
-                accentBg="bg-blue-50/80"
-                accentBorder="border-blue-200/60"
-                accentTrack="bg-blue-500"
-                accentChipBg="bg-blue-100"
-                accentChipText="text-blue-600"
               />
             </div>
           </div>
