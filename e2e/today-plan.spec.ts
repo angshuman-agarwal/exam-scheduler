@@ -204,6 +204,19 @@ test('Back from a Today-opened subject picker returns to Today', async ({ page }
   await expect(page.getByText('Study Planner')).toBeVisible()
 })
 
+test('mobile edit subjects back returns to Today', async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 })
+  await openToday(page, todayPlanState())
+
+  await page.getByRole('button', { name: 'Edit subjects' }).click()
+  await expect(page.getByRole('heading', { name: 'Update your subjects' })).toBeVisible()
+
+  await page.locator('div.sticky.top-0 button').first().click()
+
+  await expect(page.getByText('Study Planner')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Update your subjects' })).toHaveCount(0)
+})
+
 test('Subject card start full paper CTA preselects the nearest upcoming paper for multi-paper subjects', async ({ page }) => {
   await openToday(page, todayPlanState())
 

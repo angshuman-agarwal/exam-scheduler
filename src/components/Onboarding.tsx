@@ -73,9 +73,11 @@ export default function Onboarding({ mode = 'initial', onComplete, onCancel, onB
     : onBackToHome
 
   // Mobile back: same logic
-  const handleMobileBack = !ctrl.isEdit && !ctrl.persistedStudyMode
-    ? () => { ctrl.resetForQualificationChange(); ctrl.setLocalStudyMode(null) }
-    : onBackToHome ?? (() => {})
+  const handleMobileBack = ctrl.isEdit
+    ? onCancel ?? (() => {})
+    : !ctrl.persistedStudyMode
+      ? () => { ctrl.resetForQualificationChange(); ctrl.setLocalStudyMode(null) }
+      : onBackToHome ?? (() => {})
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">

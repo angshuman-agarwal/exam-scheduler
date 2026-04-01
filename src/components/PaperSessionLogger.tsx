@@ -218,11 +218,14 @@ export default function PaperSessionLogger({
   const [totalMarks, setTotalMarks] = useState('')
   const [noteText, setNoteText] = useState('')
   const [taggedTopicIds, setTaggedTopicIds] = useState<string[]>([])
+  const [topicsExpanded, setTopicsExpanded] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [confirmAction, setConfirmAction] = useState<'stop' | 'discard' | null>(null)
 
   const mode = session?.mode ?? null
-  const phase = !session
+  const phase = submitted
+    ? 'submitted'
+    : !session
     ? 'pre'
     : mode === 'running' || mode === 'paused'
       ? 'active'
@@ -321,10 +324,11 @@ export default function PaperSessionLogger({
   const actionsDisabled = requiresSelection && selectedPaperId == null
   const headerPaper = selectedPaper
   const cardDescription = `Start a timed attempt for ${selectedPaper.name} and review the score afterwards.`
+  const selectedTopicCount = taggedTopicIds.length
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 pt-6">
-      {phase !== 'post-review' && phase !== 'post-interrupted' && (
+      {phase !== 'post-review' && phase !== 'post-interrupted' && phase !== 'submitted' && (
         <button onClick={handleBack} className="mb-6 flex items-center gap-1 text-sm text-gray-500">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -333,7 +337,7 @@ export default function PaperSessionLogger({
         </button>
       )}
 
-      <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className={`rounded-2xl border border-gray-100 bg-white p-4 shadow-sm ${phase === 'post-review' && restored ? 'mb-3.5' : 'mb-6'}`}>
         <div className="flex items-center gap-3">
           <div className="h-10 w-1.5 rounded-full" style={{ backgroundColor: subject.color }} />
           <div>
@@ -557,16 +561,18 @@ export default function PaperSessionLogger({
       )}
 
       {phase === 'post-review' && !submitted && (
-        <div className="space-y-5">
+        <div className="space-y-3.5">
           {restored && (
-            <section className="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3 shadow-sm">
-              <p className="text-sm font-semibold text-blue-900">Unfinished paper review restored</p>
-              <p className="mt-1 text-sm text-blue-700">Complete review to save this attempt.</p>
+            <section className="rounded-2xl border border-amber-200/70 bg-[linear-gradient(180deg,#fffaf0_0%,#fff4dc_100%)] px-4 py-2 shadow-[0_10px_24px_rgba(245,158,11,0.08)]">
+              <div className="flex flex-col gap-0.5">
+                <p className="text-[13px] font-semibold leading-[1.15] text-amber-950">Unfinished paper review restored</p>
+                <p className="text-[13px] leading-[1.15] text-amber-800">Complete review to save this attempt.</p>
+              </div>
             </section>
           )}
-          <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <section className="rounded-2xl border border-gray-100 bg-white p-3.5 shadow-sm">
             <h3 className="text-base font-semibold text-gray-900">What did you score?</h3>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-2.5 space-y-2.5">
               <label className="text-sm text-gray-600">
                 Raw mark
                 <input
@@ -586,57 +592,94 @@ export default function PaperSessionLogger({
                 />
               </label>
             </div>
-            <p className="mt-3 text-sm text-gray-500">
-              {computedPercent == null ? 'Enter both marks to preview the percent.' : `Live preview: ${computedPercent}%`}
+            <p className="mt-2.5 text-sm text-gray-500">
+              {computedPercent == null ? 'Enter both marks to calculate the percent.' : `Estimated score: ${computedPercent}%`}
             </p>
-          </section>
 
-          <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-            <h3 className="text-base font-semibold text-gray-900">How did that paper feel?</h3>
-            <div className="mt-3 flex gap-2">
-              {CONFIDENCE_EMOJI.map((emoji, index) => {
-                const value = index + 1
-                const selected = confidence === value
-                return (
-                  <button
-                    key={value}
-                    onClick={() => setConfidence(value)}
-                    className={`flex-1 rounded-xl border px-3 py-3 text-2xl ${selected ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white'}`}
-                  >
-                    {emoji}
-                  </button>
-                )
-              })}
+            <div className="mt-3 border-t border-gray-100 pt-3">
+              <h3 className="text-[15px] font-semibold leading-tight text-gray-900">How did that paper feel?</h3>
+              <div className="mt-2.5 grid grid-cols-5 gap-1.5">
+                {CONFIDENCE_EMOJI.map((emoji, index) => {
+                  const value = index + 1
+                  const selected = confidence === value
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setConfidence(value)}
+                      className={`rounded-xl border px-2 py-2.5 text-xl ${selected ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white'}`}
+                    >
+                      {emoji}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <section className="rounded-2xl border border-gray-100 bg-white p-3.5 shadow-sm">
             <h3 className="text-base font-semibold text-gray-900">Notes</h3>
             <textarea
               value={noteText}
               onChange={(event) => setNoteText(event.target.value)}
-              className="ios-textarea mt-3 min-h-24 w-full px-3 py-2"
+              className="ios-textarea mt-2.5 min-h-24 w-full px-3 py-2"
               placeholder="Optional notes about timing, mistakes, or what to revisit."
             />
           </section>
 
-          <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-            <h3 className="text-base font-semibold text-gray-900">Which topics need work?</h3>
-            <p className="mt-1 text-sm text-gray-500">Optional. Leave this blank if you just want to save the paper attempt.</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {paperTopics.map((topic) => {
-                const selected = taggedTopicIds.includes(topic.id)
-                return (
-                  <button
-                    key={topic.id}
-                    onClick={() => setTaggedTopicIds((current) => selected ? current.filter((id) => id !== topic.id) : [...current, topic.id])}
-                    className={`rounded-full border px-3 py-1.5 text-sm ${selected ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-gray-200 bg-white text-gray-700'}`}
-                  >
-                    {topic.name}
-                  </button>
-                )
-              })}
+          <section className="rounded-2xl border border-gray-100 bg-white p-3.5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">Which topics need work?</h3>
+                <p className="mt-1 text-sm text-gray-500">Optional. Leave this blank if you just want to save the paper attempt.</p>
+              </div>
+              {selectedTopicCount > 0 && (
+                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                  {selectedTopicCount} selected
+                </span>
+              )}
             </div>
+            <button
+              type="button"
+              onClick={() => setTopicsExpanded((current) => !current)}
+              className="mt-2.5 inline-flex w-full items-center justify-between gap-3 rounded-full border border-gray-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-2.5 text-left text-gray-600 shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-[1px] hover:border-gray-300 hover:text-gray-700 hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
+              aria-expanded={topicsExpanded}
+              aria-controls="paper-review-topics"
+            >
+              <span className="flex flex-col leading-tight">
+                <span className="text-[11px] font-semibold text-gray-700">
+                  {selectedTopicCount > 0 ? `${selectedTopicCount} flagged` : `${paperTopics.length} topics`}
+                </span>
+                <span className="text-[10px] text-gray-400">
+                  Revisit topics
+                </span>
+              </span>
+              <svg
+                className={`h-4 w-4 shrink-0 transition-transform duration-200 ${topicsExpanded ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {topicsExpanded && (
+              <div id="paper-review-topics" className="mt-2.5 flex flex-wrap gap-2 border-t border-gray-100 pt-2.5">
+                {paperTopics.map((topic) => {
+                  const selected = taggedTopicIds.includes(topic.id)
+                  return (
+                    <button
+                      key={topic.id}
+                      type="button"
+                      onClick={() => setTaggedTopicIds((current) => selected ? current.filter((id) => id !== topic.id) : [...current, topic.id])}
+                      className={`rounded-full border px-3 py-1.5 text-sm ${selected ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-gray-200 bg-white text-gray-700'}`}
+                    >
+                      {topic.name}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </section>
 
           <button
@@ -649,7 +692,7 @@ export default function PaperSessionLogger({
         </div>
       )}
 
-      {submitted && (
+      {phase === 'submitted' && (
         <div className="mt-6 rounded-[1.75rem] border border-emerald-100/80 bg-[linear-gradient(180deg,#ffffff_0%,#f9fffb_100%)] p-6 text-center shadow-[0_12px_28px_rgba(16,185,129,0.08)]">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>

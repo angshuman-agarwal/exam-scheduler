@@ -204,6 +204,34 @@ test('finishing a session moves into review mode', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Complete' })).toBeVisible()
 })
 
+test('view progress after consecutive subject sessions leaves the picker flow and opens Progress', async ({ page }) => {
+  await openToday(page, timerState())
+  await page.getByRole('button', { name: 'Create suggested plan' }).click()
+
+  await page.getByTestId('today-plan-item').nth(0).click()
+  await expect(page.getByRole('button', { name: 'Start Studying' })).toBeVisible()
+  await page.getByRole('button', { name: 'Start Studying' }).click()
+  await page.getByRole('button', { name: 'Finish studying' }).click()
+  await page.getByRole('button', { name: 'End session' }).click()
+  await page.getByRole('button', { name: 'Confidence 2 of 5' }).click()
+  await page.getByRole('button', { name: 'Complete' }).click()
+  await page.getByRole('button', { name: 'Back to plan' }).click()
+
+  await page.getByTestId('today-plan-item').nth(0).click()
+  await expect(page.getByRole('button', { name: 'Start Studying' })).toBeVisible()
+  await page.getByRole('button', { name: 'Start Studying' }).click()
+  await page.getByRole('button', { name: 'Finish studying' }).click()
+  await page.getByRole('button', { name: 'End session' }).click()
+  await page.getByRole('button', { name: 'Confidence 4 of 5' }).click()
+  await page.getByRole('button', { name: 'Complete' }).click()
+  await page.getByRole('button', { name: 'View progress' }).click()
+
+  await expect(page).toHaveURL(/#progress$/)
+  await expect(page.getByTestId('progress-hero')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Computer Science' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Start Studying' })).toHaveCount(0)
+})
+
 test('running session reload recovers into paused mode', async ({ page }) => {
   await openToday(page, timerState())
   await seedTimer(page, {
@@ -324,6 +352,63 @@ test('starting a full paper from Today opens the paper timer and saves the revie
   await page.getByRole('button', { name: 'Complete' }).click()
 
   await expect(page.getByText('Paper saved')).toBeVisible()
+})
+
+test('paper review topics stay collapsed until expanded and still allow tagging topics', async ({ page }) => {
+  await openToday(page, paperEligibleState())
+
+  const fullPaperPracticeCard = page.locator('.ios-card').filter({ has: page.getByText('Full paper practice') }).first()
+  await fullPaperPracticeCard.getByRole('button', { name: 'Start full paper' }).click()
+  await page.getByRole('button', { name: 'Start full paper' }).click()
+  await page.getByRole('button', { name: 'Finish paper' }).click()
+  await page.getByRole('button', { name: 'End paper' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Which topics need work?' })).toBeVisible()
+  const revisitTopicsToggle = page.getByRole('button', { name: /topics\s+Revisit topics/i })
+  const firstTopicChip = page.getByRole('button', { name: 'Sorting and searching algorithms' })
+  await expect(revisitTopicsToggle).toHaveAttribute('aria-expanded', 'false')
+  await expect(firstTopicChip).toBeHidden()
+
+  await revisitTopicsToggle.click()
+  await expect(revisitTopicsToggle).toHaveAttribute('aria-expanded', 'true')
+  await expect(firstTopicChip).toBeVisible()
+  await firstTopicChip.click()
+  await expect(page.getByText('1 selected')).toBeVisible()
+  await expect(page.getByText('1 flagged')).toBeVisible()
+})
+
+test('paper saved view progress opens Progress without leaving paper flow UI behind', async ({ page }) => {
+  await openToday(page, paperEligibleState())
+
+  const fullPaperPracticeCard = page.locator('.ios-card').filter({ has: page.getByText('Full paper practice') }).first()
+  await expect(fullPaperPracticeCard).toBeVisible()
+  await fullPaperPracticeCard.getByRole('button', { name: 'Start full paper' }).click()
+  await expect(page.getByRole('button', { name: 'Browse topics instead' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Start full paper' }).click()
+  await expect(page.getByText('Full paper in progress')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Finish paper' }).click()
+  await expect(page.getByText('End paper?')).toBeVisible()
+  await page.getByRole('button', { name: 'End paper' }).click()
+
+  await expect(page.getByText('What did you score?')).toBeVisible()
+  await page.getByLabel('Raw mark').fill('47')
+  await page.getByLabel('Total marks').fill('80')
+  await page.getByRole('button', { name: '🙂' }).click()
+  await page.getByRole('button', { name: 'Complete' }).click()
+
+  await expect(page.getByText('Paper saved')).toBeVisible()
+  await expect(page.getByText('Choose paper')).toHaveCount(0)
+  await expect(page.getByText('Full paper practice')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Start full paper' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Browse topics instead' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'View progress' }).click()
+
+  await expect(page).toHaveURL(/#progress$/)
+  await expect(page.getByTestId('progress-hero')).toBeVisible()
+  await expect(page.getByText('Paper saved')).toHaveCount(0)
+  await expect(page.getByText('Full paper in progress')).toHaveCount(0)
 })
 
 test('paper pre-start can route into paper-scoped topic browsing', async ({ page }) => {

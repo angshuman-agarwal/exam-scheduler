@@ -360,6 +360,19 @@ updateAppState((app) => {
   - `Crunch mode` appears as a separate warm utility chip when active.
   - Neither header control visually competes with the main page CTAs lower on the screen.
 
+### A4.1. Mobile `Edit subjects` back returns safely to Today
+
+- Setup:
+  - Open `Today` on a narrow mobile viewport.
+- Steps:
+  - Tap `Edit subjects`.
+  - Wait for `Update your subjects`.
+  - Tap the header back arrow.
+- Expected:
+  - The edit-subjects overlay closes.
+  - User returns to `Study Planner`.
+  - No onboarding or edit state remains stuck on screen.
+
 ### A5. Full JSON seed cold-start sanity check
 
 - Setup:
@@ -600,15 +613,16 @@ updateAppState((app) => {
   - Interrupted attempt is not counted.
   - UI clearly communicates that the attempt was not saved.
 
-### D3. Keep screen awake
+### D3. Screen wake behavior is automatic while a paper is running
 
-- Setup:
-  - Toggle `Keep screen awake` on a supported browser.
 - Steps:
+  - Open the paper pre-start screen.
+  - Inspect `Session preferences`.
   - Start paper.
 - Expected:
-  - Wake lock badge appears while running.
-  - Toggling remains visually consistent with topic timer preference UI.
+  - `Keep screen awake` toggle is not shown anymore.
+  - Wake lock is treated as automatic while the timer is running.
+  - On supported devices/browsers, the running timer can show the `Screen awake` badge.
 
 ### D4. Review form validation
 
@@ -624,16 +638,28 @@ updateAppState((app) => {
   - Save is allowed.
   - Marks are optional in v1.
 
-### D5. Marks and live percent preview
+### D5. Marks and estimated percent summary
 
 - Steps:
   - Enter `47` raw mark.
   - Enter `80` total marks.
 - Expected:
-  - Live preview shows `59%`.
+  - Summary text shows `Estimated score: 59%`.
   - Non-digit characters are rejected or stripped.
 
-### D6. Optional notes and optional topic tags
+### D6. Review layout stays compact on mobile
+
+- Setup:
+  - Open a paper review screen on a narrow mobile viewport.
+- Steps:
+  - Inspect the top of the review form.
+- Expected:
+  - `What did you score?` and `How did that paper feel?` appear inside one shared card.
+  - Score inputs appear first.
+  - Confidence emoji row appears below inside the same card.
+  - The reminder banner, if shown, sits close to the header without excessive vertical whitespace.
+
+### D7. Optional notes and optional topic tags
 
 - Steps:
   - Save once with notes and no topic tags.
@@ -644,8 +670,11 @@ updateAppState((app) => {
   - Tagging is optional.
   - No tags means no topic-level confidence or `lastReviewed` updates.
   - Completed review clears the persisted timer before success is shown.
+  - `Which topics need work?` starts collapsed behind the `N topics / Revisit topics` control.
+  - Expanding it reveals the topic chips.
+  - Selected topics are reflected in the small selected-count label.
 
-### D7. Completed paper review does not restore after reload
+### D8. Completed paper review does not restore after reload
 
 - Setup:
   - Start and finish any full paper.

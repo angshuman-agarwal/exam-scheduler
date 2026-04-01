@@ -105,6 +105,10 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
     },
     goToProgress() {
       setSessionOverride(null)
+      setActiveOffering(null)
+      setActiveSubject(null)
+      setActivePaper(null)
+      setActiveSubjectBrowseContext(null)
       navigateTo('progress')
     },
     goToToday() {
