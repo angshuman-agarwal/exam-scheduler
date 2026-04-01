@@ -253,9 +253,9 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
 
   const mode = session?.mode ?? null
 
-  // Wake lock: active only when running + enabled
-  const wakeLockEnabled = mode === 'running' && settings.wakeLockEnabled
-  const { supported: wakeLockSupported, active: wakeLockActive } = useWakeLock(wakeLockEnabled)
+  // Wake lock: always requested while a session is running
+  const wakeLockEnabled = mode === 'running'
+  const { active: wakeLockActive } = useWakeLock(wakeLockEnabled)
 
   // Phase mapping
   const phase = !session
@@ -457,21 +457,6 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
                 accentTrack="bg-amber-500"
                 accentChipBg="bg-amber-100"
                 accentChipText="text-amber-600"
-              />
-              <SettingsToggleRow
-                icon={<SunIcon className="w-4 h-4" />}
-                title="Keep screen awake"
-                helper={wakeLockSupported
-                  ? 'Keeps the display awake while the session is running'
-                  : 'Not supported on this browser'}
-                checked={settings.wakeLockEnabled}
-                onChange={(v) => updateSettings({ wakeLockEnabled: v })}
-                disabled={!wakeLockSupported}
-                accentBg="bg-blue-50/80"
-                accentBorder="border-blue-200/60"
-                accentTrack="bg-blue-500"
-                accentChipBg="bg-blue-100"
-                accentChipText="text-blue-600"
               />
             </div>
           </div>

@@ -128,6 +128,7 @@ async function openFirstPlannedSession(page: Page) {
 
 test('starting a planned session enters running timer mode', async ({ page }) => {
   await openFirstPlannedSession(page)
+  await expect(page.getByText('Keep screen awake')).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Start Studying' }).click()
 

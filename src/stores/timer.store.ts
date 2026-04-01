@@ -40,7 +40,7 @@ interface TimerState {
 
 const DEFAULT_SETTINGS: TimerSettings = {
   strictModeDefault: false,
-  wakeLockEnabled: false,
+  wakeLockEnabled: true,
 }
 
 function persist(session: TimerSession | null, settings: TimerSettings) {
