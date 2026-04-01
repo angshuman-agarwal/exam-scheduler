@@ -87,7 +87,15 @@ function setOfferingExamDate(state: PersistedState, offeringId: string, newDate:
   }
 }
 
-function makePaperAttempt(paperId: string, date: string, confidence: number, durationSeconds: number, rawMark?: number, totalMarks?: number) {
+function makePaperAttempt(
+  paperId: string,
+  date: string,
+  confidence: number,
+  durationSeconds: number,
+  rawMark?: number,
+  totalMarks?: number,
+  noteText?: string,
+) {
   return {
     id: `${paperId}-${date}-${Math.random().toString(36).slice(2, 8)}`,
     paperId,
@@ -97,6 +105,7 @@ function makePaperAttempt(paperId: string, date: string, confidence: number, dur
     confidence,
     ...(rawMark !== undefined ? { rawMark } : {}),
     ...(totalMarks !== undefined ? { totalMarks } : {}),
+    ...(noteText ? { noteText } : {}),
     source: 'calendar' as const,
   }
 }
@@ -339,7 +348,7 @@ export function progressPaperPractice(): PersistedState {
   ]
   s.paperAttempts = [
     {
-      ...makePaperAttempt('geo-p1', '2026-04-15', 2, 5400, 38, 80),
+      ...makePaperAttempt('geo-p1', '2026-04-15', 2, 5400, 38, 80, 'Rushed the final 8-mark question and guessed two case-study details.'),
       id: 'geo-p1-morning',
       timestamp: new Date('2026-04-15T10:00:00').getTime(),
     },

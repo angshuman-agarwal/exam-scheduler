@@ -177,8 +177,8 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
   )
   const velocityDelta = useMemo(() => studyVelocityDeltaPercent(selectedSessions, today, selectedPaperAttempts), [selectedPaperAttempts, selectedSessions, today])
   const progressRows = useMemo(
-    () => buildProgressTableRows(selectedTopics, selectedOfferings, subjects, selectedPapers, today, selectedSessions, selectedPaperAttempts),
-    [selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects, today],
+    () => buildProgressTableRows(selectedTopics, selectedOfferings, subjects, selectedPapers, today, selectedSessions, selectedPaperAttempts, selectedNotes),
+    [selectedNotes, selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects, today],
   )
   const sortedRows = useMemo(() => sortProgressTableRows(progressRows, filter), [progressRows, filter])
 

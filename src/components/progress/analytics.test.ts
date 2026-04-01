@@ -14,7 +14,7 @@ import {
   studyVelocityBars,
   studyVelocityDeltaPercent,
 } from './analytics'
-import type { Offering, PaperAttempt, Session, Subject, Topic } from '../../types'
+import type { Note, Offering, PaperAttempt, Session, Subject, Topic } from '../../types'
 
 function topic(partial: Partial<Topic>): Topic {
   return {
@@ -72,6 +72,15 @@ function subject(partial: Partial<Subject>): Subject {
     id: partial.id ?? 'subject-1',
     name: partial.name ?? 'Computer Science',
     color: partial.color ?? '#2563eb',
+  }
+}
+
+function note(partial: Partial<Note>): Note {
+  return {
+    id: partial.id ?? 'note-1',
+    topicId: partial.topicId ?? 'topic-1',
+    date: partial.date ?? '2026-04-15',
+    text: partial.text ?? 'Revisit this topic',
   }
 }
 
@@ -335,6 +344,28 @@ describe('progress analytics helpers', () => {
     expect(rowByTopicId.get('flat-topic')).toEqual(expect.objectContaining({ lastSessionScore: 0.54, sessionTrend: 'flat' }))
     expect(rowByTopicId.get('down-topic')).toEqual(expect.objectContaining({ lastSessionScore: 0.7, sessionTrend: 'down' }))
     expect(rowByTopicId.get('no-session-topic')).toEqual(expect.objectContaining({ lastSessionScore: null, sessionTrend: null }))
+  })
+
+  it('surfaces the latest topic note preview on topic rows when notes exist', () => {
+    const today = new Date('2026-04-15T12:00:00')
+    const rows = buildProgressTableRows(
+      [topic({ id: 'topic-1', offeringId: 'offering-1', lastReviewed: '2026-04-15' })],
+      [offering({ id: 'offering-1', subjectId: 'subject-1' })],
+      [subject({ id: 'subject-1' })],
+      [paper({ id: 'paper-1', offeringId: 'offering-1', name: 'Paper 1', examDate: '2026-05-20' })],
+      today,
+      [session({ topicId: 'topic-1', date: '2026-04-15', score: 0.7 })],
+      [],
+      [
+        note({ id: 'older-note', topicId: 'topic-1', date: '2026-04-14', text: 'Older revision reminder' }),
+        note({ id: 'newer-note', topicId: 'topic-1', date: '2026-04-15', text: 'Focus on binary search edge cases before the exam.' }),
+      ],
+    ).filter((row) => row.kind === 'topic')
+
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toEqual(expect.objectContaining({
+      notePreview: 'Focus on binary search edge cases before the exam.',
+    }))
   })
 
   it('keeps buildTopicTableRows backward compatible when sessions are omitted', () => {

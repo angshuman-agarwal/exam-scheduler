@@ -276,6 +276,7 @@ test('16. Topic Mastery shows overall confidence, action guidance, and reason li
   await expect(flowchartsRow).toContainText('Begin this topic')
   await expect(flowchartsRow).toContainText('not studied yet')
   await expect(flowchartsRow.getByTestId('progress-session-trend-pill')).toHaveCount(0)
+  await expect(flowchartsRow.getByTestId('progress-paper-note-preview')).toHaveCount(0)
 })
 
 test('17. Mobile Topic Mastery shows the same confidence and action context', async ({ page }) => {
@@ -304,6 +305,14 @@ test('17. Mobile Topic Mastery shows the same confidence and action context', as
   await expect(flowchartsRow.getByTestId('progress-session-trend-pill')).toHaveCount(0)
 })
 
+test('17b. Topic rows show saved note previews under Action when notes exist', async ({ page }) => {
+  await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
+
+  const notedRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Computer Science' }).filter({ hasText: 'Sorting and searching algorithms' })
+  await expect(notedRow).toBeVisible()
+  await expect(notedRow.getByTestId('progress-paper-note-preview')).toContainText('Revisit merge sort edge cases')
+})
+
 test('18. Paper attempts appear in the main breakdown and last-session card like other study activity', async ({ page }) => {
   await openProgress(page, progressPaperPractice(), FROZEN_DATE)
 
@@ -319,5 +328,6 @@ test('18. Paper attempts appear in the main breakdown and last-session card like
   await expect(paperRow).toContainText('Today')
   await expect(paperRow).toContainText('Last: 59%')
   await expect(paperRow).toContainText('2 attempts today')
+  await expect(paperRow.getByTestId('progress-paper-note-preview')).toContainText('Rushed the final 8-mark question')
   await expect(page.getByTestId('progress-topic-row').filter({ hasText: 'Geography' }).filter({ hasText: 'Paper 1' })).toHaveCount(1)
 })

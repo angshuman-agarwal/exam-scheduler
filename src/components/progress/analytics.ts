@@ -87,6 +87,7 @@ export interface TopicTableRow {
   sessionTrend: 'up' | 'flat' | 'down' | null
   actionLabel: string
   actionReason: string | null
+  notePreview: string | null
   freshnessRatio: number
   recencyTimestamp: number
   recencyLabel: string
@@ -105,6 +106,7 @@ export interface PaperTableRow {
   lastScorePercent: number | null
   actionLabel: string
   actionReason: string | null
+  notePreview: string | null
   recencyDate: string
   recencyTimestamp: number
   recencyLabel: string
@@ -143,6 +145,16 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
+function trimmedPaperNote(attempt: PaperAttempt): string | null {
+  const trimmed = attempt.noteText?.trim()
+  return trimmed ? trimmed : null
+}
+
+function trimmedTopicNote(note: Note): string | null {
+  const trimmed = note.text?.trim()
+  return trimmed ? trimmed : null
+}
+
 export function masteryRatio(topic: Topic): number {
   const weakness = 0.7 * (1 - topic.performanceScore) + 0.3 * (1 - topic.confidence / 5)
   return clamp(1 - weakness, 0, 1)
@@ -150,6 +162,23 @@ export function masteryRatio(topic: Topic): number {
 
 export function masteryPercent(topic: Topic): number {
   return Math.round(masteryRatio(topic) * 100)
+}
+
+function topicNotePreview(note: Note): string | null {
+  const trimmed = trimmedTopicNote(note)
+  if (!trimmed) return null
+  return trimmed.length > 72 ? `${trimmed.slice(0, 69).trimEnd()}...` : trimmed
+}
+
+function latestTopicNotePreview(topicId: string, notes: Note[]): string | null {
+  const latestNote = notes
+    .filter((note) => note.topicId === topicId && trimmedTopicNote(note))
+    .sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date)
+      return b.id.localeCompare(a.id)
+    })[0]
+
+  return latestNote ? topicNotePreview(latestNote) : null
 }
 
 export function freshnessRatio(lastReviewed: string | null, today: Date): number {
@@ -510,6 +539,7 @@ export function buildTopicTableRows(
   papers: Paper[],
   today: Date,
   sessions: Session[] = [],
+  notes: Note[] = [],
 ): TopicTableRow[] {
   const scored = scoreAllTopics(topics, papers, offerings, subjects, today)
   const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]))
@@ -548,6 +578,7 @@ export function buildTopicTableRows(
         sessionTrend,
         actionLabel,
         actionReason,
+        notePreview: latestTopicNotePreview(topic.id, notes),
         freshnessRatio: freshnessRatio(topic.lastReviewed, today),
         recencyTimestamp: recencyTimestampForTopic(topic, sessions),
         recencyLabel: recencyLabel(recencyDate, today),
@@ -604,6 +635,20 @@ function paperActionReasonFor(status: TopicTableStatus): string | null {
   }
 }
 
+function paperNotePreview(attempt: PaperAttempt): string | null {
+  const trimmed = trimmedPaperNote(attempt)
+  if (!trimmed) return null
+  return trimmed.length > 72 ? `${trimmed.slice(0, 69).trimEnd()}...` : trimmed
+}
+
+function groupedPaperNotePreview(attempts: PaperAttempt[]): string | null {
+  const noteAttempt = [...attempts]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .find((attempt) => trimmedPaperNote(attempt))
+
+  return noteAttempt ? paperNotePreview(noteAttempt) : null
+}
+
 export function buildPaperTableRows(
   paperAttempts: PaperAttempt[],
   papers: Paper[],
@@ -643,6 +688,7 @@ export function buildPaperTableRows(
         lastScorePercent: paperPercent(attempt),
         actionLabel: paperActionLabelFor(status),
         actionReason: paperActionReasonFor(status),
+        notePreview: groupedPaperNotePreview(attempts),
         recencyDate: attempt.date,
         recencyTimestamp: attempt.timestamp,
         recencyLabel: recencyLabel(attempt.date, today),
@@ -661,9 +707,10 @@ export function buildProgressTableRows(
   today: Date,
   sessions: Session[] = [],
   paperAttempts: PaperAttempt[] = [],
+  notes: Note[] = [],
 ): ProgressTableRow[] {
   return [
-    ...buildTopicTableRows(topics, offerings, subjects, papers, today, sessions),
+    ...buildTopicTableRows(topics, offerings, subjects, papers, today, sessions, notes),
     ...buildPaperTableRows(paperAttempts, papers, offerings, subjects, today),
   ]
 }

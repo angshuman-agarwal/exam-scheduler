@@ -29,6 +29,8 @@ function ActionCell({
   row: ProgressTableRow
   onPlanNow?: (row: TopicTableRow) => void
 }) {
+  const notePreview = row.notePreview
+
   if (row.kind === 'topic' && row.status === 'Not Started' && onPlanNow) {
     return (
       <div>
@@ -54,6 +56,11 @@ function ActionCell({
       <span data-testid="progress-status-chip" className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold ${statusTone(row.status)}`}>
         {row.actionLabel}
       </span>
+      {notePreview ? (
+        <span data-testid="progress-paper-note-preview" className="mt-1 block text-[10px] leading-4 text-gray-500">
+          {notePreview}
+        </span>
+      ) : null}
       {row.actionReason ? (
         <span data-testid="progress-action-reason" className="mt-1 block text-[10px] text-gray-400">
           {row.actionReason}
