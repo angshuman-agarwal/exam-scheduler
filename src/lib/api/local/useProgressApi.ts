@@ -6,6 +6,7 @@ export function useLocalProgressApi(): ProgressContext {
   const { studyMode } = useLocalAccountApi()
   const topics = useAppStore((state) => state.topics)
   const sessions = useAppStore((state) => state.sessions)
+  const paperAttempts = useAppStore((state) => state.paperAttempts)
   const subjects = useAppStore((state) => state.subjects)
   const papers = useAppStore((state) => state.papers)
   const offerings = useAppStore((state) => state.offerings)
@@ -16,6 +17,7 @@ export function useLocalProgressApi(): ProgressContext {
     studyMode,
     topics,
     sessions,
+    paperAttempts,
     subjects,
     papers,
     offerings,

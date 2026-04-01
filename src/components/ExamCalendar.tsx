@@ -11,6 +11,7 @@ export interface CalendarDateMeta {
 interface ExamCalendarProps {
   examDateMap: Map<string, PaperWithSubject[]>
   onSelectPaper: (offering: Offering, subject: Subject, paper: Paper) => void
+  onStartPaper?: (offering: Offering, subject: Subject, paper: Paper) => void
   title?: string
   subtitle?: string
   dateMetaMap?: Map<string, CalendarDateMeta>
@@ -59,6 +60,7 @@ function isAfterMonth(a: Date, b: Date) {
 export default function ExamCalendar({
   examDateMap,
   onSelectPaper,
+  onStartPaper,
   title = 'Exam Calendar',
   subtitle = 'Tap a date to see exams and plan topics to study',
   dateMetaMap,
@@ -249,7 +251,13 @@ export default function ExamCalendar({
       {showInlineDetail && selectedDay && (selectedPapers.length > 0 || selectedMeta || renderSelectedDayContent) && (
         <div className="border-t border-black/[0.08] bg-gradient-to-br from-white/[0.85] to-white/[0.72] backdrop-blur-xl px-4 py-4">
           {selectedPapers.length > 0 && (
-            <ExamDaySelectionPanel selectedDay={selectedDay} papers={selectedPapers} onSelectPaper={onSelectPaper} className="border-0 bg-transparent p-0 shadow-none" />
+            <ExamDaySelectionPanel
+              selectedDay={selectedDay}
+              papers={selectedPapers}
+              onSelectPaper={onSelectPaper}
+              onStartPaper={onStartPaper ?? onSelectPaper}
+              className="border-0 bg-transparent p-0 shadow-none"
+            />
           )}
           {renderSelectedDayContent?.(selectedDay)}
         </div>

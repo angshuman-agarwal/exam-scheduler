@@ -6,6 +6,7 @@ import {
   progressExpandedNotes,
   progressMixedStatuses,
   progressNoFutureExams,
+  progressPaperPractice,
   progressSessionContext,
   progressPlanNowSwap,
   progressStreak,
@@ -301,4 +302,22 @@ test('17. Mobile Topic Mastery shows the same confidence and action context', as
   await expect(flowchartsRow).toContainText('Begin this topic')
   await expect(flowchartsRow).toContainText('not studied yet')
   await expect(flowchartsRow.getByTestId('progress-session-trend-pill')).toHaveCount(0)
+})
+
+test('18. Paper attempts appear in the main breakdown and last-session card like other study activity', async ({ page }) => {
+  await openProgress(page, progressPaperPractice(), FROZEN_DATE)
+
+  await expect(
+    page.getByTestId('progress-topic-row').filter({ hasText: 'Geography' }).filter({ hasText: 'Paper 1' }),
+  ).toHaveCount(0)
+  await expect(page.getByTestId('progress-last-session-card')).toContainText('Geography · Paper 1')
+
+  await page.getByTestId('progress-filter-recently-reviewed').click()
+
+  const paperRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Geography' }).filter({ hasText: 'Paper 1' })
+  await expect(paperRow).toBeVisible()
+  await expect(paperRow).toContainText('Today')
+  await expect(paperRow).toContainText('Last: 59%')
+  await expect(paperRow).toContainText('2 attempts today')
+  await expect(page.getByTestId('progress-topic-row').filter({ hasText: 'Geography' }).filter({ hasText: 'Paper 1' })).toHaveCount(1)
 })

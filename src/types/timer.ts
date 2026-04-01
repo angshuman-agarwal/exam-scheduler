@@ -1,12 +1,17 @@
-import type { ScheduleSource } from './index'
+import type { PaperAttemptSource, ScheduleSource } from './index'
 
 export type TimerMode = 'running' | 'paused' | 'stopped' | 'interrupted'
 export type TimerBanner = 'paused-away' | 'interrupted' | 'restored' | null
+export type TimerTargetType = 'topic' | 'paper'
 
-export interface TimerSession {
+export interface TimerTarget {
+  targetType: TimerTargetType
+  targetId: string
+}
+
+export interface TimerSession extends TimerTarget {
   sessionId: string
-  topicId: string
-  source: ScheduleSource
+  source: ScheduleSource | PaperAttemptSource
   scheduleItemId?: string
   mode: TimerMode
   startedAt: number       // epoch ms

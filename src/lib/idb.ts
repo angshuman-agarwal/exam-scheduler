@@ -28,3 +28,8 @@ export async function saveToIdbRaw<T>(key: string, value: T): Promise<void> {
   const db = await getDb()
   await db.put(STORE_NAME, value, key)
 }
+
+export async function deleteFromIdbRaw(key: string): Promise<void> {
+  const db = await getDb()
+  await db.delete(STORE_NAME, key)
+}

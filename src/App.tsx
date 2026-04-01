@@ -86,7 +86,12 @@ function App() {
         onGoToProgress={shell.goToProgress}
         onCloseSubjectPicker={shell.closeSubjectPicker}
         onCompletePlanNowSwap={shell.completePlanNowSwap}
+        onBrowsePaperTopics={(offering, subject, paper) => {
+          shell.closeSession()
+          shell.startSubjectBrowse(offering, subject, paper, { originPage: 'today' })
+        }}
         onStartSession={shell.startSession}
+        onStartPaperSession={shell.startPaperSession}
       />
     )
   }
@@ -137,6 +142,7 @@ function App() {
           element={(
             <TodayScreen
               onStartSession={shell.startSession}
+              onStartPaperSession={shell.startPaperSession}
               onBrowseOffering={(offering, subject, paper) => shell.startSubjectBrowse(offering, subject, paper, { originPage: 'today' })}
               onEditSubjects={shell.openEditSetup}
               recentlySwappedTopicId={shell.recentlySwappedTopicId}
@@ -150,6 +156,7 @@ function App() {
             <ProgressScreen
               onGoToToday={shell.goToToday}
               onBrowseOffering={(offering, subject, paper) => shell.startSubjectBrowse(offering, subject, paper, { originPage: 'progress' })}
+              onStartPaperSession={(paper, offering, subject) => shell.startPaperSession(paper, offering, subject, 'calendar')}
               onPlanNowTopic={(_offering, _subject, topicId) => {
                 handleProgressPlanNow(topicId)
               }}

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildAnalyticsMetrics,
+  buildLastSessionSummary,
+  buildProgressCalendarDayMeta,
+  buildProgressTableRows,
   buildTopicTableRows,
   buildStudyVelocitySeries,
   coveragePercent,
@@ -11,7 +14,7 @@ import {
   studyVelocityBars,
   studyVelocityDeltaPercent,
 } from './analytics'
-import type { Offering, Session, Subject, Topic } from '../../types'
+import type { Offering, PaperAttempt, Session, Subject, Topic } from '../../types'
 
 function topic(partial: Partial<Topic>): Topic {
   return {
@@ -45,6 +48,22 @@ function offering(partial: Partial<Offering>): Offering {
     spec: partial.spec ?? '8525',
     label: partial.label ?? 'AQA 8525',
     qualificationId: partial.qualificationId ?? 'gcse',
+  }
+}
+
+function paperAttempt(partial: Partial<PaperAttempt>): PaperAttempt {
+  return {
+    id: partial.id ?? 'paper-attempt-1',
+    paperId: partial.paperId ?? 'paper-1',
+    date: partial.date ?? '2026-04-15',
+    timestamp: partial.timestamp ?? new Date('2026-04-15T18:00:00').getTime(),
+    durationSeconds: partial.durationSeconds ?? 5400,
+    confidence: partial.confidence ?? 3,
+    rawMark: partial.rawMark,
+    totalMarks: partial.totalMarks,
+    noteText: partial.noteText,
+    taggedTopicIds: partial.taggedTopicIds,
+    source: partial.source ?? 'calendar',
   }
 }
 
@@ -179,6 +198,116 @@ describe('progress analytics helpers', () => {
       expect.objectContaining({ subjectId: 'cs-subject', subjectName: 'Computer Science', color: '#2563eb', value: 20 }),
     ])
     expect(Math.round((selectedPoint?.segments[0]?.sharePercent ?? 0) + (selectedPoint?.segments[1]?.sharePercent ?? 0))).toBe(100)
+  })
+
+  it('includes paper attempts in the shared progress rows for recently reviewed work', () => {
+    const today = new Date('2026-04-15T12:00:00')
+    const topics = [topic({ id: 'cs-topic', offeringId: 'cs-offering', paperId: 'cs-paper', lastReviewed: '2026-04-14' })]
+    const offerings = [
+      offering({ id: 'cs-offering', subjectId: 'cs-subject' }),
+      offering({ id: 'geo-offering', subjectId: 'geo-subject' }),
+    ]
+    const subjects = [
+      subject({ id: 'cs-subject', name: 'Computer Science' }),
+      subject({ id: 'geo-subject', name: 'Geography', color: '#22c55e' }),
+    ]
+    const papers = [
+      paper({ id: 'cs-paper', offeringId: 'cs-offering', name: 'Paper 1', examDate: '2026-05-20' }),
+      paper({ id: 'geo-paper', offeringId: 'geo-offering', name: 'Paper 1', examDate: '2026-04-20' }),
+    ]
+    const rows = buildProgressTableRows(
+      topics,
+      offerings,
+      subjects,
+      papers,
+      today,
+      [session({ topicId: 'cs-topic', date: '2026-04-14', score: 0.7 })],
+      [paperAttempt({ paperId: 'geo-paper', date: '2026-04-15', confidence: 3, rawMark: 47, totalMarks: 80 })],
+    )
+
+    expect(rows.some((row) => row.kind === 'paper' && row.subject.name === 'Geography' && row.paper.name === 'Paper 1')).toBe(true)
+  })
+
+  it('maps paper attempts to simple action labels based on confidence', () => {
+    const today = new Date('2026-04-15T12:00:00')
+    const offerings = [offering({ id: 'offering-1', subjectId: 'subject-1' })]
+    const subjects = [subject({ id: 'subject-1', name: 'Computer Science' })]
+    const papers = [paper({ id: 'paper-1', offeringId: 'offering-1', name: 'Paper 1', examDate: '2026-05-20' })]
+
+    const rows = buildProgressTableRows(
+      [],
+      offerings,
+      subjects,
+      papers,
+      today,
+      [],
+      [
+        paperAttempt({ id: 'low', paperId: 'paper-1', date: '2026-04-13', confidence: 2, timestamp: new Date('2026-04-13T18:00:00').getTime() }),
+        paperAttempt({ id: 'mid', paperId: 'paper-1', date: '2026-04-14', confidence: 3, timestamp: new Date('2026-04-14T19:00:00').getTime() }),
+        paperAttempt({ id: 'high', paperId: 'paper-1', date: '2026-04-15', confidence: 4, timestamp: new Date('2026-04-15T20:00:00').getTime() }),
+      ],
+    ).filter((row) => row.kind === 'paper')
+
+    const rowById = new Map(rows.map((row) => [row.attempt.id, row]))
+    expect(rowById.get('low')).toEqual(expect.objectContaining({ actionLabel: 'Sit another paper', actionReason: null }))
+    expect(rowById.get('mid')).toEqual(expect.objectContaining({ actionLabel: 'On track', actionReason: null }))
+    expect(rowById.get('high')).toEqual(expect.objectContaining({ actionLabel: 'Keep sharp', actionReason: 'strong recent paper confidence' }))
+  })
+
+  it('collapses same-day attempts for the same paper into one progress row using the latest attempt state', () => {
+    const today = new Date('2026-04-15T12:00:00')
+    const offerings = [offering({ id: 'offering-1', subjectId: 'subject-1' })]
+    const subjects = [subject({ id: 'subject-1', name: 'Computer Science' })]
+    const papers = [paper({ id: 'paper-1', offeringId: 'offering-1', name: 'Paper 1', examDate: '2026-05-20' })]
+
+    const rows = buildProgressTableRows(
+      [],
+      offerings,
+      subjects,
+      papers,
+      today,
+      [],
+      [
+        paperAttempt({ id: 'morning', paperId: 'paper-1', date: '2026-04-15', confidence: 2, timestamp: new Date('2026-04-15T10:00:00').getTime() }),
+        paperAttempt({ id: 'afternoon', paperId: 'paper-1', date: '2026-04-15', confidence: 4, rawMark: 72, totalMarks: 80, timestamp: new Date('2026-04-15T16:00:00').getTime() }),
+      ],
+    ).filter((row) => row.kind === 'paper')
+
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toEqual(expect.objectContaining({
+      attempt: expect.objectContaining({ id: 'afternoon' }),
+      attemptCount: 2,
+      confidence: 4,
+      lastScorePercent: 90,
+      actionLabel: 'Keep sharp',
+    }))
+  })
+
+  it('sorts recently reviewed rows by latest timestamp, not just by day', () => {
+    const today = new Date('2026-04-15T12:00:00')
+    const offerings = [offering({ id: 'offering-1', subjectId: 'subject-1' })]
+    const subjects = [subject({ id: 'subject-1', name: 'Computer Science' })]
+    const papers = [paper({ id: 'paper-1', offeringId: 'offering-1', name: 'Paper 1', examDate: '2026-05-20' })]
+    const topicRows = buildProgressTableRows(
+      [topic({ id: 'topic-1', offeringId: 'offering-1', lastReviewed: '2026-04-15' })],
+      offerings,
+      subjects,
+      papers,
+      today,
+      [session({ id: 'topic-session', topicId: 'topic-1', date: '2026-04-15', timestamp: new Date('2026-04-15T09:00:00').getTime() })],
+      [paperAttempt({ id: 'paper-late', paperId: 'paper-1', date: '2026-04-15', timestamp: new Date('2026-04-15T18:00:00').getTime() })],
+    )
+
+    const sorted = topicRows
+      .filter((row) => row.kind === 'paper' || row.topic.lastReviewed !== null)
+      .sort((a, b) => {
+        if (b.recencyTimestamp !== a.recencyTimestamp) return b.recencyTimestamp - a.recencyTimestamp
+        const aName = a.kind === 'paper' ? a.paper.name : a.topic.name
+        const bName = b.kind === 'paper' ? b.paper.name : b.topic.name
+        return aName.localeCompare(bName)
+      })
+
+    expect(sorted[0]).toEqual(expect.objectContaining({ kind: 'paper' }))
   })
 
   it('adds latest session context and classifies session trend for topic rows', () => {
@@ -328,5 +457,39 @@ describe('progress analytics helpers', () => {
       expect.objectContaining({ label: 'Coverage', value: '67%' }),
       expect.objectContaining({ label: 'Study Velocity', value: '+200%', trendBars: [18, 18, 18, 18, 100, 100] }),
     ])
+  })
+
+  it('treats a paper attempt as the last session when it is the newest logged activity', () => {
+    const summary = buildLastSessionSummary(
+      [session({ topicId: 'topic-1', date: '2026-04-14', timestamp: new Date('2026-04-14T12:00:00').getTime() })],
+      [topic({ id: 'topic-1', offeringId: 'offering-1' })],
+      [offering({ id: 'offering-1', subjectId: 'subject-1' })],
+      [subject({ id: 'subject-1', name: 'Geography' })],
+      [paper({ id: 'paper-1', offeringId: 'offering-1', name: 'Paper 1' })],
+      [paperAttempt({ paperId: 'paper-1', date: '2026-04-15', timestamp: new Date('2026-04-15T18:00:00').getTime(), rawMark: 47, totalMarks: 80 })],
+    )
+
+    expect(summary).toEqual(expect.objectContaining({
+      kind: 'paper',
+      paper: expect.objectContaining({ name: 'Paper 1' }),
+      subject: expect.objectContaining({ name: 'Geography' }),
+    }))
+  })
+
+  it('includes paper attempts in the calendar day meta totals', () => {
+    const dayMeta = buildProgressCalendarDayMeta(
+      [],
+      [],
+      [offering({ id: 'offering-1', subjectId: 'subject-1' })],
+      [subject({ id: 'subject-1', name: 'Geography' })],
+      [],
+      [paperAttempt({ paperId: 'paper-1', date: '2026-04-15', durationSeconds: 5400, rawMark: 47, totalMarks: 80 })],
+      [paper({ id: 'paper-1', offeringId: 'offering-1', name: 'Paper 1' })],
+    )
+
+    expect(dayMeta.get('2026-04-15')).toEqual(expect.objectContaining({
+      sessionCount: 1,
+      totalDurationSeconds: 5400,
+    }))
   })
 })

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import type { TimerSession, TimerBanner, TimerSettings } from '../types/timer'
-import type { ScheduleSource } from '../types'
-import { loadFromIdbRaw, saveToIdbRaw } from '../lib/idb'
+import type { TimerSession, TimerBanner, TimerSettings, TimerTargetType } from '../types/timer'
+import type { PaperAttemptSource, ScheduleSource } from '../types'
+import { deleteFromIdbRaw, loadFromIdbRaw, saveToIdbRaw } from '../lib/idb'
 import {
   createSession,
   pauseTimer,
@@ -26,11 +26,17 @@ interface TimerState {
   banner: TimerBanner
 
   initTimer: () => Promise<void>
-  start: (topicId: string, source: ScheduleSource, scheduleItemId?: string) => void
+  start: (
+    targetType: TimerTargetType,
+    targetId: string,
+    source: ScheduleSource | PaperAttemptSource,
+    scheduleItemId?: string,
+  ) => void
   pause: () => void
   resume: () => void
   stop: () => void
   discard: () => void
+  discardPersisted: () => Promise<void>
   onHidden: () => void
   onVisible: () => void
   dismissBanner: () => void
@@ -44,7 +50,7 @@ const DEFAULT_SETTINGS: TimerSettings = {
 }
 
 function persist(session: TimerSession | null, settings: TimerSettings) {
-  saveToIdbRaw<PersistedTimer>(TIMER_KEY, { session, settings })
+  return saveToIdbRaw<PersistedTimer>(TIMER_KEY, { session, settings })
 }
 
 export const useTimerStore = create<TimerState>()((set, get) => ({
@@ -86,10 +92,10 @@ export const useTimerStore = create<TimerState>()((set, get) => ({
     persist(session, settings)
   },
 
-  start: (topicId, source, scheduleItemId) => {
+  start: (targetType, targetId, source, scheduleItemId) => {
     const { settings } = get()
     const now = Date.now()
-    const session = createSession(topicId, source, now, settings.strictModeDefault, scheduleItemId)
+    const session = createSession(targetType, targetId, source, now, settings.strictModeDefault, scheduleItemId)
     set({ session, banner: null })
     persist(session, settings)
   },
@@ -122,6 +128,19 @@ export const useTimerStore = create<TimerState>()((set, get) => ({
     const { settings } = get()
     set({ session: null, banner: null })
     persist(null, settings)
+  },
+
+  discardPersisted: async () => {
+    const { settings } = get()
+    set({ session: null, banner: null })
+    await persist(null, settings)
+
+    const persisted = await loadFromIdbRaw<PersistedTimer>(TIMER_KEY)
+    if (persisted?.session !== null) {
+      // Fall back to a delete + rewrite so the durable state cannot keep a stale live session.
+      await deleteFromIdbRaw(TIMER_KEY)
+      await persist(null, persisted?.settings ?? settings)
+    }
   },
 
   onHidden: () => {

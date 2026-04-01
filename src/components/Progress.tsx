@@ -3,14 +3,14 @@ import { getLocalDayKey, msUntilNextLocalMidnight } from '../lib/date'
 import { useLocalProgressApi } from '../lib/api/local/useProgressApi'
 import { ExamDaySelectionPanel } from './ExamDaySelectionPanel'
 import QualificationChip from './QualificationChip'
-import type { Offering, Paper, Session, Subject } from '../types'
+import type { Offering, Paper, PaperAttempt, Session, Subject } from '../types'
 import {
   buildStudyVelocitySeries,
   buildLastSessionSummary,
   buildProgressCalendarDayMeta,
-  buildTopicTableRows,
+  buildProgressTableRows,
   nearestExamDaysForPapers,
-  sortTopicTableRows,
+  sortProgressTableRows,
   studyVelocityDeltaPercent,
   type ProgressTableFilter,
 } from './progress/analytics'
@@ -21,11 +21,15 @@ import { ProgressTopicBreakdown } from './progress/ProgressTopicBreakdown'
 interface ProgressProps {
   onGoToToday: () => void
   onBrowseOffering: (offering: Offering, subject: Subject, paper?: Paper | null) => void
+  onStartPaperSession: (paper: Paper, offering: Offering, subject: Subject) => void
   onPlanNowTopic: (offering: Offering, subject: Subject, topicId: string) => void
 }
 
-function studyStreak(sessions: Session[], today: Date): number {
-  const dates = new Set(sessions.map((session) => session.date))
+function studyStreak(sessions: Session[], paperAttempts: PaperAttempt[], today: Date): number {
+  const dates = new Set([
+    ...sessions.map((session) => session.date),
+    ...paperAttempts.map((attempt) => attempt.date),
+  ])
   const cursor = new Date(today)
   let streak = 0
 
@@ -41,15 +45,18 @@ function studyStreak(sessions: Session[], today: Date): number {
   return streak
 }
 
-function sessionsInWindow(sessions: Session[], today: Date, daysBack: number): Session[] {
+function sessionsInWindow(sessions: Session[], paperAttempts: PaperAttempt[], today: Date, daysBack: number): Array<Session | PaperAttempt> {
   const cutoff = new Date(today)
   cutoff.setDate(cutoff.getDate() - daysBack)
   const cutoffISO = getLocalDayKey(cutoff)
-  return sessions.filter((session) => session.date > cutoffISO)
+  return [
+    ...sessions.filter((session) => session.date > cutoffISO),
+    ...paperAttempts.filter((attempt) => attempt.date > cutoffISO),
+  ]
 }
 
-function streakDeltaText(sessions: Session[], today: Date): string {
-  const thisWeek = sessionsInWindow(sessions, today, 7)
+function streakDeltaText(sessions: Session[], paperAttempts: PaperAttempt[], today: Date): string {
+  const thisWeek = sessionsInWindow(sessions, paperAttempts, today, 7)
   const lastWeekCutoff = new Date(today)
   lastWeekCutoff.setDate(lastWeekCutoff.getDate() - 14)
   const lastWeekStart = getLocalDayKey(lastWeekCutoff)
@@ -58,9 +65,14 @@ function streakDeltaText(sessions: Session[], today: Date): string {
   const currentWeekStartISO = getLocalDayKey(currentWeekStart)
 
   const previousWeekDates = new Set(
-    sessions
-      .filter((session) => session.date > lastWeekStart && session.date <= currentWeekStartISO)
-      .map((session) => session.date),
+    [
+      ...sessions
+        .filter((session) => session.date > lastWeekStart && session.date <= currentWeekStartISO)
+        .map((session) => session.date),
+      ...paperAttempts
+        .filter((attempt) => attempt.date > lastWeekStart && attempt.date <= currentWeekStartISO)
+        .map((attempt) => attempt.date),
+    ],
   )
 
   const recentDates = new Set(thisWeek.map((session) => session.date))
@@ -101,8 +113,8 @@ function formatSelectedDateLabel(dateKey: string) {
   })}`
 }
 
-export default function Progress({ onGoToToday, onBrowseOffering, onPlanNowTopic }: ProgressProps) {
-  const { studyMode, topics, sessions, subjects, papers, offerings, selectedOfferingIds, notes } = useLocalProgressApi()
+export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSession, onPlanNowTopic }: ProgressProps) {
+  const { studyMode, topics, sessions, paperAttempts, subjects, papers, offerings, selectedOfferingIds, notes } = useLocalProgressApi()
   const [filter, setFilter] = useState<ProgressTableFilter>('priority-now')
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const topicBreakdownRef = useRef<HTMLDivElement | null>(null)
@@ -140,79 +152,91 @@ export default function Progress({ onGoToToday, onBrowseOffering, onPlanNowTopic
     () => notes.filter((note) => selectedTopicIds.has(note.topicId)),
     [notes, selectedTopicIds],
   )
+  const selectedPaperIds = useMemo(() => new Set(selectedPapers.map((paper) => paper.id)), [selectedPapers])
+  const selectedPaperAttempts = useMemo(
+    () => paperAttempts.filter((attempt) => selectedPaperIds.has(attempt.paperId)),
+    [paperAttempts, selectedPaperIds],
+  )
 
   const futurePapers = useMemo(
     () => selectedPapers.filter((paper) => paper.examDate >= getLocalDayKey(today)),
     [selectedPapers, today],
   )
   const hasUpcomingExams = futurePapers.length > 0
-  const hasStudyActivity = selectedSessions.length > 0 || selectedNotes.length > 0
+  const hasStudyActivity = selectedSessions.length > 0 || selectedPaperAttempts.length > 0 || selectedNotes.length > 0
 
-  const streak = useMemo(() => studyStreak(selectedSessions, today), [selectedSessions, today])
-  const thisWeekSessions = useMemo(() => sessionsInWindow(selectedSessions, today, 7), [selectedSessions, today])
+  const streak = useMemo(() => studyStreak(selectedSessions, selectedPaperAttempts, today), [selectedPaperAttempts, selectedSessions, today])
+  const thisWeekSessions = useMemo(() => sessionsInWindow(selectedSessions, selectedPaperAttempts, today, 7), [selectedPaperAttempts, selectedSessions, today])
   const lastSession = useMemo(
-    () => buildLastSessionSummary(selectedSessions, selectedTopics, selectedOfferings, subjects),
-    [selectedSessions, selectedTopics, selectedOfferings, subjects],
+    () => buildLastSessionSummary(selectedSessions, selectedTopics, selectedOfferings, subjects, selectedPapers, selectedPaperAttempts),
+    [selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects],
   )
   const velocitySeries = useMemo(
-    () => buildStudyVelocitySeries(selectedSessions, today, 14, selectedTopics, selectedOfferings, subjects),
-    [selectedOfferings, selectedSessions, selectedTopics, subjects, today],
+    () => buildStudyVelocitySeries(selectedSessions, today, 14, selectedTopics, selectedOfferings, subjects, selectedPaperAttempts, selectedPapers),
+    [selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects, today],
   )
-  const velocityDelta = useMemo(() => studyVelocityDeltaPercent(selectedSessions, today), [selectedSessions, today])
-  const topicRows = useMemo(
-    () => buildTopicTableRows(selectedTopics, selectedOfferings, subjects, selectedPapers, today, selectedSessions),
-    [selectedTopics, selectedOfferings, subjects, selectedPapers, today, selectedSessions],
+  const velocityDelta = useMemo(() => studyVelocityDeltaPercent(selectedSessions, today, selectedPaperAttempts), [selectedPaperAttempts, selectedSessions, today])
+  const progressRows = useMemo(
+    () => buildProgressTableRows(selectedTopics, selectedOfferings, subjects, selectedPapers, today, selectedSessions, selectedPaperAttempts),
+    [selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects, today],
   )
-  const sortedRows = useMemo(() => sortTopicTableRows(topicRows, filter), [topicRows, filter])
+  const sortedRows = useMemo(() => sortProgressTableRows(progressRows, filter), [progressRows, filter])
 
   const examDateMap = useMemo(
     () => buildExamDateMap(selectedPapers, selectedOfferings, subjects),
     [selectedPapers, selectedOfferings, subjects],
   )
   const calendarDayMeta = useMemo(
-    () => buildProgressCalendarDayMeta(selectedSessions, selectedTopics, selectedOfferings, subjects, selectedNotes),
-    [selectedSessions, selectedTopics, selectedOfferings, subjects, selectedNotes],
+    () => buildProgressCalendarDayMeta(selectedSessions, selectedTopics, selectedOfferings, subjects, selectedNotes, selectedPaperAttempts, selectedPapers),
+    [selectedNotes, selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects],
   )
   const nearestExamDays = useMemo(() => nearestExamDaysForPapers(futurePapers, today), [futurePapers, today])
   const todayKey = getLocalDayKey(today)
   const selectedDayPapers = useMemo(() => (selectedDay ? examDateMap.get(selectedDay) ?? [] : []), [examDateMap, selectedDay])
   const selectedDayHasFutureExam = !!selectedDay && selectedDay > todayKey && selectedDayPapers.length > 0
-  const activityTopicIdsByDate = useMemo(() => {
-    const byDate = new Map<string, Set<string>>()
+  const activityByDate = useMemo(() => {
+    const byDate = new Map<string, { topicIds: Set<string>; paperIds: Set<string> }>()
 
     for (const session of selectedSessions) {
-      const next = byDate.get(session.date) ?? new Set<string>()
-      next.add(session.topicId)
+      const next = byDate.get(session.date) ?? { topicIds: new Set<string>(), paperIds: new Set<string>() }
+      next.topicIds.add(session.topicId)
       byDate.set(session.date, next)
     }
 
     for (const note of selectedNotes) {
-      const next = byDate.get(note.date) ?? new Set<string>()
-      next.add(note.topicId)
+      const next = byDate.get(note.date) ?? { topicIds: new Set<string>(), paperIds: new Set<string>() }
+      next.topicIds.add(note.topicId)
       byDate.set(note.date, next)
     }
 
+    for (const attempt of selectedPaperAttempts) {
+      const next = byDate.get(attempt.date) ?? { topicIds: new Set<string>(), paperIds: new Set<string>() }
+      next.paperIds.add(attempt.paperId)
+      byDate.set(attempt.date, next)
+    }
+
     return byDate
-  }, [selectedNotes, selectedSessions])
+  }, [selectedNotes, selectedPaperAttempts, selectedSessions])
 
   const displayedRows = useMemo(() => {
     if (!selectedDay) return sortedRows
-    const activeTopicIds = activityTopicIdsByDate.get(selectedDay)
-    if (!activeTopicIds || activeTopicIds.size === 0) return []
-    return topicRows
-      .filter((row) => activeTopicIds.has(row.topic.id))
+    const active = activityByDate.get(selectedDay)
+    if (!active || (active.topicIds.size === 0 && active.paperIds.size === 0)) return []
+    return progressRows
+      .filter((row) => (row.kind === 'paper' ? active.paperIds.has(row.paper.id) : active.topicIds.has(row.topic.id)))
       .sort((a, b) => {
         if (a.subject.name !== b.subject.name) return a.subject.name.localeCompare(b.subject.name)
-        return a.topic.name.localeCompare(b.topic.name)
+        const aName = a.kind === 'paper' ? a.paper.name : a.topic.name
+        const bName = b.kind === 'paper' ? b.paper.name : b.topic.name
+        return aName.localeCompare(bName)
       })
-  }, [activityTopicIdsByDate, selectedDay, sortedRows, topicRows])
+  }, [activityByDate, progressRows, selectedDay, sortedRows])
 
   const showTopicBreakdown = !selectedDay || displayedRows.length > 0 || !selectedDayHasFutureExam
   const recentlyReviewedLabel = selectedDay && displayedRows.length > 0 ? formatSelectedDateLabel(selectedDay) : 'Recently Reviewed'
 
   const showEmpty = !hasStudyActivity
   const showAnalytics = hasUpcomingExams && !showEmpty
-
   const handleSelectedDayChange = (nextSelectedDay: string | null) => {
     setSelectedDay(nextSelectedDay)
     if (nextSelectedDay) {
@@ -316,7 +340,7 @@ export default function Progress({ onGoToToday, onBrowseOffering, onPlanNowTopic
             <>
               <ProgressCardsRow
                 streak={streak}
-                streakDeltaText={streakDeltaText(selectedSessions, today)}
+                streakDeltaText={streakDeltaText(selectedSessions, selectedPaperAttempts, today)}
                 lastSession={lastSession}
                 today={today}
                 velocityValue={velocityDelta === null ? '0%' : `${velocityDelta > 0 ? '+' : ''}${velocityDelta}%`}
@@ -334,6 +358,7 @@ export default function Progress({ onGoToToday, onBrowseOffering, onPlanNowTopic
                     selectedDay={selectedDay}
                     papers={selectedDayPapers}
                     onSelectPaper={(offering, subject, paper) => onBrowseOffering(offering, subject, paper)}
+                    onStartPaper={(offering, subject, paper) => onStartPaperSession(paper, offering, subject)}
                     className="rounded-[1.4rem] border border-black/[0.055] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_rgba(0,0,0,0.055)]"
                   />
                 </div>

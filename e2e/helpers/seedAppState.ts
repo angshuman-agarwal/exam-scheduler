@@ -9,6 +9,7 @@ export interface PersistedState {
   papers: unknown[]
   topics: unknown[]
   sessions: unknown[]
+  paperAttempts?: unknown[]
   notes: unknown[]
   userState: { energyLevel: number; stress: number }
   onboarded: boolean

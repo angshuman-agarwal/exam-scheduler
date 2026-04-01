@@ -1,9 +1,10 @@
 import { useAppStore } from '../stores/app.store'
-import { daysRemaining, daysSince } from '../lib/engine'
+import { daysSince, formatExamCountdown } from '../lib/engine'
 import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
 import { useLocalPlansApi } from '../lib/api/local/usePlansApi'
 import QualificationChip from './QualificationChip'
-import type { ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../types'
+import FullPaperPracticeCard from './FullPaperPracticeCard'
+import type { PaperAttemptSource, ScoredTopic, Subject, Offering, Paper, ScheduleSource } from '../types'
 
 interface SubjectPickerProps {
   offering: Offering
@@ -13,6 +14,13 @@ interface SubjectPickerProps {
   onBack: () => void
   onCompletePlanNowSwap?: () => void
   onStartSession: (scored: ScoredTopic, source: ScheduleSource, scheduleItemId?: string) => void
+  onStartPaperSession: (
+    paper: Paper,
+    offering: Offering,
+    subject: Subject,
+    source: PaperAttemptSource,
+    options?: { selectionRequired?: boolean },
+  ) => void
 }
 
 const SUGGESTED_COUNT = 3
@@ -80,7 +88,6 @@ function SuggestedCard({
   today: Date
 }) {
   const { topic, paper, subject } = scored
-  const days = daysRemaining(paper.examDate, today)
 
   return (
     <div
@@ -129,7 +136,7 @@ function SuggestedCard({
         <div className="flex items-center gap-3 mt-2">
           <ConfidenceDots level={topic.confidence} color={subject.color} />
           <span className="text-xs text-gray-400">
-            Exam in {days} {days === 1 ? 'day' : 'days'}
+            {formatExamCountdown(paper.examDate, today)}
           </span>
           <LastStudiedLabel lastReviewed={topic.lastReviewed} today={today} />
         </div>
@@ -210,6 +217,7 @@ export default function SubjectPicker({
   onBack,
   onCompletePlanNowSwap,
   onStartSession,
+  onStartPaperSession,
 }: SubjectPickerProps) {
   const getTopicsForOffering = useAppStore((s) => s.getTopicsForOffering)
   const topics = useAppStore((s) => s.topics)
@@ -301,6 +309,13 @@ export default function SubjectPicker({
         {studyMode && <span>&middot;</span>}
         <span>{offering.label}</span>
       </div>
+
+      {paper && (
+        <FullPaperPracticeCard
+          paper={paper}
+          onStart={() => onStartPaperSession(paper, offering, subject, 'picker')}
+        />
+      )}
 
       {/* Plan Tray */}
       <div className="mb-8">

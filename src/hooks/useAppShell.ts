@@ -1,14 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useAppStore } from '../stores/app.store'
+import { useTimerStore } from '../stores/timer.store'
 import { localSubjectsApi } from '../lib/api/local/subjects'
 import type { AppPage } from '../lib/navigation'
-import type { Offering, Paper, ScheduleSource, ScoredTopic, Subject } from '../types'
-
-interface ActiveSessionState {
-  scored: ScoredTopic
-  source: ScheduleSource
-  scheduleItemId?: string
-}
+import type { Offering, Paper, PaperAttemptSource, ScheduleSource, ScoredTopic, Subject } from '../types'
+import type { ActiveSessionState } from '../types/active-session'
 
 interface UseAppShellOptions {
   recoveredSession: ActiveSessionState | null
@@ -135,7 +131,31 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
       )
     },
     startSession(scored: ScoredTopic, source: ScheduleSource, scheduleItemId?: string) {
-      setSessionOverride({ scored, source, scheduleItemId })
+      const timerSession = useTimerStore.getState().session
+      if (timerSession?.mode === 'stopped' || timerSession?.mode === 'interrupted') {
+        useTimerStore.getState().discard()
+      }
+      setSessionOverride({ kind: 'topic', scored, source, scheduleItemId })
+    },
+    startPaperSession(
+      paper: Paper,
+      offering: Offering,
+      subject: Subject,
+      source: PaperAttemptSource,
+      options?: { selectionRequired?: boolean },
+    ) {
+      const timerSession = useTimerStore.getState().session
+      if (timerSession?.mode === 'stopped' || timerSession?.mode === 'interrupted') {
+        useTimerStore.getState().discard()
+      }
+      setSessionOverride({
+        kind: 'paper',
+        paper,
+        offering,
+        subject,
+        source,
+        selectionRequired: options?.selectionRequired ?? false,
+      })
     },
     startSubjectBrowse(offering: Offering, subject: Subject, paper?: Paper | null, context?: SubjectBrowseContext) {
       setActiveOffering(offering)

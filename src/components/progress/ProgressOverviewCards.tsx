@@ -21,6 +21,14 @@ function sessionScoreEmoji(score: number): string {
   return '😕'
 }
 
+function confidenceEmoji(confidence: number): string {
+  if (confidence >= 5) return '🤩'
+  if (confidence >= 4) return '😊'
+  if (confidence >= 3) return '🙂'
+  if (confidence >= 2) return '😕'
+  return '😟'
+}
+
 function velocityDisplayMeta(series: StudyVelocitySeries) {
   const maxRawValue = Math.max(...series.points.map((point) => point.value), 0)
   const useHours = series.unitLabel === 'Minutes studied' && maxRawValue >= 60
@@ -153,12 +161,16 @@ export function LastSessionCard({
           </svg>
         </div>
         <span className="text-[11px] font-semibold text-[#007AFF]">
-          {summary.session ? recencyLabel(summary.session.date, today) : 'No session yet'}
+          {summary.kind === 'paper' && summary.attempt
+            ? recencyLabel(summary.attempt.date, today)
+            : summary.session
+              ? recencyLabel(summary.session.date, today)
+              : 'No session yet'}
         </span>
       </div>
 
       <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400">Last Session</p>
-      {summary.session && summary.topic && summary.subject ? (
+      {summary.kind === 'topic' && summary.session && summary.topic && summary.subject ? (
         <>
           <div className="mt-0.5 flex items-baseline gap-1.5">
             <strong className="text-[2.6rem] font-bold leading-none tracking-[-0.04em] text-gray-900">
@@ -169,8 +181,29 @@ export function LastSessionCard({
               {sessionScoreEmoji(summary.session.score)}
             </span>
           </div>
-          <p className="mt-auto line-clamp-2 pt-2 text-[12px] leading-5 text-gray-500">
+          <p className="mt-auto line-clamp-2 pt-2 text-[14px] font-semibold leading-5 text-gray-900">
             {summary.subject.name}: {summary.topic.name}
+          </p>
+        </>
+      ) : summary.kind === 'paper' && summary.attempt && summary.paper && summary.subject ? (
+        <>
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            {summary.attempt.rawMark !== undefined && summary.attempt.totalMarks !== undefined && summary.attempt.totalMarks > 0 ? (
+              <>
+                <strong className="text-[2.6rem] font-bold leading-none tracking-[-0.04em] text-gray-900">
+                  {Math.round((summary.attempt.rawMark / summary.attempt.totalMarks) * 100)}
+                </strong>
+                <span className="text-[13px] font-medium text-gray-400">%</span>
+              </>
+            ) : (
+              <strong className="text-[1.15rem] font-semibold leading-none tracking-[-0.02em] text-gray-900">Full Paper</strong>
+            )}
+            <span className="translate-y-[-1px] text-[1.05rem]" aria-hidden="true">
+              {confidenceEmoji(summary.attempt.confidence)}
+            </span>
+          </div>
+          <p className="mt-auto line-clamp-2 pt-2 text-[14px] font-semibold leading-5 text-gray-900">
+            {summary.subject.name} · {summary.paper.name}
           </p>
         </>
       ) : (
