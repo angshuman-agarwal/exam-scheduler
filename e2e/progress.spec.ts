@@ -38,11 +38,10 @@ test('2. Active progress renders the analytics row and compact calendar', async 
   await expect(page.getByTestId('progress-daily-streak-card')).toContainText('Daily Streak')
   await expect(page.getByTestId('progress-last-session-card')).toContainText('Last Session')
   await expect(page.getByTestId('progress-study-velocity-card')).toContainText('Study Velocity')
-  await expect(velocityCard).toContainText('Minutes studied')
   await expect(velocityCard).toContainText('20')
   await expect(velocityCard).toContainText('10')
   await expect(page.getByText(/min logged/i)).toHaveCount(0)
-  await expect(page.getByTestId('progress-study-velocity-card').getByTestId('progress-velocity-bar')).toHaveCount(14)
+  await expect(page.getByTestId('progress-study-velocity-card').locator('[data-testid="progress-velocity-bar"]:visible')).toHaveCount(14)
   await expect(calendar).toBeVisible()
   await expect(page.getByTestId('progress-day-detail')).toHaveCount(0)
 })
@@ -76,7 +75,6 @@ test('4. Topic breakdown filters switch the table ordering lens', async ({ page 
   const firstRowBefore = (await page.getByTestId('progress-topic-row').first().textContent()) ?? ''
   await expect(page.getByTestId('progress-filter-priority-now')).toBeVisible()
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toBeVisible()
-  await expect(velocityCard).toContainText('Hours studied')
   await expect(velocityCard).toContainText('1.3')
   await expect(velocityCard).toContainText('0.7')
 
@@ -189,7 +187,7 @@ test('12. Hero pills reset to Recently Reviewed and navigate to Today with norma
   await page.setViewportSize({ width: 390, height: 740 })
   await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
 
-  await page.getByTestId('progress-study-velocity-card').locator('[data-date-key="2026-04-15"]').first().click()
+  await page.getByTestId('progress-velocity-mobile-carousel').locator('[data-date-key="2026-04-15"]').click()
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 15 Apr')
   await expect(page.getByTestId('progress-filter-priority-now')).toBeDisabled()
 
@@ -237,10 +235,18 @@ test('15. Mobile Study Velocity applies and clears the reviewed-date lens withou
   await page.setViewportSize({ width: 390, height: 844 })
   await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
 
-  const velocityBar = page.getByTestId('progress-study-velocity-card').locator('[data-date-key="2026-04-15"]').first()
+  const velocityCard = page.getByTestId('progress-study-velocity-card')
+  const carousel = page.getByTestId('progress-velocity-mobile-carousel')
+  const velocityBar = carousel.locator('[data-date-key="2026-04-15"]')
+
+  await expect(velocityCard.locator('[data-testid="progress-velocity-bar"]:visible')).toHaveCount(7)
+  await expect(page.getByTestId('progress-velocity-mobile-week-label')).toHaveText('This Week')
+  await expect(page.getByTestId('progress-velocity-page-dot').nth(1)).toHaveAttribute('aria-pressed', 'true')
 
   await velocityBar.click()
 
+  await expect(velocityBar).toHaveAttribute('data-selected', 'true')
+  await expect(page.getByTestId('progress-velocity-selected-day')).toHaveText('15 Apr')
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 15 Apr')
   await expect(page.getByTestId('progress-topic-row-mobile')).toHaveCount(2)
   await expect(page.getByTestId('progress-filter-priority-now')).toBeDisabled()
@@ -250,6 +256,54 @@ test('15. Mobile Study Velocity applies and clears the reviewed-date lens withou
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Recently Reviewed')
   await expect(page.getByTestId('progress-clear-reviewed-date')).toHaveCount(0)
   await expect(page.getByTestId('progress-filter-priority-now')).toBeEnabled()
+})
+
+test('15b. Mobile Study Velocity dots and swipe switch between current and previous week', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
+
+  const velocityCard = page.getByTestId('progress-study-velocity-card')
+  const carousel = page.getByTestId('progress-velocity-mobile-carousel')
+
+  await expect(velocityCard.locator('[data-testid="progress-velocity-bar"]:visible')).toHaveCount(7)
+  await expect(carousel.locator('[data-date-key="2026-04-15"]')).toBeVisible()
+  await expect(page.getByTestId('progress-velocity-mobile-week-label')).toHaveText('This Week')
+
+  await page.getByTestId('progress-velocity-page-dot').nth(0).click()
+
+  await expect(page.getByTestId('progress-velocity-mobile-week-label')).toHaveText('Last Week')
+  await expect(carousel.locator('[data-date-key="2026-04-08"]')).toBeVisible()
+  await expect(page.getByTestId('progress-velocity-page-dot').nth(0)).toHaveAttribute('aria-pressed', 'true')
+
+  await carousel.evaluate((element) => {
+    const startTouch = new Touch({ identifier: 1, target: element, clientX: 120, clientY: 40 })
+    const endTouch = new Touch({ identifier: 1, target: element, clientX: 20, clientY: 40 })
+    element.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, changedTouches: [startTouch], touches: [startTouch], targetTouches: [startTouch] }))
+    element.dispatchEvent(new TouchEvent('touchend', { bubbles: true, changedTouches: [endTouch], touches: [], targetTouches: [] }))
+  })
+
+  await expect(page.getByTestId('progress-velocity-mobile-week-label')).toHaveText('This Week')
+  await expect(carousel.locator('[data-date-key="2026-04-15"]')).toBeVisible()
+  await expect(page.getByTestId('progress-velocity-page-dot').nth(1)).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('15c. Mobile Study Velocity still changes week after selecting a bar', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
+
+  const carousel = page.getByTestId('progress-velocity-mobile-carousel')
+  const currentWeekBar = carousel.locator('[data-date-key="2026-04-15"]')
+
+  await currentWeekBar.click()
+  await expect(currentWeekBar).toHaveAttribute('data-selected', 'true')
+  await expect(page.getByTestId('progress-velocity-selected-day')).toHaveText('15 Apr')
+
+  await page.getByTestId('progress-velocity-page-dot').nth(0).click()
+
+  await expect(page.getByTestId('progress-velocity-mobile-week-label')).toHaveText('Last Week')
+  await expect(carousel.locator('[data-date-key="2026-04-08"]')).toBeVisible()
+  await expect(carousel.locator('[data-date-key="2026-04-15"]')).toHaveCount(0)
+  await expect(page.getByTestId('progress-velocity-page-dot').nth(0)).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('16. Topic Mastery shows overall confidence, action guidance, and reason lines', async ({ page }) => {

@@ -1,3 +1,4 @@
+import { useMemo, useRef, useState } from 'react'
 import { recencyLabel, type LastSessionSummary, type StudyVelocitySeries } from './analytics'
 
 // Apple-like card: pure white, precise shadow stack, full opacity
@@ -44,6 +45,10 @@ function velocityDisplayMeta(series: StudyVelocitySeries) {
     unitLabel: series.unitLabel === 'Sessions' ? 'Sessions' : useHours ? 'Hours studied' : 'Minutes studied',
     formatValue,
   }
+}
+
+function velocityDayLabel(dateKey: string): string {
+  return new Date(`${dateKey}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
 export function DailyStreakCard({
@@ -226,122 +231,201 @@ export function StudyVelocityCard({
 }) {
   const { maxRawValue, midRawValue, unitLabel, formatValue } = velocityDisplayMeta(series)
   const activePointCount = series.points.filter((point) => point.value > 0).length
+  const weekPages = useMemo(() => {
+    const midpoint = Math.ceil(series.points.length / 2)
+    return [
+      { key: 'previous', title: 'Last Week', points: series.points.slice(0, midpoint) },
+      { key: 'current', title: 'This Week', points: series.points.slice(midpoint) },
+    ]
+  }, [series.points])
+  const selectedPageIndex = selectedDay
+    ? weekPages.findIndex((page) => page.points.some((point) => point.dateKey === selectedDay))
+    : -1
+  const [mobilePageOverride, setMobilePageOverride] = useState<number | null>(null)
+  const touchStartXRef = useRef<number | null>(null)
+  const mobilePageIndex = mobilePageOverride ?? (selectedPageIndex >= 0 ? selectedPageIndex : 1)
+
+  const setClampedMobilePage = (next: number) => {
+    setMobilePageOverride(Math.max(0, Math.min(weekPages.length - 1, next)))
+  }
+
+  const handleTouchStart = (clientX: number) => {
+    touchStartXRef.current = clientX
+  }
+  const handleTouchEnd = (clientX: number) => {
+    if (touchStartXRef.current === null) return
+    const delta = clientX - touchStartXRef.current
+    if (Math.abs(delta) > 36) {
+      setClampedMobilePage(delta < 0 ? mobilePageIndex + 1 : mobilePageIndex - 1)
+    }
+    touchStartXRef.current = null
+  }
+
+  const renderVelocityBars = (points: StudyVelocitySeries['points'], isMobile = false) => (
+    <div className={`grid h-full min-w-0 items-end ${isMobile ? 'grid-cols-7 gap-1.5' : 'grid-cols-14 gap-1.5 sm:gap-1'}`}>
+      {points.map((point) => {
+        const isSelected = selectedDay === point.dateKey
+        const isClickable = point.value > 0
+        const isCurrentWeek = weekPages[1]?.points.some((candidate) => candidate.dateKey === point.dateKey) ?? false
+        const isOnlyActivePoint = activePointCount === 1 && isClickable
+        const fallbackBarSurfaceClass = isClickable
+          ? isCurrentWeek
+            ? 'bg-[linear-gradient(180deg,#7bb1ff_0%,#2f7cff_100%)] shadow-[0_8px_18px_rgba(47,124,255,0.24)]'
+            : 'bg-[linear-gradient(180deg,#c8ddff_0%,#79acff_100%)] shadow-[0_6px_14px_rgba(80,132,218,0.18)]'
+          : 'bg-black/[0.08]'
+
+        return (
+          <button
+            key={point.dateKey}
+            type="button"
+            data-testid="progress-velocity-bar"
+            data-date-key={point.dateKey}
+            data-selected={isSelected ? 'true' : 'false'}
+            aria-pressed={isSelected}
+            onClick={() => isClickable && onSelectDay(point.dateKey)}
+            disabled={!isClickable}
+            className={`group grid h-full min-w-0 grid-rows-[minmax(0,1fr)_auto_auto] rounded-[12px] px-[2px] pb-0.5 pt-1.5 text-center outline-none transition-all ${
+              isClickable
+                ? 'cursor-pointer active:scale-[0.98] hover:bg-[#007AFF]/[0.05] focus-visible:ring-2 focus-visible:ring-[#007AFF]/20'
+                : 'cursor-default opacity-55'
+            }`}
+            title={
+              isClickable
+                ? `${new Date(`${point.dateKey}T00:00:00`).toLocaleDateString('en-GB', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                  })}: ${formatValue(point.value)} ${unitLabel.toLowerCase()}${
+                    point.segments.length > 0
+                      ? ` • ${point.segments.map((segment) => `${segment.subjectName} ${formatValue(segment.value)}`).join(', ')}`
+                      : ''
+                  }`
+                : undefined
+            }
+          >
+            <span className="flex h-full items-end">
+              <span
+                className={`block w-full overflow-hidden rounded-[7px_7px_3px_3px] transition-all ${
+                  isSelected
+                    ? 'scale-[1.04] ring-2 ring-inset ring-[#007AFF] shadow-[0_12px_24px_rgba(0,122,255,0.26)]'
+                    : isClickable
+                      ? 'shadow-[0_8px_18px_rgba(0,0,0,0.1)] group-hover:translate-y-[-1px] group-hover:brightness-[1.03]'
+                      : ''
+                }`}
+                style={{ height: `${Math.max(point.heightPercent, 4)}%`, minHeight: '4px' }}
+              >
+                {point.segments.length > 0 ? (
+                  <span className="flex h-full w-full flex-col justify-end">
+                    {point.segments
+                      .slice()
+                      .reverse()
+                      .map((segment) => (
+                        <span
+                          key={`${point.dateKey}-${segment.subjectId}`}
+                          className="block w-full"
+                          style={{
+                            height: `${segment.sharePercent}%`,
+                            backgroundColor: segment.color,
+                          }}
+                        />
+                      ))}
+                  </span>
+                ) : (
+                  <span className={`block h-full w-full ${fallbackBarSurfaceClass}`} />
+                )}
+              </span>
+            </span>
+            <span
+              className={`mt-2 text-[9px] ${
+                isSelected ? 'font-bold text-[#007AFF]' : isClickable || isOnlyActivePoint ? 'font-semibold text-gray-600' : 'font-semibold text-gray-400'
+              }`}
+            >
+              {point.shortLabel}
+            </span>
+            <span className={`mt-0.5 text-[9px] ${isSelected ? 'font-bold text-[#007AFF]' : isClickable ? 'text-gray-500' : 'text-gray-300'}`}>
+              {point.dayNumber}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
 
   return (
     <article data-testid="progress-study-velocity-card" className={`${cardClassName()} col-span-2 lg:col-span-1 lg:h-[15rem]`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400">Study Velocity</p>
-          <p className="mt-1 text-[11px] font-medium text-gray-500">{unitLabel}</p>
-          <p className="mt-1 text-[10px] font-medium text-[#1f63d8] sm:text-[11px]">Tap a day to filter Topic Mastery</p>
         </div>
         <div className="text-right">
           <p data-testid="progress-velocity-value" className="text-[12px] font-medium text-gray-500">
             <strong className="font-bold text-[#007AFF]">{value}</strong> vs last week
           </p>
           {selectedDay && (
-            <p className="mt-1 text-[11px] font-medium text-gray-400">
-              {new Date(`${selectedDay}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+            <p data-testid="progress-velocity-selected-day" className="mt-1 text-[11px] font-bold text-gray-500">
+              {velocityDayLabel(selectedDay)}
             </p>
           )}
         </div>
       </div>
 
-      <div className="mt-2.5 grid flex-1 grid-cols-[2rem_minmax(0,1fr)] gap-2 sm:grid-cols-[2.15rem_minmax(0,1fr)]">
+      <div className="mt-2.5 hidden flex-1 grid-cols-[2rem_minmax(0,1fr)] gap-2 sm:grid sm:grid-cols-[2.15rem_minmax(0,1fr)]">
         <div className="flex flex-col justify-between pb-7 text-[10px] font-medium text-gray-400">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.04em] text-gray-300">{unitLabel === 'Hours studied' ? 'hrs' : unitLabel === 'Minutes studied' ? 'mins' : 'sessions'}</span>
           <span>{maxRawValue > 0 ? formatValue(maxRawValue) : '0'}</span>
           <span>{midRawValue > 0 ? formatValue(midRawValue) : ''}</span>
           <span>0</span>
         </div>
-        <div className="grid min-w-0 grid-cols-14 gap-1.5 sm:gap-1">
-          {series.points.map((point, index) => {
-            const isSelected = selectedDay === point.dateKey
-            const isClickable = point.value > 0
-            const isCurrentWeek = index >= series.points.length / 2
-            const isOnlyActivePoint = activePointCount === 1 && isClickable
-            const fallbackBarSurfaceClass = isClickable
-              ? isCurrentWeek
-                ? 'bg-[linear-gradient(180deg,#7bb1ff_0%,#2f7cff_100%)] shadow-[0_8px_18px_rgba(47,124,255,0.24)]'
-                : 'bg-[linear-gradient(180deg,#c8ddff_0%,#79acff_100%)] shadow-[0_6px_14px_rgba(80,132,218,0.18)]'
-              : 'bg-black/[0.08]'
+        {renderVelocityBars(series.points)}
+      </div>
 
-            return (
-              <button
-                key={point.dateKey}
-                type="button"
-                data-testid="progress-velocity-bar"
-                data-date-key={point.dateKey}
-                aria-pressed={isSelected}
-                onClick={() => isClickable && onSelectDay(point.dateKey)}
-                disabled={!isClickable}
-                className={`group flex min-w-0 flex-col justify-end rounded-[12px] px-[2px] pb-0.5 pt-1.5 text-center outline-none transition-all ${
-                  isClickable
-                    ? 'cursor-pointer active:scale-[0.98] hover:bg-[#007AFF]/[0.05] focus-visible:ring-2 focus-visible:ring-[#007AFF]/20'
-                    : 'cursor-default opacity-55'
-                }`}
-                title={
-                  isClickable
-                    ? `${new Date(`${point.dateKey}T00:00:00`).toLocaleDateString('en-GB', {
-                        weekday: 'short',
-                        day: 'numeric',
-                        month: 'short',
-                      })}: ${formatValue(point.value)} ${unitLabel.toLowerCase()}${
-                        point.segments.length > 0
-                          ? ` • ${point.segments.map((segment) => `${segment.subjectName} ${formatValue(segment.value)}`).join(', ')}`
-                          : ''
-                      }`
-                    : undefined
-                }
-              >
-                <span
-                  className={`block w-full overflow-hidden rounded-[7px_7px_3px_3px] transition-all ${
-                    isSelected
-                      ? 'ring-2 ring-inset ring-[#007AFF] shadow-[0_12px_24px_rgba(0,122,255,0.26)]'
-                      : isClickable
-                        ? 'shadow-[0_8px_18px_rgba(0,0,0,0.1)] group-hover:translate-y-[-1px] group-hover:brightness-[1.03]'
-                        : ''
-                  }`}
-                  style={{ height: `${Math.max(point.heightPercent, 4)}%`, minHeight: '4px' }}
-                >
-                  {point.segments.length > 0 ? (
-                    <span className="flex h-full w-full flex-col justify-end">
-                      {point.segments
-                        .slice()
-                        .reverse()
-                        .map((segment) => (
-                          <span
-                            key={`${point.dateKey}-${segment.subjectId}`}
-                            className="block w-full"
-                            style={{
-                              height: `${segment.sharePercent}%`,
-                              backgroundColor: segment.color,
-                            }}
-                          />
-                        ))}
-                    </span>
-                  ) : (
-                    <span className={`block h-full w-full ${fallbackBarSurfaceClass}`} />
-                  )}
-                </span>
-                <span
-                  className={`mt-2 text-[9px] font-semibold ${
-                    isSelected ? 'text-[#007AFF]' : isClickable || isOnlyActivePoint ? 'text-gray-600' : 'text-gray-400'
-                  }`}
-                >
-                  {point.shortLabel}
-                </span>
-                <span className={`mt-0.5 text-[9px] ${isSelected ? 'text-[#007AFF]/70' : isClickable ? 'text-gray-500' : 'text-gray-300'}`}>
-                  {point.dayNumber}
-                </span>
-              </button>
-            )
-          })}
+      <div className="mt-2.5 grid flex-1 grid-cols-[2rem_minmax(0,1fr)] gap-2 sm:hidden">
+        <div className="flex flex-col justify-between pb-7 text-[10px] font-medium text-gray-400">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.04em] text-gray-300">{unitLabel === 'Hours studied' ? 'hrs' : unitLabel === 'Minutes studied' ? 'mins' : 'sessions'}</span>
+          <span>{maxRawValue > 0 ? formatValue(maxRawValue) : '0'}</span>
+          <span>{midRawValue > 0 ? formatValue(midRawValue) : ''}</span>
+          <span>0</span>
+        </div>
+        <div
+          data-testid="progress-velocity-mobile-carousel"
+          className="min-w-0"
+          onTouchStart={(event) => handleTouchStart(event.changedTouches[0]?.clientX ?? 0)}
+          onTouchEnd={(event) => handleTouchEnd(event.changedTouches[0]?.clientX ?? 0)}
+        >
+          {renderVelocityBars(weekPages[mobilePageIndex]?.points ?? [], true)}
         </div>
       </div>
 
-      <div className="mt-2 flex items-center justify-between text-[10px] font-medium text-gray-400">
+      <div className="mt-2 hidden items-center justify-between text-[10px] font-medium text-gray-400 sm:flex">
         <span>Last Week</span>
         <span>This Week</span>
+      </div>
+
+      <div className="mt-2 flex items-center justify-between text-[10px] font-semibold text-gray-500 sm:hidden">
+        <span data-testid="progress-velocity-mobile-week-label">{weekPages[mobilePageIndex]?.title}</span>
+      </div>
+
+      <div className="mt-1.5 flex items-center justify-center sm:hidden">
+        <div className="flex items-center gap-2">
+          {weekPages.map((page, index) => {
+            const active = index === mobilePageIndex
+            return (
+              <button
+                key={page.key}
+                type="button"
+                data-testid="progress-velocity-page-dot"
+                aria-label={`Show ${page.title}`}
+                aria-pressed={active}
+                onClick={() => setClampedMobilePage(index)}
+                className={`h-2.5 w-2.5 rounded-full border transition-all ${
+                  active
+                    ? 'border-[#007AFF]/35 bg-[linear-gradient(180deg,#9bc4ff_0%,#2f7cff_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_4px_10px_rgba(47,124,255,0.28)]'
+                    : 'border-black/[0.08] bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_2px_6px_rgba(15,23,42,0.08)]'
+                }`}
+              />
+            )
+          })}
+        </div>
       </div>
     </article>
   )

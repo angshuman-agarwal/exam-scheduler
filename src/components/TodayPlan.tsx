@@ -463,46 +463,41 @@ export default function TodayPlan({
                       key={subject.id}
                       className="ios-card overflow-hidden"
                     >
-                      <div className="flex items-center gap-3 px-5 py-4">
+                      <div className="px-4 py-3.5 sm:flex sm:items-center sm:gap-3 sm:px-5 sm:py-4">
                         <button
                           onClick={() => setExpanded(isExpanded ? null : subject.id)}
-                          className="min-w-0 flex flex-1 items-center gap-3 text-left transition-colors hover:text-gray-700"
+                          className="min-w-0 flex w-full items-start gap-3 text-left transition-colors hover:text-gray-700"
                           aria-expanded={isExpanded}
                           aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${subject.name} topics`}
                         >
-                          <div className="w-1.5 h-5 rounded-full shrink-0" style={{ backgroundColor: subject.color }} />
+                          <div className="mt-1 h-8 w-1.5 rounded-full shrink-0 sm:h-5" style={{ backgroundColor: subject.color }} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-base font-semibold leading-tight text-gray-900 sm:truncate">{subject.name}</p>
-                            <div className="mt-0.5">
-                              <span className="text-xs text-gray-400">{offering.label}</span>
-                              <div className="mt-2 space-y-2">
-                                {paperSummaries.map(({ paper, days }) => {
-                                  const paperUrgencyColor = days <= 3 ? 'text-red-500'
-                                    : days <= 7 ? 'text-amber-500'
-                                    : planningMode === 'crunch' && days <= 21 ? 'text-amber-400'
-                                    : 'text-gray-400'
-                                  const countdownLabel = formatExamCountdown(paper.examDate, today).replace('Exam in ', '')
-                                  return (
-                                    <div key={paper.id} className="flex items-start gap-2 text-xs">
-                                      <span className="mt-[0.45rem] h-1 w-1 shrink-0 rounded-full bg-gray-200" />
-                                      <div className="min-w-0">
-                                        <p className="font-medium text-gray-600">{paper.name}</p>
-                                        <p className="text-[11px] text-gray-400">
-                                          {formatShortExamDate(paper.examDate)}{' '}
-                                          <span className="text-gray-300">{'\u00B7'}</span>{' '}
-                                          <span className={paperUrgencyColor}>
-                                            {countdownLabel}
-                                          </span>
-                                        </p>
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
+                            <div className="flex flex-wrap items-start gap-x-2 gap-y-1">
+                              <p className="min-w-0 text-[1rem] font-semibold leading-[1.05] tracking-[-0.03em] text-gray-900 sm:text-base sm:leading-tight sm:truncate">
+                                {subject.name}
+                              </p>
+                            </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-gray-400 sm:text-[11px]">
+                              <span>{offering.label}</span>
+                              {paperSummaries.length > 0 ? (
+                                <>
+                                  <span className="text-gray-300">{'\u00B7'}</span>
+                                  <span className="flex flex-wrap items-center gap-1.5">
+                                    {paperSummaries.map(({ paper }, index) => (
+                                      <span key={paper.id} className="inline-flex items-center gap-1.5">
+                                        <span>
+                                          {paper.name} : {formatShortExamDate(paper.examDate)}
+                                        </span>
+                                        {index < paperSummaries.length - 1 ? <span className="text-gray-300">{'\u00B7'}</span> : null}
+                                      </span>
+                                    ))}
+                                  </span>
+                                </>
+                              ) : null}
                             </div>
                           </div>
                         </button>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:shrink-0">
                           {primaryPaper && (
                             <button
                               onClick={() => onStartPaperSession(
@@ -512,10 +507,10 @@ export default function TodayPlan({
                                 'picker',
                                 { selectionRequired: paperSummaries.length > 1 },
                               )}
-                              className="inline-flex items-center gap-1.5 rounded-full border border-[#2f7cff]/18 bg-[linear-gradient(180deg,#f5f9ff_0%,#eaf2ff_100%)] px-3 py-1.5 text-[11px] font-semibold text-[#1f63d8] shadow-[0_8px_18px_rgba(37,95,216,0.12)] transition-all hover:translate-y-[-1px] hover:border-[#2f7cff]/28 hover:shadow-[0_10px_20px_rgba(37,95,216,0.16)]"
+                              className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2f7cff]/18 bg-[linear-gradient(180deg,#f5f9ff_0%,#eaf2ff_100%)] px-3 py-1.5 text-[10px] font-semibold text-[#1f63d8] shadow-[0_8px_18px_rgba(37,95,216,0.12)] transition-all hover:translate-y-[-1px] hover:border-[#2f7cff]/28 hover:shadow-[0_10px_20px_rgba(37,95,216,0.16)] sm:h-auto sm:flex-none sm:px-3 sm:py-1.5 sm:text-[11px]"
                               aria-label={`Full paper for ${subject.name}`}
                             >
-                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.1}>
+                              <svg className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.1}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               Full paper
@@ -523,19 +518,19 @@ export default function TodayPlan({
                           )}
                           <button
                             onClick={() => setExpanded(isExpanded ? null : subject.id)}
-                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-3 py-1.5 text-left text-gray-600 shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-[1px] hover:border-gray-300 hover:text-gray-700 hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
+                            className="inline-flex h-9 flex-1 items-center justify-between gap-2 rounded-full border border-gray-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-3 py-1.5 text-left text-gray-600 shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-[1px] hover:border-gray-300 hover:text-gray-700 hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] sm:h-auto sm:flex-none sm:py-1.5"
                             aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${subject.name}`}
                           >
                             <span className="flex flex-col leading-tight">
-                              <span className="text-[11px] font-semibold text-gray-700">
+                              <span className="text-[10px] font-semibold text-gray-700 sm:text-[11px]">
                                 {subjectTopics.length} topics
                               </span>
-                              <span className="text-[10px] text-gray-400">
+                              <span className="text-[9px] text-gray-400 sm:text-[10px]">
                                 Topic practice
                               </span>
                             </span>
                             <svg
-                              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
