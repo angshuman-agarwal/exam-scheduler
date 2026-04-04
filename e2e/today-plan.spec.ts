@@ -99,6 +99,26 @@ function mobileTodayPolishState(): PersistedState {
   }
 }
 
+function weakestTopicsFirstState(): PersistedState {
+  const state = geographyCardState()
+  state.topics = state.topics.map((topic) => {
+    if (topic.offeringId === 'geo-aqa') {
+      topic = { ...topic, confidence: 4, performanceScore: 0.8, lastReviewed: '2026-04-14' }
+    }
+    if (topic.id === 'geo-006') {
+      return { ...topic, confidence: 1, performanceScore: 0.2, lastReviewed: '2026-03-01' }
+    }
+    if (topic.id === 'geo-007') {
+      return { ...topic, confidence: 2, performanceScore: 0.35, lastReviewed: '2026-04-10' }
+    }
+    if (topic.id === 'geo-003') {
+      return { ...topic, confidence: 5, performanceScore: 0.95, lastReviewed: '2026-04-14' }
+    }
+    return topic
+  })
+  return state
+}
+
 async function openToday(page: Page, state: PersistedState, timerState?: { session: TimerSession | null; settings: { strictModeDefault: boolean; wakeLockEnabled: boolean } }) {
   await page.addInitScript((dateStr: string) => {
     const frozen = new Date(dateStr + 'T12:00:00').getTime()
@@ -364,4 +384,27 @@ test('Narrow tablet Today keeps the planner stacked until there is enough width'
   await expect(englishCard).toContainText('Paper 2 : 19 May')
   await expect(englishCard.getByRole('button', { name: 'Full paper for English Literature' })).toBeVisible()
   await expect(englishCard.getByRole('button', { name: 'Expand English Literature', exact: true })).toContainText('Topic practice')
+})
+
+test('Expanded subject topics are sorted weakest to strongest', async ({ page }) => {
+  await openToday(page, weakestTopicsFirstState())
+
+  await page.getByRole('button', { name: 'Expand Geography', exact: true }).click()
+
+  const topicRows = page
+    .locator('div.ios-card')
+    .filter({ hasText: 'Geography' })
+    .first()
+    .locator('div.border-t.border-gray-100 > div')
+
+  const topicTexts = await topicRows.evaluateAll((rows) => rows.map((row) => row.textContent ?? ''))
+  const nigeriaIndex = topicTexts.findIndex((text) => text.includes('Nigeria'))
+  const changingEconomicWorldIndex = topicTexts.findIndex((text) => text.includes('Changing economic world'))
+  const coastsAndRiversIndex = topicTexts.findIndex((text) => text.includes('Coasts and rivers'))
+
+  expect(nigeriaIndex).toBeGreaterThanOrEqual(0)
+  expect(changingEconomicWorldIndex).toBeGreaterThanOrEqual(0)
+  expect(coastsAndRiversIndex).toBeGreaterThanOrEqual(0)
+  expect(nigeriaIndex).toBeLessThan(changingEconomicWorldIndex)
+  expect(changingEconomicWorldIndex).toBeLessThan(coastsAndRiversIndex)
 })
