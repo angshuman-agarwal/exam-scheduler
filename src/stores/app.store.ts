@@ -745,11 +745,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   updateSelectedOfferings: (offeringIds: string[], confidences: Map<string, number>) => {
     const state = get()
-    const previouslySelected = new Set(state.selectedOfferingIds)
 
     const topics = state.topics.map((t) => {
       if (!offeringIds.includes(t.offeringId)) return t
-      if (previouslySelected.has(t.offeringId)) return t
       const conf = confidences.get(t.offeringId)
       return conf !== undefined ? { ...t, confidence: conf } : t
     })

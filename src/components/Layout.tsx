@@ -54,9 +54,9 @@ export default function Layout({
     <div className="min-h-screen flex flex-col lg:pl-[15rem]">
       <aside
         data-testid="desktop-left-rail"
-        className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[15rem] lg:flex-col lg:border-r lg:border-slate-200/90 lg:bg-[linear-gradient(180deg,rgba(252,253,255,0.98),rgba(246,249,255,0.98))] lg:pl-4 lg:pr-0 lg:py-4 lg:backdrop-blur"
+        className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[15rem] lg:flex-col lg:border-r lg:border-slate-200/90 lg:bg-[linear-gradient(180deg,rgba(252,253,255,0.98),rgba(246,249,255,0.98))] lg:px-4 lg:py-4 lg:backdrop-blur"
       >
-        <nav className="grid gap-1.5 pl-1 pr-0 pt-1" aria-label="Desktop navigation">
+        <nav className="grid gap-1.5 px-1 pt-1" aria-label="Desktop navigation">
           {NAV_ITEMS.map((item) => {
             const active = currentPage === item.page
             return (
@@ -79,7 +79,10 @@ export default function Layout({
           })}
         </nav>
 
-        <div className="mt-auto rounded-[1.25rem] border border-slate-200/90 bg-white/90 p-4 shadow-[0_14px_28px_rgba(15,23,42,0.05)]">
+        <div
+          data-testid="desktop-focus-card"
+          className="mx-1 mt-auto rounded-[1.25rem] border border-slate-200/90 bg-white/90 px-4 py-4 shadow-[0_14px_28px_rgba(15,23,42,0.05)]"
+        >
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Stay on track</p>
           <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
             Keep your plan, progress, and assistant within one focused desktop workspace.
