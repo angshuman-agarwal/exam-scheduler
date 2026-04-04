@@ -206,6 +206,19 @@ export function sortScoredTopics(topics: ScoredTopic[]): ScoredTopic[] {
   })
 }
 
+export function sortTopicsByWeakness(topics: ScoredTopic[]): ScoredTopic[] {
+  return [...topics].sort((a, b) => {
+    if (b.weakness !== a.weakness) return b.weakness - a.weakness
+    if (a.topic.confidence !== b.topic.confidence) return a.topic.confidence - b.topic.confidence
+    if (a.topic.performanceScore !== b.topic.performanceScore) {
+      return a.topic.performanceScore - b.topic.performanceScore
+    }
+    if (b.recencyFactor !== a.recencyFactor) return b.recencyFactor - a.recencyFactor
+    if (b.score !== a.score) return b.score - a.score
+    return a.topic.name.localeCompare(b.topic.name)
+  })
+}
+
 // -- Subject Diversity --
 // Diversity is grouped by generic subjectId, not offeringId
 

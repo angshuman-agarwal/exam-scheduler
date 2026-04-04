@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useAppStore } from '../stores/app.store'
-import { daysRemaining, examDayDiff, formatExamCountdown, scoreAllTopics, autoFillPlanItems, getPlanningMode, nearestExamDays as calcNearestExamDays } from '../lib/engine'
+import { daysRemaining, examDayDiff, formatExamCountdown, scoreAllTopics, sortTopicsByWeakness, autoFillPlanItems, getPlanningMode, nearestExamDays as calcNearestExamDays } from '../lib/engine'
 import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
 import { getLocalDayKey } from '../lib/date'
 import { useLocalPlansApi } from '../lib/api/local/usePlansApi'
@@ -161,6 +161,7 @@ export default function TodayPlan({
       group.topics.push(s)
     }
     for (const group of groups.values()) {
+      group.topics = sortTopicsByWeakness(group.topics)
       const offeringPapers = selPapers
         .filter((paper) => paper.offeringId === group.offering.id)
         .sort((a, b) => {
