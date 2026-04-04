@@ -351,3 +351,17 @@ test('Mobile Today keeps the legend and long subject names readable', async ({ p
   await expect(page.getByRole('button', { name: 'Expand English Literature', exact: true })).toContainText('Topic practice')
   await expect(page.locator('div.ios-card').filter({ hasText: 'English Literature' }).first()).not.toContainText(/11 May\s*·\s*26d/)
 })
+
+test('Narrow tablet Today keeps the planner stacked until there is enough width', async ({ page }) => {
+  await page.setViewportSize({ width: 685, height: 1070 })
+  await openToday(page, mobileTodayPolishState())
+
+  const englishCard = page.locator('div.ios-card').filter({ hasText: 'English Literature' }).first()
+  await expect(page.getByRole('heading', { name: 'Exam Calendar' }).first()).toBeVisible()
+  await expect(page.getByText('English Literature')).toBeVisible()
+  await expect(englishCard).toContainText('AQA 8702')
+  await expect(englishCard).toContainText('Paper 1 : 11 May')
+  await expect(englishCard).toContainText('Paper 2 : 19 May')
+  await expect(englishCard.getByRole('button', { name: 'Full paper for English Literature' })).toBeVisible()
+  await expect(englishCard.getByRole('button', { name: 'Expand English Literature', exact: true })).toContainText('Topic practice')
+})

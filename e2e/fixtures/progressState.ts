@@ -95,6 +95,7 @@ function makePaperAttempt(
   rawMark?: number,
   totalMarks?: number,
   noteText?: string,
+  taggedTopicIds?: string[],
 ) {
   return {
     id: `${paperId}-${date}-${Math.random().toString(36).slice(2, 8)}`,
@@ -106,6 +107,7 @@ function makePaperAttempt(
     ...(rawMark !== undefined ? { rawMark } : {}),
     ...(totalMarks !== undefined ? { totalMarks } : {}),
     ...(noteText ? { noteText } : {}),
+    ...(taggedTopicIds?.length ? { taggedTopicIds } : {}),
     source: 'calendar' as const,
   }
 }
@@ -348,7 +350,16 @@ export function progressPaperPractice(): PersistedState {
   ]
   s.paperAttempts = [
     {
-      ...makePaperAttempt('geo-p1', '2026-04-15', 2, 5400, 38, 80, 'Rushed the final 8-mark question and guessed two case-study details.'),
+      ...makePaperAttempt(
+        'geo-p1',
+        '2026-04-15',
+        2,
+        5400,
+        38,
+        80,
+        'Rushed the final 8-mark question and guessed two case-study details.',
+        ['geo-001', 'geo-003'],
+      ),
       id: 'geo-p1-morning',
       timestamp: new Date('2026-04-15T10:00:00').getTime(),
     },

@@ -1,23 +1,43 @@
+import { useState } from 'react'
 import { type ProgressTableFilter, type ProgressTableRow, type TopicTableRow } from './analytics'
 import { confidenceEmojis, statusTone } from './shared'
+
+function formatCompactStudyTime(totalSeconds: number): string | null {
+  if (totalSeconds <= 0) return null
+  const totalMinutes = Math.round(totalSeconds / 60)
+  if (totalMinutes < 60) return `${totalMinutes}m`
+  const totalHours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return minutes === 0 ? `${totalHours}h` : `${totalHours}h ${minutes}m`
+}
 
 function SessionTrendPill({
   score,
   trend,
+  totalDurationSeconds,
 }: {
   score: number | null
   trend: 'up' | 'flat' | 'down' | null
+  totalDurationSeconds: number
 }) {
   if (score === null) return null
 
   const pct = Math.round(score * 100)
   const arrow = trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'
   const arrowColor = trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-orange-500' : 'text-gray-500'
+  const timeLabel = formatCompactStudyTime(totalDurationSeconds)
 
   return (
-    <span data-testid="progress-session-trend-pill" className="mt-1.5 inline-flex items-center gap-0.5 text-[10px] text-gray-400">
-      Last: <span className="ml-0.5 font-medium text-gray-500">{pct}%</span>
-      <span className={`text-[11px] font-bold ${arrowColor}`}>{arrow}</span>
+    <span className="mt-1.5 block text-[10px] text-gray-400">
+      <span data-testid="progress-session-trend-pill" className="inline-flex items-center gap-0.5">
+        Last: <span className="ml-0.5 font-medium text-gray-500">{pct}%</span>
+        <span className={`text-[11px] font-bold ${arrowColor}`}>{arrow}</span>
+      </span>
+      {timeLabel ? (
+        <span data-testid="progress-study-time-label" className="mt-0.5 block">
+          Studied <span className="font-medium text-gray-500">{timeLabel}</span>
+        </span>
+      ) : null}
     </span>
   )
 }
@@ -25,11 +45,13 @@ function SessionTrendPill({
 function ActionCell({
   row,
   onPlanNow,
+  onOpenNote,
 }: {
   row: ProgressTableRow
   onPlanNow?: (row: TopicTableRow) => void
+  onOpenNote: (row: ProgressTableRow) => void
 }) {
-  const notePreview = row.notePreview
+  const hasNote = !!row.noteText
 
   if (row.kind === 'topic' && row.status === 'Not Started' && onPlanNow) {
     return (
@@ -52,14 +74,19 @@ function ActionCell({
   }
 
   return (
-    <div>
-      <span data-testid="progress-status-chip" className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold ${statusTone(row.status)}`}>
+    <div className="flex flex-col items-start">
+      <span data-testid="progress-status-chip" className={`inline-flex whitespace-nowrap rounded-full border bg-white px-3 py-1 text-[11px] font-semibold shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_6px_12px_rgba(15,23,42,0.04)] ${statusTone(row.status)}`}>
         {row.actionLabel}
       </span>
-      {notePreview ? (
-        <span data-testid="progress-paper-note-preview" className="mt-1 block text-[10px] leading-4 text-gray-500">
-          {notePreview}
-        </span>
+      {hasNote ? (
+        <button
+          type="button"
+          data-testid="progress-notes-pill"
+          onClick={() => onOpenNote(row)}
+          className="mt-2 inline-flex items-center self-start rounded-full bg-[linear-gradient(180deg,#2f7cff,#1f63d8)] px-2.5 py-1 text-[10px] font-semibold text-white shadow-[0_10px_20px_rgba(37,95,216,0.22)] transition-transform hover:translate-y-[-1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f7cff]/25"
+        >
+          Notes
+        </button>
       ) : null}
       {row.actionReason ? (
         <span data-testid="progress-action-reason" className="mt-1 block text-[10px] text-gray-400">
@@ -88,9 +115,15 @@ export function ProgressTopicBreakdown({
   onClearReviewedDate?: () => void
 }) {
   const isDateFiltered = recentlyReviewedLabel !== 'Recently Reviewed'
+  const [activeNoteRow, setActiveNoteRow] = useState<ProgressTableRow | null>(null)
+  const activeNoteTitle = activeNoteRow
+    ? `${activeNoteRow.subject.name} · ${activeNoteRow.kind === 'paper' ? activeNoteRow.paper.name : activeNoteRow.topic.name}`
+    : null
+  const activeTaggedTopics = activeNoteRow?.kind === 'paper' ? activeNoteRow.taggedTopics : []
 
   return (
-    <section className="rounded-[1.4rem] border border-black/[0.055] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_rgba(0,0,0,0.055)]">
+    <>
+      <section className="rounded-[1.4rem] border border-black/[0.055] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_rgba(0,0,0,0.055)]">
       <div className="flex flex-col gap-3 border-b border-black/[0.06] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400">Breakdown</p>
@@ -175,7 +208,7 @@ export function ProgressTopicBreakdown({
                   </div>
                   {row.kind === 'topic' ? (
                     <>
-                      <SessionTrendPill score={row.lastSessionScore} trend={row.sessionTrend} />
+                      <SessionTrendPill score={row.lastSessionScore} trend={row.sessionTrend} totalDurationSeconds={row.totalDurationSeconds} />
                       <span data-testid="progress-mastery-percent" className="mt-0.5 block text-[10px] text-gray-400">
                         {row.masteryPercent}% mastery
                       </span>
@@ -185,6 +218,11 @@ export function ProgressTopicBreakdown({
                       <span data-testid="progress-paper-score" className="mt-1 block text-[10px] text-gray-400">
                         Last: <span className="font-medium text-gray-500">{row.lastScorePercent}%</span>
                       </span>
+                      {formatCompactStudyTime(row.totalDurationSeconds) ? (
+                        <span data-testid="progress-study-time-label" className="mt-0.5 block text-[10px] text-gray-400">
+                          Studied <span className="font-medium text-gray-500">{formatCompactStudyTime(row.totalDurationSeconds)}</span>
+                        </span>
+                      ) : null}
                       {row.attemptCount > 1 ? (
                         <span data-testid="progress-paper-attempt-count" className="mt-0.5 block text-[10px] text-gray-400">
                           {row.attemptCount} attempts {row.recencyLabel.toLowerCase()}
@@ -206,7 +244,7 @@ export function ProgressTopicBreakdown({
                 </td>
                 <td className="px-5 py-3.5 text-[13px] text-gray-500">{row.recencyLabel}</td>
                 <td className="px-5 py-3.5">
-                  <ActionCell row={row} onPlanNow={onPlanNow} />
+                  <ActionCell row={row} onPlanNow={onPlanNow} onOpenNote={setActiveNoteRow} />
                 </td>
               </tr>
             ))}
@@ -236,7 +274,7 @@ export function ProgressTopicBreakdown({
                   </div>
                   {row.kind === 'topic' ? (
                     <>
-                      <SessionTrendPill score={row.lastSessionScore} trend={row.sessionTrend} />
+                      <SessionTrendPill score={row.lastSessionScore} trend={row.sessionTrend} totalDurationSeconds={row.totalDurationSeconds} />
                       <span data-testid="progress-mastery-percent" className="mt-0.5 block text-[10px] text-gray-400">
                         {row.masteryPercent}% mastery
                       </span>
@@ -246,6 +284,11 @@ export function ProgressTopicBreakdown({
                       <span data-testid="progress-paper-score" className="mt-0.5 block text-[10px] text-gray-400">
                         Last: {row.lastScorePercent}%
                       </span>
+                      {formatCompactStudyTime(row.totalDurationSeconds) ? (
+                        <span data-testid="progress-study-time-label" className="mt-0.5 block text-[10px] text-gray-400">
+                          Studied <span className="font-medium text-gray-500">{formatCompactStudyTime(row.totalDurationSeconds)}</span>
+                        </span>
+                      ) : null}
                       {row.attemptCount > 1 ? (
                         <span data-testid="progress-paper-attempt-count" className="mt-0.5 block text-[10px] text-gray-400">
                           {row.attemptCount} attempts {row.recencyLabel.toLowerCase()}
@@ -270,7 +313,7 @@ export function ProgressTopicBreakdown({
                   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">Action</p>
                   <span className="mt-0.5 block text-[10px] text-gray-400">What to do now</span>
                   <div className="mt-1.5">
-                    <ActionCell row={row} onPlanNow={onPlanNow} />
+                    <ActionCell row={row} onPlanNow={onPlanNow} onOpenNote={setActiveNoteRow} />
                   </div>
                 </div>
               </div>
@@ -278,6 +321,56 @@ export function ProgressTopicBreakdown({
           ))}
         </div>
       </div>
-    </section>
+      </section>
+
+      {activeNoteRow && activeNoteRow.noteText ? (
+        <div
+          data-testid="progress-note-overlay"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.24)] px-4 py-6 backdrop-blur-[2px]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Study note"
+        >
+          <div className="w-full max-w-md rounded-[1.5rem] border border-black/[0.06] bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.18)] sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400">Saved Note</p>
+                <h3 className="mt-1 text-[1rem] font-bold tracking-[-0.03em] text-gray-900">{activeNoteTitle}</h3>
+              </div>
+              <button
+                type="button"
+                data-testid="progress-note-overlay-close"
+                onClick={() => setActiveNoteRow(null)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.05] text-[16px] text-gray-500 transition-colors hover:bg-black/[0.08] hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f7cff]/25"
+                aria-label="Close notes"
+              >
+                ×
+              </button>
+            </div>
+            <div
+              data-testid="progress-note-overlay-body"
+              className="mt-3 whitespace-pre-wrap break-words rounded-[1.15rem] bg-[#f8fafc] px-3.5 py-3 text-[13px] leading-6 text-gray-600 sm:text-[14px]"
+            >
+              {activeNoteRow.noteText}
+            </div>
+            {activeTaggedTopics.length > 0 ? (
+              <div className="mt-3.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400">Weak topics</p>
+                <div data-testid="progress-note-overlay-tagged-topics" className="mt-2 flex flex-wrap gap-2">
+                  {activeTaggedTopics.map((topic) => (
+                    <span
+                      key={topic.id}
+                      className="inline-flex items-center rounded-full border border-[#f59e0b]/20 bg-[linear-gradient(180deg,#fff8ea_0%,#fff1cf_100%)] px-3 py-1 text-[11px] font-medium text-[#b86a00] shadow-[0_6px_16px_rgba(217,119,6,0.12)]"
+                    >
+                      {topic.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </>
   )
 }

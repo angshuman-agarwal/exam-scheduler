@@ -223,14 +223,14 @@ export default function TodayPlan({
 
   return (
     <div className="px-4 pt-6 pb-8 min-h-screen bg-system-gray">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="flex items-center gap-2.5">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Study Planner</h1>
             {studyMode && <QualificationChip mode={studyMode} />}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
           {planningMode === 'crunch' && (
             <span className="ios-toolbar-chip border-amber-200/70 bg-[linear-gradient(180deg,#fff8df_0%,#fff0bf_100%)] text-amber-800 shadow-[0_10px_24px_rgba(245,158,11,0.16)] hover:translate-y-0 hover:border-amber-200/70 hover:shadow-[0_10px_24px_rgba(245,158,11,0.16)]">
               <span className="ios-toolbar-chip__icon text-amber-700">
@@ -262,9 +262,9 @@ export default function TodayPlan({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:gap-6">
+      <div className="flex flex-col md:flex-row md:gap-6">
         {/* Mobile-only calendar */}
-        <div className="sm:hidden mb-6">
+        <div className="mb-6 md:hidden">
           <ExamCalendar examDateMap={examDateMap} onSelectPaper={(offering, subject, paper) => onBrowseOffering(offering, subject, paper)} />
         </div>
 
@@ -463,21 +463,33 @@ export default function TodayPlan({
                       key={subject.id}
                       className="ios-card overflow-hidden"
                     >
-                      <div className="px-4 py-3.5 sm:flex sm:items-center sm:gap-3 sm:px-5 sm:py-4">
+                      <div className="flex flex-col gap-3 px-4 py-3.5 md:flex-row md:items-center md:gap-3 md:px-5 md:py-4">
                         <button
                           onClick={() => setExpanded(isExpanded ? null : subject.id)}
-                          className="min-w-0 flex w-full items-start gap-3 text-left transition-colors hover:text-gray-700"
+                          className="flex min-w-0 w-full flex-1 items-start gap-3 text-left transition-colors hover:text-gray-700"
                           aria-expanded={isExpanded}
                           aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${subject.name} topics`}
                         >
-                          <div className="mt-1 h-8 w-1.5 rounded-full shrink-0 sm:h-5" style={{ backgroundColor: subject.color }} />
+                          <div className="mt-1 h-8 w-1.5 rounded-full shrink-0 md:h-5" style={{ backgroundColor: subject.color }} />
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-start gap-x-2 gap-y-1">
-                              <p className="min-w-0 text-[1rem] font-semibold leading-[1.05] tracking-[-0.03em] text-gray-900 sm:text-base sm:leading-tight sm:truncate">
+                              <p className="min-w-0 text-[1rem] font-semibold leading-[1.05] tracking-[-0.03em] text-gray-900 md:text-base md:leading-tight md:truncate">
                                 {subject.name}
                               </p>
                             </div>
-                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-gray-400 sm:text-[11px]">
+                            <div className="mt-1 md:hidden">
+                              <p className="text-[10px] text-gray-400">{offering.label}</p>
+                              {paperSummaries.length > 0 ? (
+                                <div className="mt-1 space-y-0.5 text-[10px] leading-4 text-gray-400">
+                                  {paperSummaries.map(({ paper }) => (
+                                    <p key={paper.id}>
+                                      {paper.name} : {formatShortExamDate(paper.examDate)}
+                                    </p>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </div>
+                            <div className="mt-1 hidden flex-wrap items-center gap-1.5 text-[11px] text-gray-400 md:flex">
                               <span>{offering.label}</span>
                               {paperSummaries.length > 0 ? (
                                 <>
@@ -497,7 +509,7 @@ export default function TodayPlan({
                             </div>
                           </div>
                         </button>
-                        <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:shrink-0">
+                        <div className="flex w-full items-center gap-2 md:mt-0 md:w-auto md:shrink-0">
                           {primaryPaper && (
                             <button
                               onClick={() => onStartPaperSession(
@@ -507,10 +519,10 @@ export default function TodayPlan({
                                 'picker',
                                 { selectionRequired: paperSummaries.length > 1 },
                               )}
-                              className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2f7cff]/18 bg-[linear-gradient(180deg,#f5f9ff_0%,#eaf2ff_100%)] px-3 py-1.5 text-[10px] font-semibold text-[#1f63d8] shadow-[0_8px_18px_rgba(37,95,216,0.12)] transition-all hover:translate-y-[-1px] hover:border-[#2f7cff]/28 hover:shadow-[0_10px_20px_rgba(37,95,216,0.16)] sm:h-auto sm:flex-none sm:px-3 sm:py-1.5 sm:text-[11px]"
+                              className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2f7cff]/18 bg-[linear-gradient(180deg,#f5f9ff_0%,#eaf2ff_100%)] px-3 py-1.5 text-[10px] font-semibold text-[#1f63d8] shadow-[0_8px_18px_rgba(37,95,216,0.12)] transition-all hover:translate-y-[-1px] hover:border-[#2f7cff]/28 hover:shadow-[0_10px_20px_rgba(37,95,216,0.16)] md:h-auto md:flex-none md:px-3 md:py-1.5 md:text-[11px]"
                               aria-label={`Full paper for ${subject.name}`}
                             >
-                              <svg className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.1}>
+                              <svg className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.1}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               Full paper
@@ -518,14 +530,14 @@ export default function TodayPlan({
                           )}
                           <button
                             onClick={() => setExpanded(isExpanded ? null : subject.id)}
-                            className="inline-flex h-9 flex-1 items-center justify-between gap-2 rounded-full border border-gray-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-3 py-1.5 text-left text-gray-600 shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-[1px] hover:border-gray-300 hover:text-gray-700 hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] sm:h-auto sm:flex-none sm:py-1.5"
+                            className="inline-flex h-9 flex-1 items-center justify-between gap-2 rounded-full border border-gray-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-3 py-1.5 text-left text-gray-600 shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-[1px] hover:border-gray-300 hover:text-gray-700 hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] md:h-auto md:flex-none md:py-1.5"
                             aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${subject.name}`}
                           >
                             <span className="flex flex-col leading-tight">
-                              <span className="text-[10px] font-semibold text-gray-700 sm:text-[11px]">
+                              <span className="text-[10px] font-semibold text-gray-700 md:text-[11px]">
                                 {subjectTopics.length} topics
                               </span>
-                              <span className="text-[9px] text-gray-400 sm:text-[10px]">
+                              <span className="text-[9px] text-gray-400 md:text-[10px]">
                                 Topic practice
                               </span>
                             </span>
@@ -620,7 +632,7 @@ export default function TodayPlan({
         </div>
 
         {/* Desktop sidebar calendar */}
-        <div className="hidden sm:block sm:w-80 shrink-0">
+        <div className="hidden md:block md:w-80 shrink-0">
           <div className="sticky top-6">
             <ExamCalendar examDateMap={examDateMap} onSelectPaper={(offering, subject, paper) => onBrowseOffering(offering, subject, paper)} />
           </div>

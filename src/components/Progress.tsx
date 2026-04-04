@@ -164,9 +164,36 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
   )
   const hasUpcomingExams = futurePapers.length > 0
   const hasStudyActivity = selectedSessions.length > 0 || selectedPaperAttempts.length > 0 || selectedNotes.length > 0
+  const todayKey = getLocalDayKey(today)
 
   const streak = useMemo(() => studyStreak(selectedSessions, selectedPaperAttempts, today), [selectedPaperAttempts, selectedSessions, today])
   const thisWeekSessions = useMemo(() => sessionsInWindow(selectedSessions, selectedPaperAttempts, today, 7), [selectedPaperAttempts, selectedSessions, today])
+  const paperAttemptsCount = selectedPaperAttempts.length
+  const weeklyPaperAttemptsCount = useMemo(
+    () => selectedPaperAttempts.filter((attempt) => {
+      const attemptDate = new Date(`${attempt.date}T12:00:00`)
+      const cutoff = new Date(today)
+      cutoff.setDate(cutoff.getDate() - 7)
+      return attemptDate > cutoff
+    }).length,
+    [selectedPaperAttempts, today],
+  )
+  const totalStudyTime = useMemo(
+    () =>
+      selectedSessions.reduce((sum, session) => sum + (session.durationSeconds ?? 0), 0)
+      + selectedPaperAttempts.reduce((sum, attempt) => sum + attempt.durationSeconds, 0),
+    [selectedPaperAttempts, selectedSessions],
+  )
+  const todayStudyTotal = useMemo(
+    () =>
+      selectedSessions
+        .filter((session) => session.date === todayKey)
+        .reduce((sum, session) => sum + (session.durationSeconds ?? 0), 0)
+      + selectedPaperAttempts
+        .filter((attempt) => attempt.date === todayKey)
+        .reduce((sum, attempt) => sum + attempt.durationSeconds, 0),
+    [selectedPaperAttempts, selectedSessions, todayKey],
+  )
   const lastSession = useMemo(
     () => buildLastSessionSummary(selectedSessions, selectedTopics, selectedOfferings, subjects, selectedPapers, selectedPaperAttempts),
     [selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects],
@@ -191,7 +218,6 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
     [selectedNotes, selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects],
   )
   const nearestExamDays = useMemo(() => nearestExamDaysForPapers(futurePapers, today), [futurePapers, today])
-  const todayKey = getLocalDayKey(today)
   const selectedDayPapers = useMemo(() => (selectedDay ? examDateMap.get(selectedDay) ?? [] : []), [examDateMap, selectedDay])
   const selectedDayHasFutureExam = !!selectedDay && selectedDay > todayKey && selectedDayPapers.length > 0
   const activityByDate = useMemo(() => {
@@ -341,8 +367,12 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
               <ProgressCardsRow
                 streak={streak}
                 streakDeltaText={streakDeltaText(selectedSessions, selectedPaperAttempts, today)}
+                paperAttemptsCount={paperAttemptsCount}
+                weeklyPaperAttemptsCount={weeklyPaperAttemptsCount}
+                totalStudyTime={totalStudyTime}
                 lastSession={lastSession}
                 today={today}
+                todayStudyTotal={todayStudyTotal}
                 velocityValue={velocityDelta === null ? '0%' : `${velocityDelta > 0 ? '+' : ''}${velocityDelta}%`}
                 velocitySeries={velocitySeries}
                 selectedDay={selectedDay}
