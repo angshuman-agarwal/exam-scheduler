@@ -4,7 +4,7 @@
 npm run dev
 
 ## load json via ChromeDeveloper Tools MCP into INDEXEDDB
-Refer integration-test-seed.json file from testing folder for IndexedDb build
+Refer to [/Users/jimmy/code/exam-scheduler/docs/testing/integration-test-seed.json](/Users/jimmy/code/exam-scheduler/docs/testing/integration-test-seed.json) for IndexedDB seeding. Use this internal testing seed unless you need a separate scenario that cannot be represented with it.
 
 
 
@@ -45,6 +45,17 @@ Refer integration-test-seed.json file from testing folder for IndexedDb build
   - paper-scoped browse / picker
 - Progress currently stores every real `PaperAttempt`, but the breakdown UI groups same-paper same-day attempts into one display row.
 - The Progress breakdown still uses the `Topic Mastery` title even though it now mixes topics and full papers.
+- Saved notes in Progress no longer render as inline preview text:
+  - topic and paper rows show a `Notes` pill only when a note exists
+  - clicking it opens a popup overlay
+  - multiline notes should preserve line breaks
+  - paper-note popups can also show tagged weak topics as chips
+- The current Progress top-card set is:
+  - `Daily Streak`
+  - `Total Studied`
+  - `Papers Attempted`
+  - `Last Session`
+  - `Study Velocity`
 - The Playwright `webServer` config in this repo currently has a known preview/build chain issue. Browser specs are still valid, but may need a manually started preview server in local execution.
 
 ## Test Environments
@@ -215,7 +226,7 @@ const TIMER_JSON = {
   },
   settings: {
     strictModeDefault: false,
-    wakeLockEnabled: false,
+    wakeLockEnabled: true,
   },
 }
 
@@ -659,7 +670,7 @@ updateAppState((app) => {
   - Confidence emoji row appears below inside the same card.
   - The reminder banner, if shown, sits close to the header without excessive vertical whitespace.
 
-### D7. Optional notes and optional topic tags
+### D7. Optional notes and optional weak-topic tags
 
 - Steps:
   - Save once with notes and no topic tags.
@@ -673,6 +684,24 @@ updateAppState((app) => {
   - `Which topics need work?` starts collapsed behind the `N topics / Revisit topics` control.
   - Expanding it reveals the topic chips.
   - Selected topics are reflected in the small selected-count label.
+
+### D7a. Notes and weak topics surface in Progress through the Notes popup
+
+- Setup:
+  - Save a paper attempt with multiline notes.
+  - Save the same or another paper attempt with tagged weak topics.
+- Steps:
+  - Open `Progress`.
+  - Switch to `Recently Reviewed`.
+  - Find the relevant paper row.
+  - Click the `Notes` pill.
+- Expected:
+  - A popup overlay opens.
+  - The full saved note is shown, not a truncated inline preview.
+  - Newlines in the saved note are preserved.
+  - If tagged weak topics exist, a `Weak topics` section appears below the note.
+  - Weak topics render as warm pale-yellow chips.
+  - Closing the popup returns to the same Progress position.
 
 ### D8. Completed paper review does not restore after reload
 
@@ -723,6 +752,8 @@ updateAppState((app) => {
   - Confidence reflects the latest attempt of the day.
   - Action reflects the latest attempt of the day.
   - `Last: XX%` reflects the latest attempt if it has marks.
+  - Grouped notes use the most recent attempt in that day-group that actually has a note.
+  - Grouped weak-topic chips use the union of tagged topics across that same day-group.
 
 ### E4. Paper confidence remains the primary subjective signal
 
@@ -808,24 +839,45 @@ updateAppState((app) => {
 
 ## Section F. Progress Page Cards, Velocity, And Breakdown Grid
 
-### F1. Last Session card for topic session
+### F1. `Total Studied` includes topic sessions and full papers
+
+- Setup:
+  - Log topic sessions and full-paper attempts in the selected subjects.
+- Expected:
+  - `Total Studied` sums both types of activity.
+  - Display stays compact:
+    - under 1 hour: `33m`
+    - whole hours: `3h`
+    - mixed totals: `3h 20m`
+
+### F2. `Papers Attempted` counts saved full-paper attempts
+
+- Setup:
+  - Save multiple full-paper attempts.
+- Expected:
+  - Card count equals total saved `PaperAttempt` entries in the selected subjects.
+  - Repeated attempts of the same paper still count as additional attempts.
+  - Accent helper text shows `+N this week` when applicable.
+
+### F3. Last Session card for topic session
 
 - Setup:
   - Complete a topic session last.
 - Expected:
-  - Card headline shows score or topic-equivalent current design.
+  - The card shows the topic score / confidence outcome in the current design.
   - Footer subject/topic label is bold and readable.
+  - If the session was today, the card also shows cumulative study time for today.
 
-### F2. Last Session card for full paper session
+### F4. Last Session card for full paper session
 
 - Setup:
   - Complete a paper attempt last.
 - Expected:
-  - Card identifies the last session as `Full Paper`.
   - Subject and paper label is clear.
-  - Marks, if present, are shown without noisy duplication.
+  - Paper score / confidence appears in the current card design without noisy duplication.
+  - If the attempt was today, the card also shows cumulative study time for today.
 
-### F3. Study velocity includes paper duration
+### F5. Study velocity includes paper duration
 
 - Setup:
   - Log only paper attempts on a day.
@@ -837,7 +889,7 @@ updateAppState((app) => {
   - The day bar increases based on paper duration.
   - Paper-only study days are not omitted from the graph.
 
-### F4. Daily streak increments on paper-only days
+### F6. Daily streak increments on paper-only days
 
 - Setup:
   - Log a paper attempt on a fresh day without topic sessions.
@@ -847,7 +899,7 @@ updateAppState((app) => {
 - Expected:
   - `Daily Streak` counts the day as studied.
 
-### F5. `Priority Now` excludes full papers
+### F7. `Priority Now` excludes full papers
 
 - Setup:
   - Have recent paper attempts and outstanding topic work.
@@ -858,7 +910,7 @@ updateAppState((app) => {
   - Full-paper rows do not appear there.
   - `Priority Now` remains topic-focused.
 
-### F6. `Recently Reviewed` includes topics and grouped full papers
+### F8. `Recently Reviewed` includes topics and grouped full papers
 
 - Setup:
   - Have both topic sessions and paper attempts.
@@ -870,19 +922,38 @@ updateAppState((app) => {
   - Mixed topic and full-paper rows are visible.
   - Rows are sorted descending by real recency timestamp, not by rough date text only.
 
-### F7. Confidence column for paper rows
+### F9. Confidence column for paper rows
 
 - Expected:
   - Confidence emoji reflects the paper attempt confidence.
   - Marks are secondary.
   - Topic-style copy should not mislead users into thinking paper confidence is system-derived.
 
-### F8. Topic Mastery / mixed breakdown visual scan
+### F10. Topic Mastery / mixed breakdown visual scan
 
 - Expected:
   - Paper rows remain visually legible in the same grid as topics.
   - Attempt count helper text appears when grouped.
   - `Keep sharp` and other paper status chips include explanation text where applicable.
+  - `Notes` appears as a separate clickable pill under the action pill, not beside it.
+  - If no note exists, no `Notes` pill is shown.
+
+### F11. Notes popup behavior in mixed breakdown rows
+
+- Setup:
+  - Have one topic row with a saved note.
+  - Have one paper row with a saved note.
+- Steps:
+  - Open `Progress`.
+  - Switch to `Recently Reviewed`.
+  - Open each `Notes` pill.
+- Expected:
+  - Topic rows open a popup showing the full note.
+  - Paper rows open the same popup pattern.
+  - Popup title uses `Subject · Topic/Paper`.
+  - Popup has a close icon.
+  - Topic popup does not show weak topics.
+  - Paper popup shows weak topics only when tagged topics exist.
 
 ## Section G. Topic Side Effects From Paper Review
 
@@ -983,6 +1054,8 @@ updateAppState((app) => {
 - Progress:
   - grouped paper rows do not visually overpower topic rows
   - helper text remains readable but secondary
+  - `Notes` pill sits below the action pill and reads as clickable
+  - weak-topic chips in the popup match the pale amber treatment of the `Next exam in x days` pill
 
 ## Section J. Automation / Regression Coverage Already Added
 
@@ -997,10 +1070,14 @@ updateAppState((app) => {
   - orphaned paper timer recovery clears persisted timer state
   - orphaned topic timer recovery clears persisted timer state
 - Progress:
+  - total studied card
+  - papers attempted card
   - grouped same-day paper attempts
   - paper rows excluded from `Priority Now`
   - paper rows included in `Recently Reviewed`
   - last-session card updates for full papers
+  - notes pill popup opens and closes for topic and paper rows
+  - paper-note popup shows tagged weak-topic chips
 
 ## Section K. Deferred / Out Of Scope
 

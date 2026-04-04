@@ -148,6 +148,29 @@ async function readTimer(page: Page) {
   })
 }
 
+async function readApp(page: Page) {
+  return page.evaluate(async () => {
+    return new Promise<Record<string, unknown> | undefined>((resolve, reject) => {
+      const req = indexedDB.open('gcse-scheduler', 2)
+      req.onsuccess = () => {
+        const db = req.result
+        const tx = db.transaction('state', 'readonly')
+        const getReq = tx.objectStore('state').get('app')
+        getReq.onsuccess = () => {
+          const result = getReq.result as Record<string, unknown> | undefined
+          db.close()
+          resolve(result)
+        }
+        getReq.onerror = () => {
+          db.close()
+          reject(getReq.error)
+        }
+      }
+      req.onerror = () => reject(req.error)
+    })
+  })
+}
+
 async function openFirstPlannedSession(page: Page) {
   await openToday(page, timerState())
   await page.getByRole('button', { name: 'Create suggested plan' }).click()
@@ -498,6 +521,61 @@ test('paper timer recovery discards a deleted paper target gracefully', async ({
     const timer = await readTimer(page)
     return timer === undefined || timer.session === null
   }).toBe(true)
+})
+
+test('legacy timer embedded on the app key is cleared on reload and does not block a new paper launch', async ({ page }) => {
+  await openToday(page, paperEligibleState())
+
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve, reject) => {
+      const req = indexedDB.open('gcse-scheduler', 2)
+      req.onsuccess = () => {
+        const db = req.result
+        const tx = db.transaction('state', 'readwrite')
+        const store = tx.objectStore('state')
+        const getReq = store.get('app')
+        getReq.onsuccess = () => {
+          const app = structuredClone(getReq.result)
+          app.timer = {
+            session: {
+              type: 'paper',
+              targetId: 'cs-p1',
+              startedAt: Date.now() - 120000,
+              pausedAt: null,
+              elapsed: 0,
+            },
+            settings: {},
+          }
+          store.put(app, 'app')
+        }
+        tx.oncomplete = () => { db.close(); resolve() }
+        tx.onerror = () => { db.close(); reject(tx.error) }
+      }
+      req.onerror = () => reject(req.error)
+    })
+  })
+
+  await page.reload()
+  await page.locator('text=Loading...').waitFor({ state: 'hidden', timeout: 10000 })
+
+  await expect(page.getByText('Study Planner')).toBeVisible()
+  await expect(page.getByText('Full paper in progress')).toHaveCount(0)
+  await expect(page.getByText('Paper saved')).toHaveCount(0)
+
+  await expect.poll(async () => {
+    const app = await readApp(page)
+    return Object.prototype.hasOwnProperty.call(app ?? {}, 'timer')
+  }).toBe(false)
+
+  const fullPaperPracticeCard = page.locator('.ios-card').filter({ has: page.getByText('Full paper practice') }).first()
+  await fullPaperPracticeCard.getByRole('button', { name: 'Start full paper' }).click()
+  await page.getByRole('button', { name: 'Start full paper' }).click()
+
+  await expect(page.getByText('Full paper in progress')).toBeVisible()
+  await expect.poll(async () => {
+    const timer = await readTimer(page)
+    return timer?.session?.targetId ?? null
+  }).toBe('cs-p1')
 })
 
 test('topic timer recovery discards a deleted topic target gracefully', async ({ page }) => {

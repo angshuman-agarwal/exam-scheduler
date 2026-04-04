@@ -253,29 +253,19 @@ test('Calendar-selected paper stays preselected on the explicit paper browse scr
   await expect(page.getByRole('button', { name: 'Start full paper' })).toBeEnabled()
 })
 
-test('Subject card shows every paper countdown for multi-paper subjects', async ({ page }) => {
+test('Subject card shows every paper label for multi-paper subjects without stacked countdown rows', async ({ page }) => {
   await openToday(page, geographyCardState())
 
   const geographyCard = page
     .locator('div.ios-card')
     .filter({ has: page.getByRole('button', { name: 'Full paper for Geography' }) })
     .first()
-  await expect(geographyCard).toContainText(/Paper 1\s*\d{1,2}\s\w{3}\s*·\s*\d+\s*days/)
-  await expect(geographyCard).toContainText(/Paper 2\s*\d{1,2}\s\w{3}\s*·\s*\d+\s*days/)
-  await expect(geographyCard).toContainText(/Paper 3\s*\d{1,2}\s\w{3}\s*·\s*\d+\s*days/)
+  await expect(geographyCard).toContainText(/AQA 8035\s*·\s*Paper 1 : 13 May\s*·\s*Paper 2 : 3 Jun\s*·\s*Paper 3 : 11 Jun/)
+  await expect(geographyCard).not.toContainText(/13 May\s*·\s*28d/)
 })
 
-test('Past papers are not shown as upcoming on the subject card or full paper practice', async ({ page }) => {
+test('Past papers are not shown as upcoming in full paper practice', async ({ page }) => {
   await openToday(page, geographyPastPaperState())
-
-  const geographyCard = page
-    .locator('div.ios-card')
-    .filter({ has: page.getByRole('button', { name: 'Full paper for Geography' }) })
-    .first()
-  await expect(geographyCard).toContainText(/Paper 1\s*1 Mar\s*·\s*Exam passed/)
-  await expect(geographyCard).toContainText(/Paper 2\s*20 Apr\s*·\s*5 days/)
-  await expect(geographyCard).toContainText(/Paper 3\s*28 Apr\s*·\s*13 days/)
-  await expect(geographyCard).not.toContainText(/Paper 1\s*1 Mar\s*·\s*1 day/)
 
   const fullPaperPracticeCard = page.locator('.ios-card').filter({ has: page.getByText('Full paper practice') }).first()
   await expect(fullPaperPracticeCard).toBeVisible()
@@ -356,4 +346,22 @@ test('Mobile Today keeps the legend and long subject names readable', async ({ p
   await expect(page.getByText('Add topics to plan')).toBeVisible()
   await expect(page.getByText('Nailed it')).toBeVisible()
   await expect(page.getByText('English Literature')).toBeVisible()
+  await expect(page.locator('div.ios-card').filter({ hasText: 'English Literature' }).first()).toContainText(/AQA 8702\s*·\s*Paper 1 : 11 May\s*·\s*Paper 2 : 19 May/)
+  await expect(page.getByRole('button', { name: 'Full paper for English Literature' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Expand English Literature', exact: true })).toContainText('Topic practice')
+  await expect(page.locator('div.ios-card').filter({ hasText: 'English Literature' }).first()).not.toContainText(/11 May\s*·\s*26d/)
+})
+
+test('Narrow tablet Today keeps the planner stacked until there is enough width', async ({ page }) => {
+  await page.setViewportSize({ width: 685, height: 1070 })
+  await openToday(page, mobileTodayPolishState())
+
+  const englishCard = page.locator('div.ios-card').filter({ hasText: 'English Literature' }).first()
+  await expect(page.getByRole('heading', { name: 'Exam Calendar' }).first()).toBeVisible()
+  await expect(page.getByText('English Literature')).toBeVisible()
+  await expect(englishCard).toContainText('AQA 8702')
+  await expect(englishCard).toContainText('Paper 1 : 11 May')
+  await expect(englishCard).toContainText('Paper 2 : 19 May')
+  await expect(englishCard.getByRole('button', { name: 'Full paper for English Literature' })).toBeVisible()
+  await expect(englishCard.getByRole('button', { name: 'Expand English Literature', exact: true })).toContainText('Topic practice')
 })

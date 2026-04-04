@@ -562,6 +562,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
     if (!state.planDay) state.planDay = ''
     if (!state.selectedOfferingIds) state.selectedOfferingIds = []
     if (!state.paperAttempts) state.paperAttempts = []
+    if ('timer' in (state as PersistedState & { timer?: unknown })) {
+      delete (state as PersistedState & { timer?: unknown }).timer
+    }
 
     // Auto-detect studyMode for existing onboarded users
     if (state.studyMode === null && state.onboarded && state.selectedOfferingIds.length > 0) {

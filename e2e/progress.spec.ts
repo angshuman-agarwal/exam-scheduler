@@ -32,17 +32,24 @@ test('2. Active progress renders the analytics row and compact calendar', async 
   await openProgress(page, progressStreak(), FROZEN_DATE)
   const calendar = page.locator('[data-testid="progress-calendar-card"]:visible').first()
   const velocityCard = page.getByTestId('progress-study-velocity-card')
+  const lastSessionCard = page.getByTestId('progress-last-session-card')
 
   await expect(page.getByTestId('progress-hero')).toContainText('3 day streak')
   await expect(page.getByTestId('progress-hero-cta')).toHaveCount(0)
   await expect(page.getByTestId('progress-daily-streak-card')).toContainText('Daily Streak')
-  await expect(page.getByTestId('progress-last-session-card')).toContainText('Last Session')
+  await expect(page.getByTestId('progress-total-studied-card')).toContainText('Total Studied')
+  await expect(page.getByTestId('progress-total-studied-card')).toContainText('52m')
+  await expect(page.getByTestId('progress-papers-attempted-card')).toContainText('Papers Attempted')
+  await expect(page.getByTestId('progress-papers-attempted-card')).toContainText('0')
+  await expect(page.getByTestId('progress-papers-attempted-card')).toContainText('No papers this week')
+  await expect(lastSessionCard).toContainText('Last Session')
+  await expect(lastSessionCard).toContainText('Today')
+  await expect(page.getByTestId('progress-last-session-today-total')).toHaveText('20m')
   await expect(page.getByTestId('progress-study-velocity-card')).toContainText('Study Velocity')
-  await expect(velocityCard).toContainText('Minutes studied')
   await expect(velocityCard).toContainText('20')
   await expect(velocityCard).toContainText('10')
   await expect(page.getByText(/min logged/i)).toHaveCount(0)
-  await expect(page.getByTestId('progress-study-velocity-card').getByTestId('progress-velocity-bar')).toHaveCount(14)
+  await expect(page.getByTestId('progress-study-velocity-card').locator('[data-testid="progress-velocity-bar"]:visible')).toHaveCount(14)
   await expect(calendar).toBeVisible()
   await expect(page.getByTestId('progress-day-detail')).toHaveCount(0)
 })
@@ -76,7 +83,6 @@ test('4. Topic breakdown filters switch the table ordering lens', async ({ page 
   const firstRowBefore = (await page.getByTestId('progress-topic-row').first().textContent()) ?? ''
   await expect(page.getByTestId('progress-filter-priority-now')).toBeVisible()
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toBeVisible()
-  await expect(velocityCard).toContainText('Hours studied')
   await expect(velocityCard).toContainText('1.3')
   await expect(velocityCard).toContainText('0.7')
 
@@ -189,7 +195,7 @@ test('12. Hero pills reset to Recently Reviewed and navigate to Today with norma
   await page.setViewportSize({ width: 390, height: 740 })
   await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
 
-  await page.getByTestId('progress-study-velocity-card').locator('[data-date-key="2026-04-15"]').first().click()
+  await page.getByTestId('progress-velocity-mobile-carousel').locator('[data-date-key="2026-04-15"]').click()
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 15 Apr')
   await expect(page.getByTestId('progress-filter-priority-now')).toBeDisabled()
 
@@ -227,6 +233,8 @@ test('14. Mobile progress hides the calendar and keeps Topic Mastery as the prim
   await expect(visibleDesktopTable).toHaveCount(0)
   await expect(page.locator('[data-testid="progress-calendar-card"]:visible')).toHaveCount(0)
   await expect(page.getByTestId('progress-open-calendar-mobile')).toHaveCount(0)
+  await expect(page.getByTestId('progress-total-studied-card')).toBeVisible()
+  await expect(page.getByTestId('progress-papers-attempted-card')).toBeVisible()
   await expect(mobileBreakdown).toContainText('Biology')
   await expect(mobileBreakdown).toContainText('Computer Science')
   await expect(mobileBreakdown).toContainText('Action')
@@ -237,10 +245,18 @@ test('15. Mobile Study Velocity applies and clears the reviewed-date lens withou
   await page.setViewportSize({ width: 390, height: 844 })
   await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
 
-  const velocityBar = page.getByTestId('progress-study-velocity-card').locator('[data-date-key="2026-04-15"]').first()
+  const velocityCard = page.getByTestId('progress-study-velocity-card')
+  const carousel = page.getByTestId('progress-velocity-mobile-carousel')
+  const velocityBar = carousel.locator('[data-date-key="2026-04-15"]')
+
+  await expect(velocityCard.locator('[data-testid="progress-velocity-bar"]:visible')).toHaveCount(7)
+  await expect(page.getByTestId('progress-velocity-mobile-week-label')).toHaveText('This Week')
+  await expect(page.getByTestId('progress-velocity-page-dot').nth(1)).toHaveAttribute('aria-pressed', 'true')
 
   await velocityBar.click()
 
+  await expect(velocityBar).toHaveAttribute('data-selected', 'true')
+  await expect(page.getByTestId('progress-velocity-selected-day')).toHaveText('15 Apr')
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Reviewed on 15 Apr')
   await expect(page.getByTestId('progress-topic-row-mobile')).toHaveCount(2)
   await expect(page.getByTestId('progress-filter-priority-now')).toBeDisabled()
@@ -250,6 +266,54 @@ test('15. Mobile Study Velocity applies and clears the reviewed-date lens withou
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Recently Reviewed')
   await expect(page.getByTestId('progress-clear-reviewed-date')).toHaveCount(0)
   await expect(page.getByTestId('progress-filter-priority-now')).toBeEnabled()
+})
+
+test('15b. Mobile Study Velocity dots and swipe switch between current and previous week', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
+
+  const velocityCard = page.getByTestId('progress-study-velocity-card')
+  const carousel = page.getByTestId('progress-velocity-mobile-carousel')
+
+  await expect(velocityCard.locator('[data-testid="progress-velocity-bar"]:visible')).toHaveCount(7)
+  await expect(carousel.locator('[data-date-key="2026-04-15"]')).toBeVisible()
+  await expect(page.getByTestId('progress-velocity-mobile-week-label')).toHaveText('This Week')
+
+  await page.getByTestId('progress-velocity-page-dot').nth(0).click()
+
+  await expect(page.getByTestId('progress-velocity-mobile-week-label')).toHaveText('Last Week')
+  await expect(carousel.locator('[data-date-key="2026-04-08"]')).toBeVisible()
+  await expect(page.getByTestId('progress-velocity-page-dot').nth(0)).toHaveAttribute('aria-pressed', 'true')
+
+  await carousel.evaluate((element) => {
+    const startTouch = new Touch({ identifier: 1, target: element, clientX: 120, clientY: 40 })
+    const endTouch = new Touch({ identifier: 1, target: element, clientX: 20, clientY: 40 })
+    element.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, changedTouches: [startTouch], touches: [startTouch], targetTouches: [startTouch] }))
+    element.dispatchEvent(new TouchEvent('touchend', { bubbles: true, changedTouches: [endTouch], touches: [], targetTouches: [] }))
+  })
+
+  await expect(page.getByTestId('progress-velocity-mobile-week-label')).toHaveText('This Week')
+  await expect(carousel.locator('[data-date-key="2026-04-15"]')).toBeVisible()
+  await expect(page.getByTestId('progress-velocity-page-dot').nth(1)).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('15c. Mobile Study Velocity still changes week after selecting a bar', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
+
+  const carousel = page.getByTestId('progress-velocity-mobile-carousel')
+  const currentWeekBar = carousel.locator('[data-date-key="2026-04-15"]')
+
+  await currentWeekBar.click()
+  await expect(currentWeekBar).toHaveAttribute('data-selected', 'true')
+  await expect(page.getByTestId('progress-velocity-selected-day')).toHaveText('15 Apr')
+
+  await page.getByTestId('progress-velocity-page-dot').nth(0).click()
+
+  await expect(page.getByTestId('progress-velocity-mobile-week-label')).toHaveText('Last Week')
+  await expect(carousel.locator('[data-date-key="2026-04-08"]')).toBeVisible()
+  await expect(carousel.locator('[data-date-key="2026-04-15"]')).toHaveCount(0)
+  await expect(page.getByTestId('progress-velocity-page-dot').nth(0)).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('16. Topic Mastery shows overall confidence, action guidance, and reason lines', async ({ page }) => {
@@ -265,11 +329,13 @@ test('16. Topic Mastery shows overall confidence, action guidance, and reason li
   await expect(table).toContainText('Action')
   await expect(table).toContainText('What to do now')
   await expect(sortingRow).toContainText('Last: 75%')
+  await expect(sortingRow.getByTestId('progress-study-time-label')).toContainText('Studied 35m')
   await expect(sortingRow).toContainText('↑')
   await expect(sortingRow).toContainText('53% mastery')
   await expect(sortingRow).toContainText('Study today')
   await expect(sortingRow).toContainText('exam in 2 days')
   await expect(cellsRow).toContainText('Last: 54%')
+  await expect(cellsRow.getByTestId('progress-study-time-label')).toContainText('Studied 13m')
   await expect(cellsRow).toContainText('Keep practising')
   await expect(cellsRow).toContainText('not studied in a while')
   await expect(flowchartsRow).toContainText('37% mastery')
@@ -293,11 +359,13 @@ test('17. Mobile Topic Mastery shows the same confidence and action context', as
   await expect(mobileBreakdown).toContainText('Action')
   await expect(mobileBreakdown).toContainText('What to do now')
   await expect(sortingRow).toContainText('Last: 75%')
+  await expect(sortingRow.getByTestId('progress-study-time-label')).toContainText('Studied 35m')
   await expect(sortingRow).toContainText('↑')
   await expect(sortingRow).toContainText('53% mastery')
   await expect(sortingRow).toContainText('Study today')
   await expect(sortingRow).toContainText('exam in 2 days')
   await expect(cellsRow).toContainText('Keep practising')
+  await expect(cellsRow.getByTestId('progress-study-time-label')).toContainText('Studied 13m')
   await expect(cellsRow).toContainText('not studied in a while')
   await expect(flowchartsRow).toContainText('37% mastery')
   await expect(flowchartsRow).toContainText('Begin this topic')
@@ -305,12 +373,34 @@ test('17. Mobile Topic Mastery shows the same confidence and action context', as
   await expect(flowchartsRow.getByTestId('progress-session-trend-pill')).toHaveCount(0)
 })
 
-test('17b. Topic rows show saved note previews under Action when notes exist', async ({ page }) => {
+test('17b. Topic and paper rows show a Notes pill that opens and closes the saved-note overlay', async ({ page }) => {
   await openProgress(page, progressExpandedNotes(), FROZEN_DATE)
 
   const notedRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Computer Science' }).filter({ hasText: 'Sorting and searching algorithms' })
   await expect(notedRow).toBeVisible()
-  await expect(notedRow.getByTestId('progress-paper-note-preview')).toContainText('Revisit merge sort edge cases')
+  await expect(notedRow.getByTestId('progress-notes-pill')).toHaveText('Notes')
+
+  await notedRow.getByTestId('progress-notes-pill').click()
+  await expect(page.getByTestId('progress-note-overlay')).toBeVisible()
+  await expect(page.getByTestId('progress-note-overlay')).toContainText('Computer Science · Sorting and searching algorithms')
+  await expect(page.getByTestId('progress-note-overlay')).toContainText('Revisit merge sort edge cases')
+  await expect(page.getByTestId('progress-note-overlay-body')).toHaveCSS('white-space', 'pre-wrap')
+  await page.getByTestId('progress-note-overlay-close').click()
+  await expect(page.getByTestId('progress-note-overlay')).toHaveCount(0)
+
+  await page.goto('/#progress')
+  await openProgress(page, progressPaperPractice(), FROZEN_DATE)
+  await page.getByTestId('progress-filter-recently-reviewed').click()
+  const paperRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Geography' }).filter({ hasText: 'Paper 1' })
+  await expect(paperRow.getByTestId('progress-notes-pill')).toHaveText('Notes')
+  await paperRow.getByTestId('progress-notes-pill').click()
+  await expect(page.getByTestId('progress-note-overlay')).toContainText('Geography · Paper 1')
+  await expect(page.getByTestId('progress-note-overlay')).toContainText('Rushed the final 8-mark question')
+  await expect(page.getByTestId('progress-note-overlay-body')).toHaveCSS('white-space', 'pre-wrap')
+  await expect(page.getByTestId('progress-note-overlay-tagged-topics')).toContainText('Tectonic hazards and climate change')
+  await expect(page.getByTestId('progress-note-overlay-tagged-topics')).toContainText('Coasts and rivers')
+  await page.getByTestId('progress-note-overlay-close').click()
+  await expect(page.getByTestId('progress-note-overlay')).toHaveCount(0)
 })
 
 test('18. Paper attempts appear in the main breakdown and last-session card like other study activity', async ({ page }) => {
@@ -320,6 +410,12 @@ test('18. Paper attempts appear in the main breakdown and last-session card like
     page.getByTestId('progress-topic-row').filter({ hasText: 'Geography' }).filter({ hasText: 'Paper 1' }),
   ).toHaveCount(0)
   await expect(page.getByTestId('progress-last-session-card')).toContainText('Geography · Paper 1')
+  await expect(page.getByTestId('progress-last-session-card')).toContainText('Today')
+  await expect(page.getByTestId('progress-last-session-today-total')).toHaveText('3h')
+  await expect(page.getByTestId('progress-total-studied-card')).toContainText('3h 20m')
+  await expect(page.getByTestId('progress-papers-attempted-card')).toContainText('Papers Attempted')
+  await expect(page.getByTestId('progress-papers-attempted-card')).toContainText('2')
+  await expect(page.getByTestId('progress-papers-attempted-card')).toContainText('+2 this week')
 
   await page.getByTestId('progress-filter-recently-reviewed').click()
 
@@ -327,7 +423,8 @@ test('18. Paper attempts appear in the main breakdown and last-session card like
   await expect(paperRow).toBeVisible()
   await expect(paperRow).toContainText('Today')
   await expect(paperRow).toContainText('Last: 59%')
+  await expect(paperRow.getByTestId('progress-study-time-label')).toContainText('Studied 3h')
   await expect(paperRow).toContainText('2 attempts today')
-  await expect(paperRow.getByTestId('progress-paper-note-preview')).toContainText('Rushed the final 8-mark question')
+  await expect(paperRow.getByTestId('progress-notes-pill')).toHaveText('Notes')
   await expect(page.getByTestId('progress-topic-row').filter({ hasText: 'Geography' }).filter({ hasText: 'Paper 1' })).toHaveCount(1)
 })

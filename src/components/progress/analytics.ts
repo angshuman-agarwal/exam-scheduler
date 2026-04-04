@@ -82,12 +82,14 @@ export interface TopicTableRow {
   topic: Topic
   subject: Subject
   offering: Offering
+  totalDurationSeconds: number
   masteryPercent: number
   lastSessionScore: number | null
   sessionTrend: 'up' | 'flat' | 'down' | null
   actionLabel: string
   actionReason: string | null
   notePreview: string | null
+  noteText: string | null
   freshnessRatio: number
   recencyTimestamp: number
   recencyLabel: string
@@ -100,6 +102,8 @@ export interface PaperTableRow {
   paper: Paper
   attempt: PaperAttempt
   attemptCount: number
+  totalDurationSeconds: number
+  taggedTopics: Topic[]
   subject: Subject
   offering: Offering
   confidence: number
@@ -107,6 +111,7 @@ export interface PaperTableRow {
   actionLabel: string
   actionReason: string | null
   notePreview: string | null
+  noteText: string | null
   recencyDate: string
   recencyTimestamp: number
   recencyLabel: string
@@ -179,6 +184,17 @@ function latestTopicNotePreview(topicId: string, notes: Note[]): string | null {
     })[0]
 
   return latestNote ? topicNotePreview(latestNote) : null
+}
+
+function latestTopicNoteText(topicId: string, notes: Note[]): string | null {
+  const latestNote = notes
+    .filter((note) => note.topicId === topicId && trimmedTopicNote(note))
+    .sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date)
+      return b.id.localeCompare(a.id)
+    })[0]
+
+  return latestNote ? trimmedTopicNote(latestNote) : null
 }
 
 export function freshnessRatio(lastReviewed: string | null, today: Date): number {
@@ -556,6 +572,9 @@ export function buildTopicTableRows(
       const priorityScore = scoredTopic.score
       const status = statusForTopic(topic, priorityScore, today)
       const latestSession = latestSessionForTopic(topic.id, sessions)
+      const totalDurationSeconds = sessions
+        .filter((session) => session.topicId === topic.id)
+        .reduce((sum, session) => sum + (session.durationSeconds ?? 0), 0)
       const recencyDate = recencySourceDate(topic, sessions)
       const lastSessionScore = latestSession?.score ?? null
       const diff = lastSessionScore !== null ? lastSessionScore - topic.performanceScore : null
@@ -573,12 +592,14 @@ export function buildTopicTableRows(
         topic,
         subject,
         offering,
+        totalDurationSeconds,
         masteryPercent: masteryPercent(topic),
         lastSessionScore,
         sessionTrend,
         actionLabel,
         actionReason,
         notePreview: latestTopicNotePreview(topic.id, notes),
+        noteText: latestTopicNoteText(topic.id, notes),
         freshnessRatio: freshnessRatio(topic.lastReviewed, today),
         recencyTimestamp: recencyTimestampForTopic(topic, sessions),
         recencyLabel: recencyLabel(recencyDate, today),
@@ -649,13 +670,40 @@ function groupedPaperNotePreview(attempts: PaperAttempt[]): string | null {
   return noteAttempt ? paperNotePreview(noteAttempt) : null
 }
 
+function groupedPaperNoteText(attempts: PaperAttempt[]): string | null {
+  const noteAttempt = [...attempts]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .find((attempt) => trimmedPaperNote(attempt))
+
+  return noteAttempt ? trimmedPaperNote(noteAttempt) : null
+}
+
+function groupedPaperTaggedTopics(attempts: PaperAttempt[], topicMap: Map<string, Topic>): Topic[] {
+  const taggedTopics: Topic[] = []
+  const seen = new Set<string>()
+
+  for (const attempt of [...attempts].sort((a, b) => b.timestamp - a.timestamp)) {
+    for (const topicId of attempt.taggedTopicIds ?? []) {
+      if (seen.has(topicId)) continue
+      const topic = topicMap.get(topicId)
+      if (!topic) continue
+      seen.add(topicId)
+      taggedTopics.push(topic)
+    }
+  }
+
+  return taggedTopics
+}
+
 export function buildPaperTableRows(
   paperAttempts: PaperAttempt[],
+  topics: Topic[],
   papers: Paper[],
   offerings: Offering[],
   subjects: Subject[],
   today: Date,
 ): PaperTableRow[] {
+  const topicMap = new Map(topics.map((topic) => [topic.id, topic]))
   const paperMap = new Map(papers.map((paper) => [paper.id, paper]))
   const offeringMap = new Map(offerings.map((offering) => [offering.id, offering]))
   const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]))
@@ -682,6 +730,8 @@ export function buildPaperTableRows(
         paper,
         attempt,
         attemptCount: attempts.length,
+        totalDurationSeconds: attempts.reduce((sum, groupedAttempt) => sum + groupedAttempt.durationSeconds, 0),
+        taggedTopics: groupedPaperTaggedTopics(attempts, topicMap),
         subject,
         offering,
         confidence: attempt.confidence,
@@ -689,6 +739,7 @@ export function buildPaperTableRows(
         actionLabel: paperActionLabelFor(status),
         actionReason: paperActionReasonFor(status),
         notePreview: groupedPaperNotePreview(attempts),
+        noteText: groupedPaperNoteText(attempts),
         recencyDate: attempt.date,
         recencyTimestamp: attempt.timestamp,
         recencyLabel: recencyLabel(attempt.date, today),
@@ -711,7 +762,7 @@ export function buildProgressTableRows(
 ): ProgressTableRow[] {
   return [
     ...buildTopicTableRows(topics, offerings, subjects, papers, today, sessions, notes),
-    ...buildPaperTableRows(paperAttempts, papers, offerings, subjects, today),
+    ...buildPaperTableRows(paperAttempts, topics, papers, offerings, subjects, today),
   ]
 }
 
