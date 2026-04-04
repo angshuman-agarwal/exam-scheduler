@@ -195,8 +195,17 @@ export function ProgressTopicBreakdown({
             {rows.map((row) => (
               <tr key={row.kind === 'paper' ? row.attempt.id : row.topic.id} data-testid="progress-topic-row" className="border-t border-black/[0.06] align-top transition-colors hover:bg-black/[0.01]">
                 <td className="px-5 py-3.5">
-                  <p className="text-[13px] font-semibold tracking-[-0.02em] text-gray-900">{row.subject.name}</p>
-                  <p className="mt-0.5 text-[13px] text-gray-500">{row.kind === 'paper' ? row.paper.name : row.topic.name}</p>
+                  <div className="flex items-start gap-3">
+                    <span
+                      data-testid="progress-subject-color-bar"
+                      className="mt-1 h-8 w-1.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: row.subject.color }}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold tracking-[-0.02em] text-gray-900">{row.subject.name}</p>
+                      <p className="mt-0.5 text-[13px] text-gray-500">{row.kind === 'paper' ? row.paper.name : row.topic.name}</p>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-5 py-3.5">
                   <div className="flex items-center gap-1.5 text-[1.05rem]">
@@ -256,9 +265,16 @@ export function ProgressTopicBreakdown({
         <div className="divide-y divide-black/[0.06]">
           {rows.map((row) => (
             <article key={row.kind === 'paper' ? row.attempt.id : row.topic.id} data-testid="progress-topic-row-mobile" className="px-4 py-3.5">
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold tracking-[-0.02em] text-gray-900">{row.subject.name}</p>
-                <p className="mt-0.5 text-[13px] leading-5 text-gray-500">{row.kind === 'paper' ? row.paper.name : row.topic.name}</p>
+              <div className="flex items-start gap-3 min-w-0">
+                <span
+                  data-testid="progress-subject-color-bar"
+                  className="mt-1 h-8 w-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: row.subject.color }}
+                />
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold tracking-[-0.02em] text-gray-900">{row.subject.name}</p>
+                  <p className="mt-0.5 text-[13px] leading-5 text-gray-500">{row.kind === 'paper' ? row.paper.name : row.topic.name}</p>
+                </div>
               </div>
 
               <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2.5">

@@ -237,6 +237,54 @@ test('mobile edit subjects back returns to Today', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Update your subjects' })).toHaveCount(0)
 })
 
+test('edit subjects confidence changes are honored on Today after saving', async ({ page }) => {
+  await openToday(page, todayPlanState())
+
+  await page.getByRole('button', { name: 'Edit subjects' }).click()
+  await expect(page.getByRole('heading', { name: 'Update your exam setup' })).toBeVisible()
+
+  const computerScienceCard = page.locator('[data-subject-id="cs"]').first()
+  await computerScienceCard.locator('[role="button"]').first().click()
+  await computerScienceCard.getByRole('button', { name: 'Set confidence to 1' }).click()
+  await page.getByRole('button', { name: 'Save changes' }).click()
+
+  await expect(page.getByText('Study Planner')).toBeVisible()
+  await page.getByRole('button', { name: 'Expand Computer Science', exact: true }).click()
+
+  const firstTopicRow = page
+    .locator('div.ios-card')
+    .filter({ hasText: 'Computer Science' })
+    .first()
+    .locator('div.border-t.border-gray-100 > div')
+    .first()
+
+  const activeDotCount = await firstTopicRow.locator('span.w-1\\.5.h-1\\.5.rounded-full').evaluateAll((dots) => {
+    return dots.filter((dot) => getComputedStyle(dot).backgroundColor !== 'rgb(229, 231, 235)').length
+  })
+
+  expect(activeDotCount).toBe(1)
+
+  const topicConfidences = await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open('gcse-scheduler', 2)
+      req.onsuccess = () => resolve(req.result)
+      req.onerror = () => reject(req.error)
+    })
+
+    const app = await new Promise<PersistedState>((resolve, reject) => {
+      const tx = db.transaction('state', 'readonly')
+      const req = tx.objectStore('state').get('app')
+      req.onsuccess = () => resolve(req.result as PersistedState)
+      req.onerror = () => reject(req.error)
+    })
+
+    db.close()
+    return app.topics.filter((topic) => topic.offeringId === 'cs-aqa').map((topic) => topic.confidence)
+  })
+
+  expect(topicConfidences.every((confidence) => confidence === 1)).toBe(true)
+})
+
 test('Subject card start full paper CTA preselects the nearest upcoming paper for multi-paper subjects', async ({ page }) => {
   await openToday(page, todayPlanState())
 

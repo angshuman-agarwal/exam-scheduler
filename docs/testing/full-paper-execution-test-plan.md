@@ -384,6 +384,25 @@ updateAppState((app) => {
   - User returns to `Study Planner`.
   - No onboarding or edit state remains stuck on screen.
 
+### A4.2. Edit-subject confidence changes persist and affect Today
+
+- Setup:
+  - Open `Today`.
+  - Use an already-selected subject such as `Computer Science`.
+- Steps:
+  - Click `Edit subjects`.
+  - Expand the already-selected subject.
+  - Change confidence to `1`.
+  - Click `Save changes`.
+  - Return to `Today`.
+  - Expand the same subject.
+- Expected:
+  - The save succeeds for an already-selected subject.
+  - The subject does not silently keep its old confidence.
+  - Expanded topic dots reflect the new lower confidence.
+  - Topics from that offering rise appropriately in weak-first ordering / planner priority.
+  - No deselect/re-add workaround is needed for the confidence change to take effect.
+
 ### A5. Full JSON seed cold-start sanity check
 
 - Setup:
@@ -773,6 +792,54 @@ updateAppState((app) => {
 - Expected:
   - No fake “Review mistakes” workflow is implied.
   - Status copy should not read like duplicate confidence text.
+
+### E6. Topic score changes when onboarding/edit confidence changes
+
+- Expected:
+  - Lowering a subject confidence increases weakness for all topics in that offering.
+  - Raising a subject confidence decreases weakness for all topics in that offering.
+  - Confidence is only part of topic score:
+    - performance has stronger weight than confidence
+    - urgency and recency still affect planner order
+  - On `Today`, expanded subject lists should visibly respond to the confidence change with weaker topics rising earlier in the list.
+
+### E6.1. Lower confidence pushes topics upward
+
+- Setup:
+  - Pick a selected subject with visible topics on `Today`.
+- Steps:
+  - Change confidence to `1` in `Edit subjects`.
+  - Save.
+  - Return to `Today` and expand the subject.
+- Expected:
+  - Topics appear weaker than before.
+  - Weakest topics rise toward the top of the expanded list.
+  - Dot display reflects the lower confidence.
+
+### E6.2. Higher confidence softens topic priority
+
+- Setup:
+  - Use the same subject after `E6.1`.
+- Steps:
+  - Change confidence to `5`.
+  - Save.
+  - Return to `Today` and expand the subject.
+- Expected:
+  - Topics no longer appear as weak as in `E6.1`.
+  - Stronger topics can fall lower in the weak-first list.
+  - Dot display reflects higher confidence.
+
+### E6.3. Confidence does not override bad performance
+
+- Setup:
+  - Use a subject where at least one topic has clearly weaker recent performance than others.
+- Steps:
+  - Set overall subject confidence high.
+  - Return to `Today`.
+- Expected:
+  - A poor-performance topic can still stay near the top.
+  - High confidence alone should not hide a genuinely weak topic.
+  - This confirms confidence influences score, but does not replace performance.
 
 ## Section F0. Persistence And Recovery Edge Cases
 

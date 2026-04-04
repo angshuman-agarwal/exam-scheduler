@@ -97,12 +97,25 @@ test.describe('desktop shell', () => {
     await openWithState(page, onboardedState(), '/#home')
 
     const rail = page.getByTestId('desktop-left-rail')
+    const focusCard = page.getByTestId('desktop-focus-card')
 
     await expect(rail).toBeVisible()
     await expect(page.getByTestId('mobile-bottom-nav')).toHaveCount(0)
     await expect(page.getByTestId('desktop-nav-home')).toBeVisible()
     await expect(rail.getByRole('navigation', { name: 'Desktop navigation' })).toBeVisible()
     await expect(page.getByTestId('desktop-nav-home')).toHaveAttribute('aria-current', 'page')
+    await expect(focusCard).toBeVisible()
+    await expect(focusCard).toContainText('Stay on track')
+    await expect(focusCard).toContainText('Keep your plan, progress, and assistant within one focused desktop workspace.')
+
+    const railBox = await rail.boundingBox()
+    const focusCardBox = await focusCard.boundingBox()
+    expect(railBox).not.toBeNull()
+    expect(focusCardBox).not.toBeNull()
+    if (railBox && focusCardBox) {
+      expect(focusCardBox.x).toBeGreaterThan(railBox.x + 4)
+      expect(focusCardBox.x + focusCardBox.width).toBeLessThan(railBox.x + railBox.width - 4)
+    }
   })
 
   test('desktop left rail navigates between home, today, and progress', async ({ page }) => {
