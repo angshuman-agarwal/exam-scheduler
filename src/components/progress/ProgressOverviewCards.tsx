@@ -1,6 +1,18 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { recencyLabel, type LastSessionSummary, type StudyVelocitySeries } from './analytics'
 
+export interface PaperAttemptDigestAttempt {
+  id: string
+  detail: string
+}
+
+export interface PaperAttemptDigestGroup {
+  key: string
+  title: string
+  latestAttempt: PaperAttemptDigestAttempt
+  olderAttempts: PaperAttemptDigestAttempt[]
+}
+
 // Apple-like card: pure white, precise shadow stack, full opacity
 function cardClassName() {
   return [
@@ -247,38 +259,187 @@ export function TotalStudiedCard({
 export function PapersAttemptedCard({
   totalAttempts,
   weeklyAttempts,
+  groups,
 }: {
   totalAttempts: number
   weeklyAttempts: number
+  groups: PaperAttemptDigestGroup[]
 }) {
   const accentText = weeklyAttempts > 0 ? `+${weeklyAttempts} this week` : 'No papers this week'
-  return (
-    <article data-testid="progress-papers-attempted-card" className={`${cardClassName()} relative`}>
-      <div className="flex items-start justify-between">
-        <div className="grid h-12 w-12 place-items-center rounded-[16px] bg-[linear-gradient(180deg,#fff5f1_0%,#ffe3d8_100%)] text-[#d9604a] shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_12px_26px_rgba(217,96,74,0.12)]">
-          <svg className="h-[1.72rem] w-[1.72rem]" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-            <path d="M30 62H16a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v58a1 1 0 0 1-1 1Z" fill="#FEBC00" />
-            <path d="M30 2h-1v44a14 14 0 0 1-14 14v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z" fill="#EDAA03" />
-            <path d="M15 7h7v2h-7V7Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Z" fill="#F74E0C" />
-            <path d="M33 21h12v32H33V21Z" fill="#F74E0C" />
-            <path d="M37 21h4v32h-4V21Z" fill="#FEBC00" />
-            <path d="M33 15h12v6H33v-6Z" fill="#DFEAEF" />
-            <path d="M35 15h-2v6h12v-2h-6a4 4 0 0 1-4-4Z" fill="#C3D6DD" />
-            <path d="M39 8a6 6 0 0 1 6 6v1H33v-1a6 6 0 0 1 6-6Z" fill="#F74E0C" />
-            <path d="M40 8.09A5.967 5.967 0 0 0 33 14v1h2v-1a6 6 0 0 1 5-5.91Z" fill="#E03A07" />
-            <path d="M40.39 60h-2.78L33 53h12l-4.61 7Z" fill="#F7D694" />
-            <path d="M40.39 60 39 62l-1.39-2h2.78Z" fill="#F74E0C" />
-          </svg>
-        </div>
-        <span className="text-[11px] font-semibold text-[#d9604a]">{accentText}</span>
-      </div>
+  const [showMobilePopup, setShowMobilePopup] = useState(false)
 
-      <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400">Papers Attempted</p>
-      <div className="mt-0.5 flex items-baseline gap-1.5">
-        <strong className="text-[2.35rem] font-bold leading-none tracking-[-0.04em] text-gray-900 sm:text-[2.6rem]">{totalAttempts}</strong>
+  const renderScoreContent = (scoreStr: string) => {
+    if (scoreStr.startsWith('Raw Marks ')) {
+      return (
+        <>
+          <span className="font-semibold text-gray-400">Marks </span>
+          <span className="font-bold text-gray-600">{scoreStr.slice('Raw Marks '.length)}</span>
+        </>
+      )
+    }
+    return <span className="font-bold text-gray-600">{scoreStr}</span>
+  }
+
+  const renderGroup = (group: PaperAttemptDigestGroup, scope: 'desktop' | 'mobile') => {
+    if (scope === 'desktop') {
+      const renderAttemptRow = (attempt: PaperAttemptDigestAttempt, testId?: string) => {
+        const parts = attempt.detail.split(' · ')
+        const date = parts[0] ?? attempt.detail
+        const score = parts.slice(1).join(' · ')
+        return (
+          <div
+            key={attempt.id}
+            data-testid={testId}
+            className="flex items-baseline gap-2"
+          >
+            <span className="w-10 shrink-0 text-[10px] font-semibold tabular-nums text-gray-400">{date}</span>
+            <span className="whitespace-nowrap text-[10.5px] tabular-nums">{renderScoreContent(score || attempt.detail)}</span>
+          </div>
+        )
+      }
+
+      return (
+        <div
+          key={`${scope}-${group.key}`}
+          data-testid="progress-papers-attempted-summary-row"
+          className="min-w-0"
+        >
+          <p className="text-[12px] font-semibold leading-5 text-gray-900">{group.title}</p>
+          <div className="mt-0.5 space-y-0.5">
+            {renderAttemptRow(group.latestAttempt)}
+            {group.olderAttempts.map((attempt) => renderAttemptRow(attempt, 'progress-papers-attempted-desktop-attempt'))}
+          </div>
+        </div>
+      )
+    }
+
+    const renderMobileAttemptRow = (attempt: PaperAttemptDigestAttempt, testId?: string) => {
+      const parts = attempt.detail.split(' · ')
+      const date = parts[0] ?? attempt.detail
+      const score = parts.slice(1).join(' · ')
+      return (
+        <div
+          key={attempt.id}
+          data-testid={testId}
+          className="flex items-baseline gap-2"
+        >
+          <span className="w-10 shrink-0 text-[10px] font-semibold tabular-nums text-gray-400">{date}</span>
+          <span className="text-[10.5px] tabular-nums">{renderScoreContent(score || attempt.detail)}</span>
+        </div>
+      )
+    }
+
+    return (
+      <div
+        key={`${scope}-${group.key}`}
+        data-testid="progress-papers-attempted-popup-row"
+        className="min-w-0"
+      >
+        <p className="text-[12px] font-semibold leading-5 text-gray-900">{group.title}</p>
+        <div className="mt-0.5 space-y-0.5">
+          {renderMobileAttemptRow(group.latestAttempt)}
+          {group.olderAttempts.map((attempt) => renderMobileAttemptRow(attempt, 'progress-papers-attempted-popup-expanded-attempts'))}
+        </div>
       </div>
-      <p className="mt-auto pt-2 text-[12px] leading-5 text-gray-400">Full papers logged</p>
-    </article>
+    )
+  }
+
+  return (
+    <>
+      <article data-testid="progress-papers-attempted-card" className={`${cardClassName()} relative`}>
+        <div className="flex h-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 sm:max-w-[10rem]">
+            <div className="flex items-start justify-between gap-3 sm:block">
+              <div className="grid h-12 w-12 place-items-center rounded-[16px] bg-[linear-gradient(180deg,#fff5f1_0%,#ffe3d8_100%)] text-[#d9604a] shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_12px_26px_rgba(217,96,74,0.12)]">
+                <svg className="h-[1.72rem] w-[1.72rem]" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                  <path d="M30 62H16a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v58a1 1 0 0 1-1 1Z" fill="#FEBC00" />
+                  <path d="M30 2h-1v44a14 14 0 0 1-14 14v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z" fill="#EDAA03" />
+                  <path d="M15 7h7v2h-7V7Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Zm0 6h7v2h-7v-2Z" fill="#F74E0C" />
+                  <path d="M33 21h12v32H33V21Z" fill="#F74E0C" />
+                  <path d="M37 21h4v32h-4V21Z" fill="#FEBC00" />
+                  <path d="M33 15h12v6H33v-6Z" fill="#DFEAEF" />
+                  <path d="M35 15h-2v6h12v-2h-6a4 4 0 0 1-4-4Z" fill="#C3D6DD" />
+                  <path d="M39 8a6 6 0 0 1 6 6v1H33v-1a6 6 0 0 1 6-6Z" fill="#F74E0C" />
+                  <path d="M40 8.09A5.967 5.967 0 0 0 33 14v1h2v-1a6 6 0 0 1 5-5.91Z" fill="#E03A07" />
+                  <path d="M40.39 60h-2.78L33 53h12l-4.61 7Z" fill="#F7D694" />
+                  <path d="M40.39 60 39 62l-1.39-2h2.78Z" fill="#F74E0C" />
+                </svg>
+              </div>
+              <span className="text-[11px] font-semibold text-[#d9604a] sm:hidden">{accentText}</span>
+            </div>
+
+            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400">Papers Attempted</p>
+            <div className="mt-0.5 flex items-baseline gap-1.5">
+              <strong className="text-[2.35rem] font-bold leading-none tracking-[-0.04em] text-gray-900 sm:text-[2.6rem]">{totalAttempts}</strong>
+            </div>
+            {groups.length > 0 ? (
+              <button
+                type="button"
+                data-testid="progress-papers-attempted-view-details"
+                onClick={() => setShowMobilePopup(true)}
+                className="mt-3 inline-flex items-center rounded-full bg-[linear-gradient(180deg,#2f7cff,#1f63d8)] px-3 py-1.5 text-[11px] font-semibold text-white shadow-[0_10px_20px_rgba(37,95,216,0.22)] transition-transform hover:translate-y-[-1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f7cff]/25 sm:hidden"
+              >
+                View paper details
+              </button>
+            ) : null}
+          </div>
+
+          {groups.length > 0 ? (
+            <div className="hidden min-w-0 flex-1 sm:flex sm:flex-col sm:items-end">
+              <span className="text-[11px] font-semibold text-[#d9604a]">{accentText}</span>
+              <div className="relative mt-4 w-fit">
+                <div
+                  data-testid="progress-papers-attempted-summary"
+                  className="max-h-[9.5rem] overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
+                  <div className="space-y-3 pb-6">
+                    {groups.map((group) => renderGroup(group, 'desktop'))}
+                  </div>
+                </div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent" />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </article>
+
+      {showMobilePopup ? (
+        <div
+          data-testid="progress-papers-attempted-popup"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.24)] px-4 py-6 backdrop-blur-[2px]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Paper attempt details"
+        >
+          <div className="w-full max-w-md rounded-[1.5rem] border border-black/[0.06] bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.18)] sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-[1rem] font-bold tracking-[-0.03em] text-gray-900">{totalAttempts} Papers Attempted</h3>
+              </div>
+              <button
+                type="button"
+                data-testid="progress-papers-attempted-popup-close"
+                onClick={() => setShowMobilePopup(false)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.05] text-[16px] text-gray-500 transition-colors hover:bg-black/[0.08] hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f7cff]/25"
+                aria-label="Close paper details"
+              >
+                ×
+              </button>
+            </div>
+            <div className="relative mt-4">
+              <div className="max-h-[60vh] overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="space-y-3 pb-6">
+                  {groups.length > 0 ? groups.map((group) => renderGroup(group, 'mobile')) : (
+                    <p className="text-[13px] leading-6 text-gray-500">No recent paper attempts yet.</p>
+                  )}
+                </div>
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent" />
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   )
 }
 
@@ -598,6 +759,7 @@ export function ProgressCardsRow({
   streakDeltaText,
   paperAttemptsCount,
   weeklyPaperAttemptsCount,
+  paperAttemptDigest,
   totalStudyTime,
   lastSession,
   today,
@@ -611,6 +773,7 @@ export function ProgressCardsRow({
   streakDeltaText: string
   paperAttemptsCount: number
   weeklyPaperAttemptsCount: number
+  paperAttemptDigest: PaperAttemptDigestGroup[]
   totalStudyTime: number
   lastSession: LastSessionSummary
   today: Date
@@ -624,7 +787,7 @@ export function ProgressCardsRow({
     <section className="grid grid-cols-2 items-stretch gap-2.5 sm:gap-3">
       <DailyStreakCard streak={streak} deltaText={streakDeltaText} />
       <TotalStudiedCard totalStudyTime={totalStudyTime} />
-      <PapersAttemptedCard totalAttempts={paperAttemptsCount} weeklyAttempts={weeklyPaperAttemptsCount} />
+      <PapersAttemptedCard totalAttempts={paperAttemptsCount} weeklyAttempts={weeklyPaperAttemptsCount} groups={paperAttemptDigest} />
       <LastSessionCard summary={lastSession} today={today} todayStudyTotal={todayStudyTotal} />
       <StudyVelocityCard value={velocityValue} series={velocitySeries} selectedDay={selectedDay} onSelectDay={onSelectVelocityDay} />
     </section>

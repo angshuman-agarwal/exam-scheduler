@@ -14,7 +14,7 @@ import {
   studyVelocityDeltaPercent,
   type ProgressTableFilter,
 } from './progress/analytics'
-import { ProgressCardsRow } from './progress/ProgressOverviewCards'
+import { ProgressCardsRow, type PaperAttemptDigestGroup } from './progress/ProgressOverviewCards'
 import { ProgressCalendarCard } from './progress/ProgressCalendarCard'
 import { ProgressTopicBreakdown } from './progress/ProgressTopicBreakdown'
 
@@ -113,6 +113,75 @@ function formatSelectedDateLabel(dateKey: string) {
   })}`
 }
 
+function formatPaperAttemptDate(dateKey: string) {
+  return new Date(`${dateKey}T00:00:00`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
+function formatPaperAttemptDetail(attempt: PaperAttempt) {
+  const dateLabel = formatPaperAttemptDate(attempt.date)
+  if (attempt.rawMark !== undefined && attempt.totalMarks !== undefined && attempt.totalMarks > 0) {
+    const percent = Math.round((attempt.rawMark / attempt.totalMarks) * 100)
+    return `${dateLabel} · Raw Marks ${attempt.rawMark}/${attempt.totalMarks} · ${percent}%`
+  }
+  return `${dateLabel} · Attempt logged`
+}
+
+function buildPaperAttemptDigest(
+  attempts: PaperAttempt[],
+  papers: Paper[],
+  offerings: Offering[],
+  subjects: Subject[],
+): PaperAttemptDigestGroup[] {
+  const paperMap = new Map(papers.map((paper) => [paper.id, paper]))
+  const offeringMap = new Map(offerings.map((offering) => [offering.id, offering]))
+  const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]))
+  const byPaper = new Map<string, PaperAttempt[]>()
+
+  for (const attempt of attempts) {
+    const existing = byPaper.get(attempt.paperId) ?? []
+    existing.push(attempt)
+    byPaper.set(attempt.paperId, existing)
+  }
+
+  return Array.from(byPaper.entries())
+    .map(([paperId, groupedAttempts]) => {
+      const sortedAttempts = [...groupedAttempts].sort(
+        (a, b) => b.timestamp - a.timestamp || b.date.localeCompare(a.date),
+      )
+      const latestAttempt = sortedAttempts[0]
+      const paper = paperMap.get(paperId)
+      if (!paper || !latestAttempt) return null
+      const offering = offeringMap.get(paper.offeringId)
+      if (!offering) return null
+      const subject = subjectMap.get(offering.subjectId)
+      if (!subject) return null
+
+      return {
+        key: paperId,
+        title: `${subject.name} · ${paper.name}`,
+        latestAttempt: {
+          id: latestAttempt.id,
+          detail: formatPaperAttemptDetail(latestAttempt),
+        },
+        olderAttempts: sortedAttempts.slice(1).map((attempt) => ({
+          id: attempt.id,
+          detail: formatPaperAttemptDetail(attempt),
+        })),
+        latestTimestamp: latestAttempt.timestamp,
+      }
+    })
+    .filter((group): group is PaperAttemptDigestGroup & { latestTimestamp: number } => group !== null)
+    .sort((a, b) => b.latestTimestamp - a.latestTimestamp)
+    .map((group) => {
+      const { latestTimestamp, ...rest } = group
+      void latestTimestamp
+      return rest
+    })
+}
+
 export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSession, onPlanNowTopic }: ProgressProps) {
   const { studyMode, topics, sessions, paperAttempts, subjects, papers, offerings, selectedOfferingIds, notes } = useLocalProgressApi()
   const [filter, setFilter] = useState<ProgressTableFilter>('priority-now')
@@ -177,6 +246,10 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
       return attemptDate > cutoff
     }).length,
     [selectedPaperAttempts, today],
+  )
+  const paperAttemptDigest = useMemo(
+    () => buildPaperAttemptDigest(selectedPaperAttempts, selectedPapers, selectedOfferings, subjects),
+    [selectedOfferings, selectedPaperAttempts, selectedPapers, subjects],
   )
   const totalStudyTime = useMemo(
     () =>
@@ -369,6 +442,7 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
                 streakDeltaText={streakDeltaText(selectedSessions, selectedPaperAttempts, today)}
                 paperAttemptsCount={paperAttemptsCount}
                 weeklyPaperAttemptsCount={weeklyPaperAttemptsCount}
+                paperAttemptDigest={paperAttemptDigest}
                 totalStudyTime={totalStudyTime}
                 lastSession={lastSession}
                 today={today}
