@@ -6,6 +6,7 @@ import {
   progressExpandedNotes,
   progressMixedStatuses,
   progressNoFutureExams,
+  progressPaperDigest,
   progressPaperPractice,
   progressSessionContext,
   progressPlanNowSwap,
@@ -42,6 +43,9 @@ test('2. Active progress renders the analytics row and compact calendar', async 
   await expect(page.getByTestId('progress-papers-attempted-card')).toContainText('Papers Attempted')
   await expect(page.getByTestId('progress-papers-attempted-card')).toContainText('0')
   await expect(page.getByTestId('progress-papers-attempted-card')).toContainText('No papers this week')
+  await expect(page.getByText('Full papers logged')).toHaveCount(0)
+  await expect(page.getByTestId('progress-papers-attempted-summary')).toHaveCount(0)
+  await expect(page.getByText('Recent paper results')).toHaveCount(0)
   await expect(lastSessionCard).toContainText('Last Session')
   await expect(lastSessionCard).toContainText('Today')
   await expect(page.getByTestId('progress-last-session-today-total')).toHaveText('20m')
@@ -52,6 +56,34 @@ test('2. Active progress renders the analytics row and compact calendar', async 
   await expect(page.getByTestId('progress-study-velocity-card').locator('[data-testid="progress-velocity-bar"]:visible')).toHaveCount(14)
   await expect(calendar).toBeVisible()
   await expect(page.getByTestId('progress-day-detail')).toHaveCount(0)
+})
+
+test('2b. Papers Attempted card shows recent paper results inline on desktop and expands repeated attempts', async ({ page }) => {
+  await openProgress(page, progressPaperDigest(), FROZEN_DATE)
+
+  const card = page.getByTestId('progress-papers-attempted-card')
+  const summary = page.getByTestId('progress-papers-attempted-summary')
+
+  await expect(card).toContainText('Papers Attempted')
+  await expect(card).toContainText('5')
+  await expect(card).toContainText('+5 this week')
+  await expect(card).not.toContainText('Full papers logged')
+  await expect(summary).toContainText('Geography · Paper 1')
+  await expect(summary).toContainText('15 Apr')
+  await expect(summary).toContainText('Marks 47/80 · 59%')
+  await expect(summary).toContainText('12 Apr')
+  await expect(summary).toContainText('Marks 38/80 · 48%')
+  await expect(summary).toContainText('Maths · Paper 1')
+  await expect(summary).toContainText('14 Apr')
+  await expect(summary).toContainText('Marks 72/80 · 90%')
+  await expect(summary).toContainText('Biology · Paper 2')
+  await expect(summary).toContainText('13 Apr')
+  await expect(summary).toContainText('Marks 41/70 · 59%')
+  await expect(summary).toContainText('Geography · Paper 2')
+  await expect(summary).toContainText('10 Apr')
+  await expect(summary).toContainText('Marks 53/88 · 60%')
+  await expect(card.getByTestId('progress-papers-attempted-more-pill')).toHaveCount(0)
+  await expect(card).not.toContainText('+1 more paper')
 })
 
 test('3. Clicking a studied date filters the topic grid and toggles the reviewed-date lens', async ({ page }) => {
@@ -266,6 +298,44 @@ test('15. Mobile Study Velocity applies and clears the reviewed-date lens withou
   await expect(page.getByTestId('progress-filter-recently-reviewed')).toContainText('Recently Reviewed')
   await expect(page.getByTestId('progress-clear-reviewed-date')).toHaveCount(0)
   await expect(page.getByTestId('progress-filter-priority-now')).toBeEnabled()
+})
+
+test('15d. Mobile Papers Attempted card opens a popup with grouped paper details', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openProgress(page, progressPaperDigest(), FROZEN_DATE)
+
+  const card = page.getByTestId('progress-papers-attempted-card')
+  await expect(card).toContainText('Papers Attempted')
+  await expect(card).toContainText('5')
+  await expect(card.getByTestId('progress-papers-attempted-view-details')).toHaveText('View paper details')
+
+  await card.getByTestId('progress-papers-attempted-view-details').click()
+
+  const popup = page.getByTestId('progress-papers-attempted-popup')
+  await expect(popup).toBeVisible()
+  await expect(popup).toContainText('5 Papers Attempted')
+  await expect(popup).not.toContainText('+5 this week')
+  await expect(popup).not.toContainText('5 total')
+  await expect(popup).toContainText('Geography · Paper 1')
+  await expect(popup).toContainText('15 Apr')
+  await expect(popup).toContainText('Marks 47/80 · 59%')
+  await expect(popup).toContainText('Maths · Paper 1')
+  await expect(popup).toContainText('14 Apr')
+  await expect(popup).toContainText('Marks 72/80 · 90%')
+  await expect(popup).toContainText('Biology · Paper 2')
+  await expect(popup).toContainText('13 Apr')
+  await expect(popup).toContainText('Marks 41/70 · 59%')
+  await expect(popup).toContainText('Geography · Paper 2')
+  await expect(popup).toContainText('10 Apr')
+  await expect(popup).toContainText('Marks 53/88 · 60%')
+
+  // Older attempts are shown inline without a pill — verify the second Geography attempt is already visible
+  const popupGeoRow = page.getByTestId('progress-papers-attempted-popup-row').filter({ hasText: 'Geography · Paper 1' })
+  await expect(popupGeoRow.getByTestId('progress-papers-attempted-popup-expanded-attempts')).toContainText('12 Apr')
+  await expect(popupGeoRow.getByTestId('progress-papers-attempted-popup-expanded-attempts')).toContainText('Marks 38/80 · 48%')
+
+  await page.getByTestId('progress-papers-attempted-popup-close').click()
+  await expect(popup).toHaveCount(0)
 })
 
 test('15b. Mobile Study Velocity dots and swipe switch between current and previous week', async ({ page }) => {

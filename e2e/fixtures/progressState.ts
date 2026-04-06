@@ -375,6 +375,43 @@ export function progressPaperPractice(): PersistedState {
   return s
 }
 
+export function progressPaperDigest(): PersistedState {
+  const s = baseState(['geo-aqa', 'bio-aqa', 'maths-edexcel'])
+  setOfferingExamDate(s, 'geo-aqa', '2026-04-20')
+  setOfferingExamDate(s, 'bio-aqa', '2026-04-26')
+  setOfferingExamDate(s, 'maths-edexcel', '2026-04-28')
+
+  s.paperAttempts = [
+    {
+      ...makePaperAttempt('geo-p1', '2026-04-15', 3, 5400, 47, 80),
+      id: 'geo-p1-latest',
+      timestamp: new Date('2026-04-15T18:00:00').getTime(),
+    },
+    {
+      ...makePaperAttempt('maths-p1', '2026-04-14', 5, 6300, 72, 80),
+      id: 'maths-p1-latest',
+      timestamp: new Date('2026-04-14T18:30:00').getTime(),
+    },
+    {
+      ...makePaperAttempt('bio-p2', '2026-04-13', 3, 4800, 41, 70),
+      id: 'bio-p2-latest',
+      timestamp: new Date('2026-04-13T17:45:00').getTime(),
+    },
+    {
+      ...makePaperAttempt('geo-p1', '2026-04-12', 2, 5100, 38, 80),
+      id: 'geo-p1-older',
+      timestamp: new Date('2026-04-12T09:30:00').getTime(),
+    },
+    {
+      ...makePaperAttempt('geo-p2', '2026-04-10', 4, 5600, 53, 88),
+      id: 'geo-p2-latest',
+      timestamp: new Date('2026-04-10T16:15:00').getTime(),
+    },
+  ]
+
+  return s
+}
+
 // 8. No weak spots — all topics have high perf, future exams exist
 export function progressNoWeakSpots(): PersistedState {
   const s = baseState(['cs-aqa'])
