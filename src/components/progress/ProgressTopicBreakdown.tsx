@@ -11,6 +11,14 @@ function formatCompactStudyTime(totalSeconds: number): string | null {
   return minutes === 0 ? `${totalHours}h` : `${totalHours}h ${minutes}m`
 }
 
+function paperAttemptScoreLabel(row: ProgressTableRow): string | null {
+  if (row.kind !== 'paper') return null
+  const { rawMark, totalMarks } = row.attempt
+  if (rawMark === undefined || totalMarks === undefined || totalMarks <= 0) return null
+  const percent = Math.round((rawMark / totalMarks) * 100)
+  return `${percent}% (${rawMark}/${totalMarks})`
+}
+
 function SessionTrendPill({
   score,
   trend,
@@ -30,12 +38,12 @@ function SessionTrendPill({
   return (
     <span className="mt-1.5 block text-[10px] text-gray-400">
       <span data-testid="progress-session-trend-pill" className="inline-flex items-center gap-0.5">
-        Last: <span className="ml-0.5 font-medium text-gray-500">{pct}%</span>
+        Last Topic Confidence Score: <span className="ml-0.5 font-semibold text-gray-500">{pct}%</span>
         <span className={`text-[11px] font-bold ${arrowColor}`}>{arrow}</span>
       </span>
       {timeLabel ? (
         <span data-testid="progress-study-time-label" className="mt-0.5 block">
-          Studied <span className="font-medium text-gray-500">{timeLabel}</span>
+          Studied <span className="font-semibold text-gray-500">{timeLabel}</span>
         </span>
       ) : null}
     </span>
@@ -120,6 +128,7 @@ export function ProgressTopicBreakdown({
     ? `${activeNoteRow.subject.name} · ${activeNoteRow.kind === 'paper' ? activeNoteRow.paper.name : activeNoteRow.topic.name}`
     : null
   const activeTaggedTopics = activeNoteRow?.kind === 'paper' ? activeNoteRow.taggedTopics : []
+  const activePaperScoreLabel = activeNoteRow ? paperAttemptScoreLabel(activeNoteRow) : null
 
   return (
     <>
@@ -219,17 +228,19 @@ export function ProgressTopicBreakdown({
                     <>
                       <SessionTrendPill score={row.lastSessionScore} trend={row.sessionTrend} totalDurationSeconds={row.totalDurationSeconds} />
                       <span data-testid="progress-mastery-percent" className="mt-0.5 block text-[10px] text-gray-400">
-                        {row.masteryPercent}% mastery
+                        Overall <span className="font-semibold text-gray-500">{row.masteryPercent}%</span> mastery
                       </span>
                     </>
                   ) : row.lastScorePercent !== null ? (
                     <>
-                      <span data-testid="progress-paper-score" className="mt-1 block text-[10px] text-gray-400">
-                        Last: <span className="font-medium text-gray-500">{row.lastScorePercent}%</span>
-                      </span>
                       {formatCompactStudyTime(row.totalDurationSeconds) ? (
                         <span data-testid="progress-study-time-label" className="mt-0.5 block text-[10px] text-gray-400">
                           Studied <span className="font-medium text-gray-500">{formatCompactStudyTime(row.totalDurationSeconds)}</span>
+                        </span>
+                      ) : null}
+                      {paperAttemptScoreLabel(row) ? (
+                        <span data-testid="progress-paper-score" className="mt-0.5 block text-[10px] text-gray-400">
+                          Raw Paper Marks : <span className="font-semibold text-gray-500">{paperAttemptScoreLabel(row)}</span>
                         </span>
                       ) : null}
                       {row.attemptCount > 1 ? (
@@ -292,17 +303,19 @@ export function ProgressTopicBreakdown({
                     <>
                       <SessionTrendPill score={row.lastSessionScore} trend={row.sessionTrend} totalDurationSeconds={row.totalDurationSeconds} />
                       <span data-testid="progress-mastery-percent" className="mt-0.5 block text-[10px] text-gray-400">
-                        {row.masteryPercent}% mastery
+                        Overall <span className="font-semibold text-gray-500">{row.masteryPercent}%</span> mastery
                       </span>
                     </>
                   ) : row.lastScorePercent !== null ? (
                     <>
-                      <span data-testid="progress-paper-score" className="mt-0.5 block text-[10px] text-gray-400">
-                        Last: {row.lastScorePercent}%
-                      </span>
                       {formatCompactStudyTime(row.totalDurationSeconds) ? (
                         <span data-testid="progress-study-time-label" className="mt-0.5 block text-[10px] text-gray-400">
                           Studied <span className="font-medium text-gray-500">{formatCompactStudyTime(row.totalDurationSeconds)}</span>
+                        </span>
+                      ) : null}
+                      {paperAttemptScoreLabel(row) ? (
+                        <span data-testid="progress-paper-score" className="mt-0.5 block text-[10px] text-gray-400">
+                          Raw Paper Marks : <span className="font-semibold text-gray-500">{paperAttemptScoreLabel(row)}</span>
                         </span>
                       ) : null}
                       {row.attemptCount > 1 ? (
@@ -352,6 +365,11 @@ export function ProgressTopicBreakdown({
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400">Saved Note</p>
                 <h3 className="mt-1 text-[1rem] font-bold tracking-[-0.03em] text-gray-900">{activeNoteTitle}</h3>
+                {activePaperScoreLabel ? (
+                  <p data-testid="progress-note-overlay-paper-score" className="mt-1 text-[12px] font-medium text-gray-500">
+                    Raw Paper Marks : {activePaperScoreLabel}
+                  </p>
+                ) : null}
               </div>
               <button
                 type="button"
