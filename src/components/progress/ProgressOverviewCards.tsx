@@ -293,7 +293,11 @@ export function PapersAttemptedCard({
             className="flex items-baseline gap-2"
           >
             <span className="w-10 shrink-0 text-[10px] font-semibold tabular-nums text-gray-400">{date}</span>
-            <span className="whitespace-nowrap text-[10.5px] tabular-nums">{renderScoreContent(score || attempt.detail)}</span>
+            {score ? (
+              <span className="whitespace-nowrap text-[10.5px] tabular-nums">{renderScoreContent(score)}</span>
+            ) : (
+              <span className="text-[10.5px] italic text-gray-400">No marks logged</span>
+            )}
           </div>
         )
       }
@@ -324,7 +328,11 @@ export function PapersAttemptedCard({
           className="flex items-baseline gap-2"
         >
           <span className="w-10 shrink-0 text-[10px] font-semibold tabular-nums text-gray-400">{date}</span>
-          <span className="text-[10.5px] tabular-nums">{renderScoreContent(score || attempt.detail)}</span>
+          {score ? (
+            <span className="text-[10.5px] tabular-nums">{renderScoreContent(score)}</span>
+          ) : (
+            <span className="text-[10.5px] italic text-gray-400">No marks logged</span>
+          )}
         </div>
       )
     }

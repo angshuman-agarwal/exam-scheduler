@@ -126,7 +126,7 @@ function formatPaperAttemptDetail(attempt: PaperAttempt) {
     const percent = Math.round((attempt.rawMark / attempt.totalMarks) * 100)
     return `${dateLabel} · Raw Marks ${attempt.rawMark}/${attempt.totalMarks} · ${percent}%`
   }
-  return `${dateLabel} · Attempt logged`
+  return dateLabel
 }
 
 function buildPaperAttemptDigest(
