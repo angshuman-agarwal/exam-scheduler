@@ -1,7 +1,7 @@
 {
   "name": "exam-scheduler",
   "private": true,
-  "version": "1.9.7",
+  "version": "1.9.8",
   "type": "module",
   "scripts": {
     "predev": "node scripts/generate-version.js",
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "idb": "^8.0.3",
+    "posthog-js": "^1.365.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.2",

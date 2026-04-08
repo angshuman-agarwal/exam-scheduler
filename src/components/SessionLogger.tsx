@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { usePostHog } from 'posthog-js/react'
 import { useAppStore } from '../stores/app.store'
 import { useTimerStore } from '../stores/timer.store'
 import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
@@ -225,6 +226,7 @@ function ConfidenceDots({ value }: { value: number }) {
 
 export default function SessionLogger({ scored, source, scheduleItemId, onBack, onGoToProgress }: SessionLoggerProps) {
   const { topic, subject, offering } = scored
+  const posthog = usePostHog()
   const logSession = useAppStore((s) => s.logSession)
   const addNote = useAppStore((s) => s.addNote)
   const { studyMode } = useLocalAccountApi()
@@ -330,11 +332,12 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
     if (confirmAction === 'stop') {
       stop()
     } else if (confirmAction === 'discard') {
+      posthog?.capture('session_discard', { subject: subject.name, topic: topic.name })
       discard()
       onBack()
     }
     setConfirmAction(null)
-  }, [confirmAction, stop, discard, onBack])
+  }, [confirmAction, stop, discard, onBack, posthog, subject.name, topic.name])
 
   const handleCancelConfirm = useCallback(() => {
     setConfirmAction(null)
@@ -346,6 +349,12 @@ export default function SessionLogger({ scored, source, scheduleItemId, onBack, 
     const rawScore = SCORE_MAP[confidenceLevel - 1]
     const durationSeconds = Math.floor(getElapsedMs() / 1000)
     const safeDuration = durationSeconds > 10800 ? undefined : durationSeconds
+    posthog?.capture('session_complete', {
+      subject: subject.name,
+      topic: topic.name,
+      confidence: confidenceLevel,
+      duration_seconds: safeDuration ?? 0,
+    })
     logSession(topic.id, rawScore, new Date(), safeDuration, source)
     if (noteText.trim()) {
       addNote(topic.id, noteText.trim())

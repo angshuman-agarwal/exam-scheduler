@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { usePostHog } from 'posthog-js/react'
 import { useAppStore } from '../stores/app.store'
 import { useTimerStore } from '../stores/timer.store'
 import { localSubjectsApi } from '../lib/api/local/subjects'
@@ -17,6 +18,7 @@ export interface SubjectBrowseContext {
 }
 
 export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions) {
+  const posthog = usePostHog()
   const [sessionOverride, setSessionOverride] = useState<ActiveSessionState | null>()
   const [activeOffering, setActiveOffering] = useState<Offering | null>(null)
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null)
@@ -91,6 +93,7 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
       navigateTo(nextPage)
     },
     completePlanNowSwap() {
+      posthog?.capture('plan_now_swap')
       setActiveOffering(null)
       setActiveSubject(null)
       setActivePaper(null)
@@ -101,9 +104,11 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
       setEditingSetup(false)
     },
     completeOnboarding() {
+      posthog?.capture('onboarding_complete')
       navigateTo('today')
     },
     goToProgress() {
+      posthog?.capture('navigate_progress')
       setSessionOverride(null)
       setActiveOffering(null)
       setActiveSubject(null)
@@ -112,15 +117,19 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
       navigateTo('progress')
     },
     goToToday() {
+      posthog?.capture('navigate_today')
       navigateTo('today')
     },
     openEditSetup() {
+      posthog?.capture('edit_subjects_open')
       setEditingSetup(true)
     },
     openFeedback() {
+      posthog?.capture('feedback_open')
       setShowFeedback(true)
     },
     openOnboarding() {
+      posthog?.capture('onboarding_open')
       setShowOnboarding(true)
     },
     markRecentlySwappedTopic(topicId: string | null) {
@@ -135,6 +144,7 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
       )
     },
     startSession(scored: ScoredTopic, source: ScheduleSource, scheduleItemId?: string) {
+      posthog?.capture('session_start', { subject: scored.subject.name, topic: scored.topic.name })
       const timerSession = useTimerStore.getState().session
       if (timerSession?.mode === 'stopped' || timerSession?.mode === 'interrupted') {
         useTimerStore.getState().discard()
@@ -148,6 +158,7 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
       source: PaperAttemptSource,
       options?: { selectionRequired?: boolean },
     ) {
+      posthog?.capture('paper_session_start', { subject: subject.name, paper: paper.name })
       const timerSession = useTimerStore.getState().session
       if (timerSession?.mode === 'stopped' || timerSession?.mode === 'interrupted') {
         useTimerStore.getState().discard()
@@ -162,6 +173,7 @@ export function useAppShell({ recoveredSession, navigateTo }: UseAppShellOptions
       })
     },
     startSubjectBrowse(offering: Offering, subject: Subject, paper?: Paper | null, context?: SubjectBrowseContext) {
+      posthog?.capture('subject_browse', { subject: subject.name, offering: offering.label })
       setActiveOffering(offering)
       setActiveSubject(subject)
       setActivePaper(paper ?? null)

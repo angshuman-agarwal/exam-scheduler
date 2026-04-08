@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
+import { usePostHog } from 'posthog-js/react'
 import { useAppStore } from '../stores/app.store'
 import { daysRemaining, examDayDiff, formatExamCountdown, scoreAllTopics, sortTopicsByWeakness, autoFillPlanItems, getPlanningMode, nearestExamDays as calcNearestExamDays } from '../lib/engine'
 import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
@@ -58,6 +59,7 @@ export default function TodayPlan({
   recentlySwappedTopicId,
   onClearRecentlySwappedTopic,
 }: TodayPlanProps) {
+  const posthog = usePostHog()
   const topics = useAppStore((s) => s.topics)
   const papers = useAppStore((s) => s.papers)
   const subjects = useAppStore((s) => s.subjects)
@@ -291,6 +293,7 @@ export default function TodayPlan({
               {hasUserItems && (
                 <button
                   onClick={() => {
+                    posthog?.capture('plan_autofill')
                     onClearRecentlySwappedTopic()
                     plansApi.clearPlan()
                     plansApi.autoFillPlan(today)
@@ -376,7 +379,7 @@ export default function TodayPlan({
                     <>
                       <button
                         type="button"
-                        onClick={() => plansApi.autoFillPlan(today)}
+                        onClick={() => { posthog?.capture('plan_autofill'); plansApi.autoFillPlan(today) }}
                         className="w-full py-2.5 ios-button text-sm"
                       >
                         Create suggested plan
@@ -387,7 +390,7 @@ export default function TodayPlan({
                     <>
                       <button
                         type="button"
-                        onClick={() => plansApi.autoFillPlan(today)}
+                        onClick={() => { posthog?.capture('plan_autofill'); plansApi.autoFillPlan(today) }}
                         className="w-full py-2.5 border border-dashed border-gray-300 text-sm text-system-blue font-medium rounded-xl transition-colors hover:border-black/20 hover:bg-black/5"
                       >
                         Complete plan
@@ -575,7 +578,7 @@ export default function TodayPlan({
                                     <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 shrink-0">In plan</span>
                                   ) : !planFull ? (
                                     <button
-                                      onClick={() => plansApi.addToPlan(s.topic.id, 'suggested', new Date())}
+                                      onClick={() => { posthog?.capture('plan_add_topic', { topic: s.topic.name }); plansApi.addToPlan(s.topic.id, 'suggested', new Date()) }}
                                       className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-500 transition-colors hover:bg-blue-100 hover:border-blue-400 hover:text-blue-600"
                                       aria-label={`Add ${s.topic.name} to plan`}
                                     >
@@ -622,6 +625,7 @@ export default function TodayPlan({
             <button
               onClick={() => {
                 if (window.confirm('Reset everything? This will clear all sessions and return to onboarding.')) {
+                  posthog?.capture('reset_all_data')
                   resetAll()
                 }
               }}

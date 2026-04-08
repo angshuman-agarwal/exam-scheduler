@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { usePostHog } from 'posthog-js/react'
 import { useAppStore } from '../stores/app.store'
 import { useTimerStore } from '../stores/timer.store'
 import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
@@ -179,6 +180,7 @@ export default function PaperSessionLogger({
   onGoToProgress,
   onBrowseTopics,
 }: PaperSessionLoggerProps) {
+  const posthog = usePostHog()
   const { studyMode } = useLocalAccountApi()
   const logPaperAttempt = useAppStore((state) => state.logPaperAttempt)
   const topics = useAppStore((state) => state.topics)
@@ -304,10 +306,17 @@ export default function PaperSessionLogger({
 
   const handleComplete = async () => {
     if (confidence == null) return
+    const durationSeconds = Math.floor(getElapsedMs() / 1000)
+    posthog?.capture('paper_complete', {
+      subject: subject.name,
+      paper: selectedPaper.name,
+      confidence,
+      duration_seconds: durationSeconds,
+    })
     logPaperAttempt(
       selectedPaper.id,
       new Date(),
-      Math.floor(getElapsedMs() / 1000),
+      durationSeconds,
       confidence,
       taggedTopicIds,
       source,
@@ -730,6 +739,7 @@ export default function PaperSessionLogger({
           onConfirm={() => {
             if (confirmAction === 'stop') stop()
             else {
+              posthog?.capture('paper_cancel', { subject: subject.name, paper: selectedPaper.name })
               discard()
               onBack()
             }
