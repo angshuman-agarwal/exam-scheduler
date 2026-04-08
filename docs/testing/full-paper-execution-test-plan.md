@@ -934,6 +934,7 @@ updateAppState((app) => {
   - The card shows the topic score / confidence outcome in the current design.
   - Footer subject/topic label is bold and readable.
   - If the session was today, the card also shows cumulative study time for today.
+  - Clicking a `Study Velocity` bar must not change `Last Session` away from the real current-day context.
 
 ### F4. Last Session card for full paper session
 
@@ -943,6 +944,7 @@ updateAppState((app) => {
   - Subject and paper label is clear.
   - Paper score / confidence appears in the current card design without noisy duplication.
   - If the attempt was today, the card also shows cumulative study time for today.
+  - Clicking a `Study Velocity` bar must not replace the card total with the selected day total.
 
 ### F5. Study velocity includes paper duration
 
@@ -955,6 +957,45 @@ updateAppState((app) => {
 - Expected:
   - The day bar increases based on paper duration.
   - Paper-only study days are not omitted from the graph.
+
+### F5.1. Study Velocity header defaults to a simple weekly total
+
+- Setup:
+  - Have at least one studied day within the visible 14-day window.
+- Steps:
+  - Open `Progress`.
+- Expected:
+  - The top-right Study Velocity header does not show `% vs last week`.
+  - It shows a compact total such as `This week` + `12h 40m`.
+  - The wording is student-readable and stays stable with no bar selected.
+
+### F5.2. Clicking a bar switches Study Velocity into day-inspection mode
+
+- Setup:
+  - Have study activity on at least two different days in the visible 14-day window.
+- Steps:
+  - Open `Progress`.
+  - Click one non-zero `Study Velocity` bar.
+- Expected:
+  - The Study Velocity header switches from the weekly total to the selected day total.
+  - Example pattern:
+    - label: `8 Apr`
+    - value: `2h 12m`
+  - The selected bar remains visually selected until cleared or another bar is chosen.
+
+### F5.3. Clicking a bar scopes grid `Studied` timings to that selected day
+
+- Setup:
+  - Use data where a topic has cumulative study history across multiple days.
+- Steps:
+  - Open `Progress`.
+  - Click a non-zero `Study Velocity` bar for a day with mixed subject activity.
+  - Inspect the visible `Topic Mastery` / breakdown rows.
+- Expected:
+  - The row set is filtered to activity that happened on the selected day.
+  - Each visible row’s `Studied` time reflects only that day’s duration.
+  - Do not sum cumulative historical topic durations when a day bar is active.
+  - The visible row timings should add up to the selected-day total shown in the Study Velocity header.
 
 ### F6. Daily streak increments on paper-only days
 

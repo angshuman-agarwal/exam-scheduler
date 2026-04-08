@@ -12,7 +12,6 @@ import {
   buildProgressTableRows,
   nearestExamDaysForPapers,
   sortProgressTableRows,
-  studyVelocityDeltaPercent,
   type ProgressTableFilter,
 } from './progress/analytics'
 import { ProgressCardsRow, type PaperAttemptDigestGroup } from './progress/ProgressOverviewCards'
@@ -119,6 +118,18 @@ function formatPaperAttemptDate(dateKey: string) {
     day: 'numeric',
     month: 'short',
   })
+}
+
+function formatDateRangeLabel(startKey: string, endKey: string) {
+  const start = new Date(`${startKey}T00:00:00`)
+  const end = new Date(`${endKey}T00:00:00`)
+  const startDay = start.toLocaleDateString('en-GB', { day: 'numeric' })
+  const startMonth = start.toLocaleDateString('en-GB', { month: 'short' })
+  const endDay = end.toLocaleDateString('en-GB', { day: 'numeric' })
+  const endMonth = end.toLocaleDateString('en-GB', { month: 'short' })
+
+  if (startMonth === endMonth) return `${startDay} ${startMonth} - ${endDay} ${endMonth}`
+  return `${startDay} ${startMonth} - ${endDay} ${endMonth}`
 }
 
 function formatPaperAttemptDetail(attempt: PaperAttempt) {
@@ -269,6 +280,34 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
         .reduce((sum, attempt) => sum + attempt.durationSeconds, 0),
     [selectedPaperAttempts, selectedSessions, todayKey],
   )
+  const selectedDayStudyTotal = useMemo(
+    () => {
+      if (!selectedDay) return 0
+      return selectedSessions
+        .filter((session) => session.date === selectedDay)
+        .reduce((sum, session) => sum + (session.durationSeconds ?? 0), 0)
+        + selectedPaperAttempts
+          .filter((attempt) => attempt.date === selectedDay)
+          .reduce((sum, attempt) => sum + attempt.durationSeconds, 0)
+    },
+    [selectedDay, selectedPaperAttempts, selectedSessions],
+  )
+  const visibleRangeStudyTotal = useMemo(() => {
+    const cutoff = new Date(today)
+    cutoff.setDate(cutoff.getDate() - 13)
+    const cutoffKey = getLocalDayKey(cutoff)
+    return selectedSessions
+      .filter((session) => session.date >= cutoffKey && session.date <= todayKey)
+      .reduce((sum, session) => sum + (session.durationSeconds ?? 0), 0)
+      + selectedPaperAttempts
+        .filter((attempt) => attempt.date >= cutoffKey && attempt.date <= todayKey)
+        .reduce((sum, attempt) => sum + attempt.durationSeconds, 0)
+  }, [selectedPaperAttempts, selectedSessions, today, todayKey])
+  const visibleRangeLabel = useMemo(() => {
+    const start = new Date(today)
+    start.setDate(start.getDate() - 13)
+    return formatDateRangeLabel(getLocalDayKey(start), todayKey)
+  }, [today, todayKey])
   const lastSession = useMemo(
     () => buildLastSessionSummary(selectedSessions, selectedTopics, selectedOfferings, subjects, selectedPapers, selectedPaperAttempts),
     [selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects],
@@ -277,7 +316,6 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
     () => buildStudyVelocitySeries(selectedSessions, today, 14, selectedTopics, selectedOfferings, subjects, selectedPaperAttempts, selectedPapers),
     [selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects, today],
   )
-  const velocityDelta = useMemo(() => studyVelocityDeltaPercent(selectedSessions, today, selectedPaperAttempts), [selectedPaperAttempts, selectedSessions, today])
   const progressRows = useMemo(
     () => buildProgressTableRows(selectedTopics, selectedOfferings, subjects, selectedPapers, today, selectedSessions, selectedPaperAttempts, selectedNotes),
     [selectedNotes, selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects, today],
@@ -323,15 +361,37 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
     if (!selectedDay) return sortedRows
     const active = activityByDate.get(selectedDay)
     if (!active || (active.topicIds.size === 0 && active.paperIds.size === 0)) return []
+    const daySessionsByTopic = new Map<string, typeof selectedSessions>()
+    for (const session of selectedSessions) {
+      if (session.date !== selectedDay) continue
+      const existing = daySessionsByTopic.get(session.topicId) ?? []
+      existing.push(session)
+      daySessionsByTopic.set(session.topicId, existing)
+    }
     return progressRows
       .filter((row) => (row.kind === 'paper' ? active.paperIds.has(row.paper.id) : active.topicIds.has(row.topic.id)))
+      .map((row) => {
+        if (row.kind === 'paper') return row
+        const daySessions = daySessionsByTopic.get(row.topic.id) ?? []
+        if (daySessions.length === 0) {
+          return {
+            ...row,
+            totalDurationSeconds: 0,
+          }
+        }
+        const totalDurationSeconds = daySessions.reduce((sum, session) => sum + (session.durationSeconds ?? 0), 0)
+        return {
+          ...row,
+          totalDurationSeconds,
+        }
+      })
       .sort((a, b) => {
         if (a.subject.name !== b.subject.name) return a.subject.name.localeCompare(b.subject.name)
         const aName = a.kind === 'paper' ? a.paper.name : a.topic.name
         const bName = b.kind === 'paper' ? b.paper.name : b.topic.name
         return aName.localeCompare(bName)
       })
-  }, [activityByDate, progressRows, selectedDay, sortedRows])
+  }, [activityByDate, progressRows, selectedDay, selectedSessions, sortedRows])
 
   const showTopicBreakdown = !selectedDay || displayedRows.length > 0 || !selectedDayHasFutureExam
   const recentlyReviewedLabel = selectedDay && displayedRows.length > 0 ? formatSelectedDateLabel(selectedDay) : 'Recently Reviewed'
@@ -449,7 +509,8 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
                 lastSession={lastSession}
                 today={today}
                 todayStudyTotal={todayStudyTotal}
-                velocityValue={velocityDelta === null ? '0%' : `${velocityDelta > 0 ? '+' : ''}${velocityDelta}%`}
+                velocitySummaryValue={selectedDay ? selectedDayStudyTotal : visibleRangeStudyTotal}
+                velocitySummaryLabel={selectedDay ? formatPaperAttemptDate(selectedDay) : visibleRangeLabel}
                 velocitySeries={velocitySeries}
                 selectedDay={selectedDay}
                 onSelectVelocityDay={(dateKey) => {
