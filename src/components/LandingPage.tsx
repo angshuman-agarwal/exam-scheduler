@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react'
+import { usePostHog } from 'posthog-js/react'
 import seedData from '../data/subjects.json'
 import landingCopy from '../data/landing-copy.json'
 import { useLocalAccountApi } from '../lib/api/local/useAccountApi'
@@ -381,6 +382,7 @@ export default function LandingPage({
   nearestUserExam,
   selectedSubjectDetails,
 }: LandingPageProps) {
+  const posthog = usePostHog()
   const { studyMode } = useLocalAccountApi()
   const countdown = useMemo(() => getCountdown(), [])
   const demoRef = useRef<HTMLDivElement>(null)
@@ -541,7 +543,7 @@ export default function LandingPage({
               {/* CTA */}
               <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={onGetStarted}
+                  onClick={() => { posthog?.capture('landing_get_started'); onGetStarted() }}
                   className="px-6 py-3 ios-button text-sm"
                 >
                   Start your revision schedule

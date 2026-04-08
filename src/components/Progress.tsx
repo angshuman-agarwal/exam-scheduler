@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { usePostHog } from 'posthog-js/react'
 import { getLocalDayKey, msUntilNextLocalMidnight } from '../lib/date'
 import { useLocalProgressApi } from '../lib/api/local/useProgressApi'
 import { ExamDaySelectionPanel } from './ExamDaySelectionPanel'
@@ -183,6 +184,7 @@ function buildPaperAttemptDigest(
 }
 
 export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSession, onPlanNowTopic }: ProgressProps) {
+  const posthog = usePostHog()
   const { studyMode, topics, sessions, paperAttempts, subjects, papers, offerings, selectedOfferingIds, notes } = useLocalProgressApi()
   const [filter, setFilter] = useState<ProgressTableFilter>('priority-now')
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
@@ -451,6 +453,7 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
                 velocitySeries={velocitySeries}
                 selectedDay={selectedDay}
                 onSelectVelocityDay={(dateKey) => {
+                  posthog?.capture('progress_velocity_click', { date: dateKey })
                   setSelectedDay((current) => (current === dateKey ? null : dateKey))
                   setFilter('recently-reviewed')
                 }}
@@ -474,7 +477,7 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
                     rows={displayedRows}
                     filter={filter}
                     onFilterChange={setFilter}
-                    onPlanNow={(row) => onPlanNowTopic(row.offering, row.subject, row.topic.id)}
+                    onPlanNow={(row) => { posthog?.capture('progress_plan_now', { topic: row.topic.name, subject: row.subject.name }); onPlanNowTopic(row.offering, row.subject, row.topic.id) }}
                     recentlyReviewedLabel={recentlyReviewedLabel}
                     priorityDisabled={selectedDay !== null}
                     onClearReviewedDate={() => setSelectedDay(null)}
