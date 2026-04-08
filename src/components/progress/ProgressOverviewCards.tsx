@@ -59,10 +59,6 @@ function velocityDisplayMeta(series: StudyVelocitySeries) {
   }
 }
 
-function velocityDayLabel(dateKey: string): string {
-  return new Date(`${dateKey}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-}
-
 function formatCompactStudyTime(totalSeconds: number): string | null {
   if (totalSeconds <= 0) return null
   const totalMinutes = Math.round(totalSeconds / 60)
@@ -550,12 +546,14 @@ export function LastSessionCard({
 }
 
 export function StudyVelocityCard({
-  value,
+  summaryValue,
+  summaryLabel,
   series,
   selectedDay,
   onSelectDay,
 }: {
-  value: string
+  summaryValue: number
+  summaryLabel: string
   series: StudyVelocitySeries
   selectedDay: string | null
   onSelectDay: (dateKey: string) => void
@@ -690,13 +688,11 @@ export function StudyVelocityCard({
         </div>
         <div className="text-right">
           <p data-testid="progress-velocity-value" className="text-[12px] font-medium text-gray-500">
-            <strong className="font-bold text-[#007AFF]">{value}</strong> vs last week
+            <strong className="font-bold text-[#007AFF]">{formatCompactStudyTime(summaryValue) ?? '0m'}</strong>
           </p>
-          {selectedDay && (
-            <p data-testid="progress-velocity-selected-day" className="mt-1 text-[11px] font-bold text-gray-500">
-              {velocityDayLabel(selectedDay)}
-            </p>
-          )}
+          <p data-testid="progress-velocity-selected-day" className="mt-1 text-[11px] font-bold text-gray-500">
+            {summaryLabel}
+          </p>
         </div>
       </div>
 
@@ -772,7 +768,8 @@ export function ProgressCardsRow({
   lastSession,
   today,
   todayStudyTotal,
-  velocityValue,
+  velocitySummaryValue,
+  velocitySummaryLabel,
   velocitySeries,
   selectedDay,
   onSelectVelocityDay,
@@ -786,7 +783,8 @@ export function ProgressCardsRow({
   lastSession: LastSessionSummary
   today: Date
   todayStudyTotal: number
-  velocityValue: string
+  velocitySummaryValue: number
+  velocitySummaryLabel: string
   velocitySeries: StudyVelocitySeries
   selectedDay: string | null
   onSelectVelocityDay: (dateKey: string) => void
@@ -797,7 +795,13 @@ export function ProgressCardsRow({
       <TotalStudiedCard totalStudyTime={totalStudyTime} />
       <PapersAttemptedCard totalAttempts={paperAttemptsCount} weeklyAttempts={weeklyPaperAttemptsCount} groups={paperAttemptDigest} />
       <LastSessionCard summary={lastSession} today={today} todayStudyTotal={todayStudyTotal} />
-      <StudyVelocityCard value={velocityValue} series={velocitySeries} selectedDay={selectedDay} onSelectDay={onSelectVelocityDay} />
+      <StudyVelocityCard
+        summaryValue={velocitySummaryValue}
+        summaryLabel={velocitySummaryLabel}
+        series={velocitySeries}
+        selectedDay={selectedDay}
+        onSelectDay={onSelectVelocityDay}
+      />
     </section>
   )
 }

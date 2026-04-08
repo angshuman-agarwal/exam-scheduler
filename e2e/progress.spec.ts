@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { openProgress } from './helpers/seedAppState'
+import integrationSeed from '../docs/testing/integration-test-seed.json' with { type: 'json' }
 import {
   progressEmpty,
   progressExamAndActivitySameDay,
@@ -8,12 +9,14 @@ import {
   progressNoFutureExams,
   progressPaperDigest,
   progressPaperPractice,
+  progressSelectedDayStudyTotals,
   progressSessionContext,
   progressPlanNowSwap,
   progressStreak,
 } from './fixtures/progressState'
 
 const FROZEN_DATE = '2026-04-15'
+const INTEGRATION_SEED = integrationSeed as { app: import('./helpers/seedAppState').PersistedState }
 
 test('1. Empty progress state keeps the CTA path and hides analytics sections', async ({ page }) => {
   await openProgress(page, progressEmpty(), FROZEN_DATE)
@@ -50,6 +53,8 @@ test('2. Active progress renders the analytics row and compact calendar', async 
   await expect(lastSessionCard).toContainText('Today')
   await expect(page.getByTestId('progress-last-session-today-total')).toHaveText('20m')
   await expect(page.getByTestId('progress-study-velocity-card')).toContainText('Study Velocity')
+  await expect(page.getByTestId('progress-velocity-value')).toHaveText('52m')
+  await expect(page.getByTestId('progress-velocity-selected-day')).toHaveText('2 Apr - 15 Apr')
   await expect(velocityCard).toContainText('20')
   await expect(velocityCard).toContainText('10')
   await expect(page.getByText(/min logged/i)).toHaveCount(0)
@@ -500,4 +505,54 @@ test('18. Paper attempts appear in the main breakdown and last-session card like
   await expect(paperRow).toContainText('2 attempts today')
   await expect(paperRow.getByTestId('progress-notes-pill')).toHaveText('Notes')
   await expect(page.getByTestId('progress-topic-row').filter({ hasText: 'Geography' }).filter({ hasText: 'Paper 1' })).toHaveCount(1)
+})
+
+test('18b. Selecting a Study Velocity day keeps Last Session on today, updates the velocity header, and scopes row timings to that day', async ({ page }) => {
+  await openProgress(page, progressSelectedDayStudyTotals(), FROZEN_DATE)
+
+  await expect(page.getByTestId('progress-last-session-card')).toContainText('Today')
+  await expect(page.getByTestId('progress-last-session-today-total')).toHaveText('20m')
+  await expect(page.getByTestId('progress-velocity-value')).toHaveText('1h 30m')
+  await expect(page.getByTestId('progress-velocity-selected-day')).toHaveText('2 Apr - 15 Apr')
+
+  const velocityBar = page.getByTestId('progress-study-velocity-card').locator('[data-date-key="2026-04-14"]').first()
+  await velocityBar.click()
+
+  await expect(page.getByTestId('progress-last-session-card')).toContainText('Today')
+  await expect(page.getByTestId('progress-last-session-today-total')).toHaveText('20m')
+  await expect(page.getByTestId('progress-velocity-value')).toHaveText('1h 10m')
+  await expect(page.getByTestId('progress-velocity-selected-day')).toHaveText('14 Apr')
+
+  const csRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Computer Science' }).filter({ hasText: 'Sorting and searching algorithms' })
+  const bioRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Biology' }).filter({ hasText: 'Cells tissues organs' })
+
+  await expect(csRow.getByTestId('progress-study-time-label')).toContainText('Studied 30m')
+  await expect(bioRow.getByTestId('progress-study-time-label')).toContainText('Studied 40m')
+  await expect(page.getByTestId('progress-topic-row')).toHaveCount(2)
+})
+
+test('18c. Real integration seed on 8 Apr keeps Today at 2h 12m and shows day-scoped row timings for the 8 Apr velocity bar', async ({ page }) => {
+  await openProgress(page, INTEGRATION_SEED.app, '2026-04-08')
+
+  await expect(page.getByTestId('progress-last-session-card')).toContainText('Today')
+  await expect(page.getByTestId('progress-last-session-today-total')).toHaveText('2h 12m')
+  await expect(page.getByTestId('progress-velocity-value')).toHaveText('34h 30m')
+  await expect(page.getByTestId('progress-velocity-selected-day')).toHaveText('26 Mar - 8 Apr')
+
+  const velocityBar = page.getByTestId('progress-study-velocity-card').locator('[data-date-key="2026-04-08"]').first()
+  await velocityBar.click()
+
+  await expect(page.getByTestId('progress-last-session-card')).toContainText('Today')
+  await expect(page.getByTestId('progress-last-session-today-total')).toHaveText('2h 12m')
+  await expect(page.getByTestId('progress-velocity-value')).toHaveText('2h 12m')
+  await expect(page.getByTestId('progress-velocity-selected-day')).toHaveText('8 Apr')
+
+  const csRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Computer Science' }).filter({ hasText: 'Networks' })
+  const spanishRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Spanish' }).filter({ hasText: 'Identities and relationships' })
+  const chemRow = page.getByTestId('progress-topic-row').filter({ hasText: 'Chemistry' }).filter({ hasText: 'Equilibrium and rate of reaction' })
+
+  await expect(csRow.getByTestId('progress-study-time-label')).toContainText('Studied 47m')
+  await expect(spanishRow.getByTestId('progress-study-time-label')).toContainText('Studied 45m')
+  await expect(chemRow.getByTestId('progress-study-time-label')).toContainText('Studied 40m')
+  await expect(page.getByTestId('progress-topic-row')).toHaveCount(3)
 })

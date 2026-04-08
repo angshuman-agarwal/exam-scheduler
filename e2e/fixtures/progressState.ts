@@ -412,6 +412,24 @@ export function progressPaperDigest(): PersistedState {
   return s
 }
 
+export function progressSelectedDayStudyTotals(): PersistedState {
+  const s = baseState(['cs-aqa', 'bio-aqa'])
+  setOfferingExamDate(s, 'cs-aqa', EXAM_FAR)
+  setOfferingExamDate(s, 'bio-aqa', EXAM_FAR)
+
+  s.sessions = [
+    makeSession('cs-001', '2026-04-14', 0.7, 1800, new Date('2026-04-14T10:00:00').getTime()),
+    makeSession('bio-001', '2026-04-14', 0.8, 2400, new Date('2026-04-14T14:00:00').getTime()),
+    makeSession('cs-002', '2026-04-15', 0.75, 1200, new Date('2026-04-15T12:00:00').getTime()),
+  ]
+
+  setTopicFields(s, 'cs-001', { lastReviewed: '2026-04-14', performanceScore: 0.7, confidence: 3 })
+  setTopicFields(s, 'bio-001', { lastReviewed: '2026-04-14', performanceScore: 0.8, confidence: 4 })
+  setTopicFields(s, 'cs-002', { lastReviewed: '2026-04-15', performanceScore: 0.75, confidence: 3 })
+
+  return s
+}
+
 // 8. No weak spots — all topics have high perf, future exams exist
 export function progressNoWeakSpots(): PersistedState {
   const s = baseState(['cs-aqa'])
