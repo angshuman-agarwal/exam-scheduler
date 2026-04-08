@@ -235,9 +235,12 @@ export default function PaperSessionLogger({
   const selectedPaper = useMemo(() => {
     // Only the pre-start chooser is allowed to derive a different paper within the same offering.
     // Once a session exists, the UI must stay pinned to the actual session paper and never silently retarget.
-    if (phase !== 'pre') return paper
+    if (phase !== 'pre') {
+      // Use the paper the user actually started (session.targetId), not the original prop which always defaults to Paper 1.
+      return offeringPapers.find((candidate) => candidate.id === session?.targetId) ?? paper
+    }
     return offeringPapers.find((candidate) => candidate.id === (selectedPaperId ?? defaultPaperId ?? paper.id)) ?? paper
-  }, [defaultPaperId, offeringPapers, paper, phase, selectedPaperId])
+  }, [defaultPaperId, offeringPapers, paper, phase, selectedPaperId, session?.targetId])
   const paperTopics = useMemo(
     () => topics.filter((topic) => topic.paperId === selectedPaper.id),
     [selectedPaper.id, topics],

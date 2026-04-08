@@ -33,6 +33,15 @@ function paperEligibleState(): PersistedState {
   return state
 }
 
+function multiPaperEligibleState(): PersistedState {
+  const state = timerState()
+  const p1 = state.papers.find((p) => p.id === 'cs-p1')
+  const p2 = state.papers.find((p) => p.id === 'cs-p2')
+  if (p1) p1.examDate = '2026-04-20'
+  if (p2) p2.examDate = '2026-04-27'
+  return state
+}
+
 async function openToday(page: Page, state: PersistedState) {
   await page.addInitScript((dateStr: string) => {
     const frozen = new Date(dateStr + 'T12:00:00').getTime()
@@ -706,4 +715,29 @@ test('completed paper review clears the stopped timer so reload does not restore
   })
 
   expect(paperAttemptCount).toBe(1)
+})
+
+test('selecting Paper 2 in the picker shows Paper 2 on the active session screen', async ({ page }) => {
+  await openToday(page, multiPaperEligibleState())
+
+  // Click the Full paper button for Computer Science (aria-label targets it precisely)
+  await page.getByRole('button', { name: 'Full paper for Computer Science' }).click()
+
+  // Paper picker should be visible with both options
+  await expect(page.getByText('Choose paper')).toBeVisible()
+
+  // Use aria-pressed attribute to scope specifically to the picker toggle buttons
+  const pickerButtons = page.locator('[aria-pressed]')
+  await expect(pickerButtons.filter({ hasText: 'Paper 1' })).toBeVisible()
+  await expect(pickerButtons.filter({ hasText: 'Paper 2' })).toBeVisible()
+
+  // Select Paper 2
+  await pickerButtons.filter({ hasText: 'Paper 2' }).click()
+
+  // Start the session
+  await page.getByRole('button', { name: 'Start full paper' }).click()
+
+  // Active screen must show Paper 2, not Paper 1
+  await expect(page.getByText('Computer Science — Paper 2')).toBeVisible()
+  await expect(page.getByText('Computer Science — Paper 1')).toHaveCount(0)
 })
