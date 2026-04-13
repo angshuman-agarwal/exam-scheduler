@@ -27,8 +27,8 @@ export default function ConfidenceRow({
               onClick={() => onSet(offeringId, level)}
               className={`text-2xl leading-none p-1.5 rounded-lg transition-all duration-150 ${
                 selected
-                  ? 'scale-125 drop-shadow-sm'
-                  : 'opacity-40 hover:opacity-70 hover:scale-110'
+                  ? 'scale-130 bg-gray-100 rounded-xl shadow-md ring-2 ring-gray-200'
+                  : 'opacity-80 hover:opacity-100 hover:scale-110'
               }`}
               aria-label={`Set confidence to ${level}`}
             >
