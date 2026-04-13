@@ -116,7 +116,6 @@ function App() {
           onContinuePlanning={shell.goToToday}
           onViewProgress={shell.goToProgress}
           onEditSubjects={shell.openEditSetup}
-          onOpenFeedback={shell.openFeedback}
           onCloseFeedback={shell.closeFeedback}
           nearestUserExam={shell.nearestUserExam}
           selectedSubjectDetails={shell.selectedSubjectDetails}

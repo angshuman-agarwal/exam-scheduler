@@ -6,7 +6,6 @@ interface HomeScreenProps {
   onContinuePlanning: () => void
   onViewProgress: () => void
   onEditSubjects: () => void
-  onOpenFeedback: () => void
   onCloseFeedback: () => void
   nearestUserExam: { days: number; subjectName: string; paperName: string; board: string } | null
   selectedSubjectDetails: { name: string; board: string }[]
@@ -17,7 +16,6 @@ export default function HomeScreen({
   onContinuePlanning,
   onViewProgress,
   onEditSubjects,
-  onOpenFeedback,
   onCloseFeedback,
   nearestUserExam,
   selectedSubjectDetails,
@@ -30,7 +28,6 @@ export default function HomeScreen({
         onContinuePlanning={onContinuePlanning}
         onViewProgress={onViewProgress}
         onEditSubjects={onEditSubjects}
-        onOpenFeedback={onOpenFeedback}
         nearestUserExam={nearestUserExam}
         selectedSubjectDetails={selectedSubjectDetails}
       />
