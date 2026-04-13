@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { recencyLabel, type LastSessionSummary, type StudyVelocitySeries } from './analytics'
 
 export interface PaperAttemptDigestAttempt {
@@ -68,6 +68,48 @@ function formatCompactStudyTime(totalSeconds: number): string | null {
   const hours = Math.floor(totalHours)
   const minutes = totalMinutes % 60
   return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`
+}
+
+function formatDayKeyShort(dateKey: string): string {
+  return new Date(`${dateKey}T00:00:00`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
+function buildVelocityWeekPages(points: StudyVelocitySeries['points']) {
+  const pages: Array<{
+    key: string
+    title: string
+    rangeLabel: string
+    points: StudyVelocitySeries['points']
+  }> = []
+
+  for (let startIndex = 0; startIndex < points.length; startIndex += 7) {
+    const pagePoints = points.slice(startIndex, startIndex + 7)
+    const pageStart = pagePoints[0]
+    const pageEnd = pagePoints[pagePoints.length - 1]
+    if (!pageStart || !pageEnd) continue
+
+    pages.push({
+      key: pageStart.dateKey,
+      title: `Week of ${formatDayKeyShort(pageStart.dateKey)}`,
+      rangeLabel: `${formatDayKeyShort(pageStart.dateKey)} - ${formatDayKeyShort(pageEnd.dateKey)}`,
+      points: pagePoints,
+    })
+  }
+
+  if (pages.length === 0) {
+    return [{ key: 'empty', title: 'This Week', rangeLabel: '', points: [] }]
+  }
+
+  const currentIndex = pages.length - 1
+  pages[currentIndex] = { ...pages[currentIndex], title: 'This Week' }
+  if (currentIndex - 1 >= 0) {
+    pages[currentIndex - 1] = { ...pages[currentIndex - 1], title: 'Last Week' }
+  }
+
+  return pages
 }
 
 function StatCard({
@@ -560,19 +602,29 @@ export function StudyVelocityCard({
 }) {
   const { maxRawValue, midRawValue, unitLabel, formatValue } = velocityDisplayMeta(series)
   const activePointCount = series.points.filter((point) => point.value > 0).length
-  const weekPages = useMemo(() => {
-    const midpoint = Math.ceil(series.points.length / 2)
-    return [
-      { key: 'previous', title: 'Last Week', points: series.points.slice(0, midpoint) },
-      { key: 'current', title: 'This Week', points: series.points.slice(midpoint) },
-    ]
-  }, [series.points])
+  const weekPages = useMemo(() => buildVelocityWeekPages(series.points), [series.points])
   const selectedPageIndex = selectedDay
     ? weekPages.findIndex((page) => page.points.some((point) => point.dateKey === selectedDay))
     : -1
   const [mobilePageOverride, setMobilePageOverride] = useState<number | null>(null)
   const touchStartXRef = useRef<number | null>(null)
-  const mobilePageIndex = mobilePageOverride ?? (selectedPageIndex >= 0 ? selectedPageIndex : 1)
+  const desktopScrollerRef = useRef<HTMLDivElement | null>(null)
+  const mobilePageIndex = mobilePageOverride ?? (selectedPageIndex >= 0 ? selectedPageIndex : Math.max(weekPages.length - 1, 0))
+
+  useEffect(() => {
+    const container = desktopScrollerRef.current
+    if (!container) return
+
+    if (selectedDay) {
+      const selectedBar = container.querySelector<HTMLElement>(`[data-date-key="${selectedDay}"]`)
+      if (selectedBar) {
+        selectedBar.scrollIntoView({ block: 'nearest', inline: 'center' })
+        return
+      }
+    }
+
+    container.scrollLeft = container.scrollWidth
+  }, [selectedDay, series.points])
 
   const setClampedMobilePage = (next: number) => {
     setMobilePageOverride(Math.max(0, Math.min(weekPages.length - 1, next)))
@@ -591,7 +643,10 @@ export function StudyVelocityCard({
   }
 
   const renderVelocityBars = (points: StudyVelocitySeries['points'], isMobile = false) => (
-    <div className={`grid h-full min-w-0 items-end ${isMobile ? 'grid-cols-7 gap-1.5' : 'grid-cols-14 gap-1.5 sm:gap-1'}`}>
+    <div
+      className={`grid h-full min-w-0 items-end ${isMobile ? 'gap-1.5' : 'gap-1.5 sm:gap-1'}`}
+      style={{ gridTemplateColumns: `repeat(${Math.max(points.length, 1)}, minmax(0, 1fr))` }}
+    >
       {points.map((point) => {
         const isSelected = selectedDay === point.dateKey
         const isClickable = point.value > 0
@@ -696,14 +751,24 @@ export function StudyVelocityCard({
         </div>
       </div>
 
-      <div className="mt-2.5 hidden flex-1 grid-cols-[2rem_minmax(0,1fr)] gap-2 sm:grid sm:grid-cols-[2.15rem_minmax(0,1fr)]">
-        <div className="flex flex-col justify-between pb-7 text-[10px] font-medium text-gray-400">
+      <div className="mt-2.5 hidden min-h-[8.75rem] flex-1 grid-cols-[2rem_minmax(0,1fr)] items-stretch gap-2 sm:grid sm:grid-cols-[2.15rem_minmax(0,1fr)]">
+        <div className="flex h-full flex-col justify-between pb-7 text-[10px] font-medium text-gray-400">
           <span className="text-[9px] font-semibold uppercase tracking-[0.04em] text-gray-300">{unitLabel === 'Hours studied' ? 'hrs' : unitLabel === 'Minutes studied' ? 'mins' : 'sessions'}</span>
           <span>{maxRawValue > 0 ? formatValue(maxRawValue) : '0'}</span>
           <span>{midRawValue > 0 ? formatValue(midRawValue) : ''}</span>
           <span>0</span>
         </div>
-        {renderVelocityBars(series.points)}
+        <div
+          ref={desktopScrollerRef}
+          className="h-full min-w-0 self-stretch overflow-x-auto overflow-y-hidden overscroll-contain pb-1 pr-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <div
+            className="h-full min-w-full"
+            style={{ width: `${Math.max(series.points.length * 30, 420)}px` }}
+          >
+            {renderVelocityBars(series.points)}
+          </div>
+        </div>
       </div>
 
       <div className="mt-2.5 grid flex-1 grid-cols-[2rem_minmax(0,1fr)] gap-2 sm:hidden">
@@ -724,16 +789,28 @@ export function StudyVelocityCard({
       </div>
 
       <div className="mt-2 hidden items-center justify-between text-[10px] font-medium text-gray-400 sm:flex">
-        <span>Last Week</span>
-        <span>This Week</span>
+        <span>{series.points[0] ? `Started ${formatDayKeyShort(series.points[0].dateKey)}` : 'Started'}</span>
+        <span>Today</span>
       </div>
 
       <div className="mt-2 flex items-center justify-between text-[10px] font-semibold text-gray-500 sm:hidden">
         <span data-testid="progress-velocity-mobile-week-label">{weekPages[mobilePageIndex]?.title}</span>
+        <span data-testid="progress-velocity-mobile-range-label" className="text-[10px] font-medium text-gray-400">
+          {weekPages[mobilePageIndex]?.rangeLabel}
+        </span>
       </div>
 
-      <div className="mt-1.5 flex items-center justify-center sm:hidden">
-        <div className="flex items-center gap-2">
+      <div className="mt-2 flex items-center justify-between gap-2 sm:hidden">
+        <button
+          type="button"
+          data-testid="progress-velocity-page-prev"
+          onClick={() => setClampedMobilePage(mobilePageIndex - 1)}
+          disabled={mobilePageIndex === 0}
+          className="inline-flex items-center rounded-full border border-black/[0.08] bg-[linear-gradient(180deg,#ffffff_0%,#f6f8fc_100%)] px-3 py-1.5 text-[10px] font-semibold text-gray-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_4px_10px_rgba(15,23,42,0.06)] transition-all disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          Older
+        </button>
+        <div className="flex items-center gap-1.5">
           {weekPages.map((page, index) => {
             const active = index === mobilePageIndex
             return (
@@ -753,6 +830,15 @@ export function StudyVelocityCard({
             )
           })}
         </div>
+        <button
+          type="button"
+          data-testid="progress-velocity-page-next"
+          onClick={() => setClampedMobilePage(mobilePageIndex + 1)}
+          disabled={mobilePageIndex >= weekPages.length - 1}
+          className="inline-flex items-center rounded-full border border-black/[0.08] bg-[linear-gradient(180deg,#ffffff_0%,#f6f8fc_100%)] px-3 py-1.5 text-[10px] font-semibold text-gray-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_4px_10px_rgba(15,23,42,0.06)] transition-all disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          Newer
+        </button>
       </div>
     </article>
   )

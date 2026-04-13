@@ -120,6 +120,14 @@ function formatPaperAttemptDate(dateKey: string) {
   })
 }
 
+function diffLocalDays(startKey: string, endKey: string) {
+  const [startYear, startMonth, startDay] = startKey.split('-').map(Number)
+  const [endYear, endMonth, endDay] = endKey.split('-').map(Number)
+  const startUtc = Date.UTC(startYear, startMonth - 1, startDay)
+  const endUtc = Date.UTC(endYear, endMonth - 1, endDay)
+  return Math.max(0, Math.round((endUtc - startUtc) / 86400000))
+}
+
 function formatDateRangeLabel(startKey: string, endKey: string) {
   const start = new Date(`${startKey}T00:00:00`)
   const end = new Date(`${endKey}T00:00:00`)
@@ -280,6 +288,23 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
         .reduce((sum, attempt) => sum + attempt.durationSeconds, 0),
     [selectedPaperAttempts, selectedSessions, todayKey],
   )
+  const firstStudyDateKey = useMemo(() => {
+    const activityDates = [
+      ...selectedSessions.map((session) => session.date),
+      ...selectedPaperAttempts.map((attempt) => attempt.date),
+    ].sort()
+    if (activityDates.length === 0) return todayKey
+    return activityDates[0] ?? todayKey
+  }, [selectedPaperAttempts, selectedSessions, todayKey])
+  const velocityDayCount = useMemo(
+    () => Math.max(14, diffLocalDays(firstStudyDateKey, todayKey) + 1),
+    [firstStudyDateKey, todayKey],
+  )
+  const velocityRangeStartKey = useMemo(() => {
+    const start = new Date(today)
+    start.setDate(start.getDate() - (velocityDayCount - 1))
+    return getLocalDayKey(start)
+  }, [today, velocityDayCount])
   const selectedDayStudyTotal = useMemo(
     () => {
       if (!selectedDay) return 0
@@ -292,29 +317,17 @@ export default function Progress({ onGoToToday, onBrowseOffering, onStartPaperSe
     },
     [selectedDay, selectedPaperAttempts, selectedSessions],
   )
-  const visibleRangeStudyTotal = useMemo(() => {
-    const cutoff = new Date(today)
-    cutoff.setDate(cutoff.getDate() - 13)
-    const cutoffKey = getLocalDayKey(cutoff)
-    return selectedSessions
-      .filter((session) => session.date >= cutoffKey && session.date <= todayKey)
-      .reduce((sum, session) => sum + (session.durationSeconds ?? 0), 0)
-      + selectedPaperAttempts
-        .filter((attempt) => attempt.date >= cutoffKey && attempt.date <= todayKey)
-        .reduce((sum, attempt) => sum + attempt.durationSeconds, 0)
-  }, [selectedPaperAttempts, selectedSessions, today, todayKey])
+  const visibleRangeStudyTotal = totalStudyTime
   const visibleRangeLabel = useMemo(() => {
-    const start = new Date(today)
-    start.setDate(start.getDate() - 13)
-    return formatDateRangeLabel(getLocalDayKey(start), todayKey)
-  }, [today, todayKey])
+    return formatDateRangeLabel(velocityRangeStartKey, todayKey)
+  }, [todayKey, velocityRangeStartKey])
   const lastSession = useMemo(
     () => buildLastSessionSummary(selectedSessions, selectedTopics, selectedOfferings, subjects, selectedPapers, selectedPaperAttempts),
     [selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects],
   )
   const velocitySeries = useMemo(
-    () => buildStudyVelocitySeries(selectedSessions, today, 14, selectedTopics, selectedOfferings, subjects, selectedPaperAttempts, selectedPapers),
-    [selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects, today],
+    () => buildStudyVelocitySeries(selectedSessions, today, velocityDayCount, selectedTopics, selectedOfferings, subjects, selectedPaperAttempts, selectedPapers),
+    [selectedOfferings, selectedPaperAttempts, selectedPapers, selectedSessions, selectedTopics, subjects, today, velocityDayCount],
   )
   const progressRows = useMemo(
     () => buildProgressTableRows(selectedTopics, selectedOfferings, subjects, selectedPapers, today, selectedSessions, selectedPaperAttempts, selectedNotes),
