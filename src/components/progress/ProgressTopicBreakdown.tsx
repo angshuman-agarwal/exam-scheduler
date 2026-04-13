@@ -184,7 +184,7 @@ export function ProgressTopicBreakdown({
         </div>
       </div>
 
-      <div className="hidden max-h-[32rem] overflow-auto sm:block">
+      <div className="hidden overflow-auto sm:block sm:max-h-[36rem] xl:max-h-[42rem] 2xl:max-h-[46rem]">
         <table data-testid="progress-topic-table" className="min-w-full border-collapse">
           <thead>
             <tr className="border-b border-black/[0.06] text-left">

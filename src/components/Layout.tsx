@@ -57,9 +57,9 @@ export default function Layout({
       <MobileFeedbackButton />
       <aside
         data-testid="desktop-left-rail"
-        className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[15rem] lg:flex-col lg:border-r lg:border-slate-200/90 lg:bg-[linear-gradient(180deg,rgba(252,253,255,0.98),rgba(246,249,255,0.98))] lg:px-4 lg:py-4 lg:backdrop-blur"
+        className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[15rem] lg:flex-col lg:border-r lg:border-slate-200/85 lg:bg-[linear-gradient(180deg,rgba(252,253,255,0.98),rgba(244,247,253,0.98))] lg:px-4 lg:py-4 lg:backdrop-blur"
       >
-        <nav className="grid gap-1.5 px-1 pt-1" aria-label="Desktop navigation">
+        <nav className="grid gap-2 px-1 pt-2" aria-label="Desktop navigation">
           {NAV_ITEMS.map((item) => {
             const active = currentPage === item.page
             return (
@@ -69,14 +69,22 @@ export default function Layout({
                 data-testid={`desktop-nav-${item.page}`}
                 aria-current={active ? 'page' : undefined}
                 onClick={() => onNavigate(item.page)}
-                className={`flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[0.92rem] font-semibold transition ${
+                className={`group flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[0.92rem] font-semibold transition ${
                   active
-                    ? 'mr-[-1rem] rounded-l-xl rounded-r-none bg-[linear-gradient(90deg,rgba(48,93,255,0.14),rgba(48,93,255,0.035)_82%,rgba(48,93,255,0.01)_100%)] text-blue-700 shadow-[inset_3px_0_0_#305dff]'
-                    : 'mr-[-1rem] rounded-l-xl rounded-r-none text-slate-500 hover:bg-[linear-gradient(90deg,rgba(255,255,255,0.92),rgba(255,255,255,0.58)_82%,rgba(255,255,255,0.2)_100%)] hover:text-slate-800'
+                    ? 'relative mr-[-0.75rem] rounded-[1.15rem] rounded-r-none border border-blue-100/80 bg-[linear-gradient(90deg,rgba(240,246,255,0.96),rgba(232,240,255,0.7)_70%,rgba(232,240,255,0.12)_100%)] text-blue-700 shadow-[inset_3px_0_0_#305dff,0_12px_28px_rgba(48,93,255,0.12)]'
+                    : 'mr-[-0.75rem] rounded-[1.15rem] rounded-r-none border border-transparent text-slate-500 hover:border-white/80 hover:bg-[linear-gradient(90deg,rgba(255,255,255,0.96),rgba(255,255,255,0.64)_75%,rgba(255,255,255,0.16)_100%)] hover:text-slate-800 hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]'
                 }`}
               >
-                <span className={active ? 'text-blue-600' : 'text-slate-400'}>{item.icon}</span>
-                <span>{item.label}</span>
+                <span
+                  className={`grid h-8 w-8 shrink-0 place-items-center rounded-full transition-all ${
+                    active
+                      ? 'bg-[linear-gradient(180deg,#ffffff_0%,#eef4ff_100%)] text-blue-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_14px_rgba(48,93,255,0.16)]'
+                      : 'bg-white/72 text-slate-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] group-hover:text-slate-600'
+                  }`}
+                >
+                  {item.icon}
+                </span>
+                <span className="tracking-[-0.01em]">{item.label}</span>
               </button>
             )
           })}
