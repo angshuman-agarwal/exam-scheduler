@@ -1,4 +1,6 @@
 import { type ReactNode } from 'react'
+import FeedbackTrigger from './FeedbackTrigger'
+import MobileFeedbackButton from './MobileFeedbackButton'
 import type { AppPage } from '../lib/navigation'
 
 interface LayoutProps {
@@ -52,6 +54,7 @@ export default function Layout({
 }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col lg:pl-[15rem]">
+      <MobileFeedbackButton />
       <aside
         data-testid="desktop-left-rail"
         className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[15rem] lg:flex-col lg:border-r lg:border-slate-200/90 lg:bg-[linear-gradient(180deg,rgba(252,253,255,0.98),rgba(246,249,255,0.98))] lg:px-4 lg:py-4 lg:backdrop-blur"
@@ -79,14 +82,8 @@ export default function Layout({
           })}
         </nav>
 
-        <div
-          data-testid="desktop-focus-card"
-          className="mx-1 mt-auto rounded-[1.25rem] border border-slate-200/90 bg-white/90 px-4 py-4 shadow-[0_14px_28px_rgba(15,23,42,0.05)]"
-        >
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Stay on track</p>
-          <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
-            Keep your plan, progress, and assistant within one focused desktop workspace.
-          </p>
+        <div className="mx-1 mt-auto">
+          <FeedbackTrigger />
         </div>
       </aside>
 
