@@ -1,13 +1,6 @@
 import { daysRemaining } from '../../lib/engine'
 import type { Paper } from '../../types'
 
-function pastel(hex: string, alpha = 0.08): string {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r},${g},${b},${alpha})`
-}
-
 export default function PaperSchedule({ papers, subjectColor }: { papers: Paper[]; subjectColor: string }) {
   if (papers.length === 0) {
     return (
@@ -44,26 +37,18 @@ export default function PaperSchedule({ papers, subjectColor }: { papers: Paper[
         )}
       </p>
       <div className="flex flex-col gap-1.5">
-        {sorted.map((p, i) => {
-          const isNearest = i === nearestIdx
+        {sorted.map((p) => {
           return (
             <div key={p.id} className="flex items-center justify-between gap-2">
-              <span className={`text-sm shrink-0 ${isNearest ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
-                {p.name}
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: subjectColor }} />
+                <span className="text-sm text-gray-700 font-medium">{p.name}</span>
+              </div>
               <div className="flex items-center gap-2">
-                {isNearest && (
-                  <span
-                    className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
-                    style={{ color: subjectColor, backgroundColor: pastel(subjectColor, 0.12) }}
-                  >
-                    Next
-                  </span>
-                )}
-                <span className={`text-xs tabular-nums ${isNearest ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
+                <span className="text-xs tabular-nums text-gray-600">
                   {fmtDate(p.examDate)}
                 </span>
-                <span className={`text-xs tabular-nums ${isNearest ? 'text-gray-500' : 'text-gray-300'}`}>
+                <span className="text-xs tabular-nums text-gray-400">
                   {fmtTime(p.examTime)}
                 </span>
               </div>

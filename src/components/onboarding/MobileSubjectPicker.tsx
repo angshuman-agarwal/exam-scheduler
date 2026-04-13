@@ -167,7 +167,7 @@ export default function MobileSubjectPicker({ ctrl, onBack }: MobileSubjectPicke
               <p className="text-sm text-gray-600 truncate">
                 {selectedCount} selected
                 {unconfiguredCount > 0 && (
-                  <span className="text-amber-600"> {'\u00B7'} {unconfiguredCount} need setup</span>
+                  <span className="text-amber-600"> {'\u00B7'} rate confidence to start studying</span>
                 )}
               </p>
             )}

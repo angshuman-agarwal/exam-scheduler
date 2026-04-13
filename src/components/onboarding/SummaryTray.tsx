@@ -28,6 +28,11 @@ export default function SummaryTray({
 }) {
   const selectedSubjects = subjects.filter((s) => selectedSubjectIds.has(s.id))
 
+  const missingConfidence = selectedSubjects.filter((s) => {
+    const oid = chosenOffering.get(s.id)
+    return !oid || !confidences.has(oid)
+  })
+
   let nearestSubjectName: string | null = null
   let nearestDays = Infinity
   for (const s of selectedSubjects) {
@@ -62,8 +67,10 @@ export default function SummaryTray({
                   ) : (
                     <span className="text-xs text-gray-400 shrink-0">Pick board</span>
                   )}
-                  {conf !== undefined && (
+                  {conf !== undefined ? (
                     <span className="text-sm leading-none shrink-0">{EMOJIS[Math.max(0, Math.min(4, conf - 1))]}</span>
+                  ) : (
+                    oid && <span className="text-xs text-amber-500 shrink-0 font-medium">rate confidence</span>
                   )}
                 </div>
               )
@@ -84,6 +91,13 @@ export default function SummaryTray({
       >
         {finishLabel}
       </button>
+      {!canFinish && missingConfidence.length > 0 && (
+        <p className="text-xs text-center text-amber-600 mt-2">
+          {missingConfidence.length === 1
+            ? `Rate your confidence for ${missingConfidence[0].name} to start studying`
+            : `Rate your confidence for ${missingConfidence.length} subjects to start studying`}
+        </p>
+      )}
       {onCancel && (
         <button
           onClick={onCancel}
