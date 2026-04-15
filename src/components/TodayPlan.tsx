@@ -289,6 +289,9 @@ export default function TodayPlan({
                     {planItems.length}
                   </span>
                 )}
+                {resolvedPlan.length > 0 && (
+                  <span className="text-[10px] text-gray-400 font-semibold">Click on a topic below to start</span>
+                )}
               </div>
               {hasUserItems && (
                 <button
@@ -322,7 +325,7 @@ export default function TodayPlan({
                       tabIndex={0}
                       onClick={() => onStartSession(s, item.source, item.id)}
                       onKeyDown={(e) => { if (e.key === 'Enter') onStartSession(s, item.source, item.id) }}
-                      className="flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-colors hover:bg-gray-50/50"
+                      className="flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-all hover:bg-blue-50/60 hover:shadow-[inset_3px_0_0_#2f7cff] active:bg-blue-50"
                     >
                       <div
                         className="w-1.5 h-5 rounded-full shrink-0"
